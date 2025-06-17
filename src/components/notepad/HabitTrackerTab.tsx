@@ -11,11 +11,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame, Check } from 'lucide-react'; // Added Check
 import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, getWeek } from 'date-fns';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 const PREDEFINED_COLORS = ["#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF", "#A0C4FF", "#BDB2FF", "#FFC6FF", "#E0E0E0"];
 
@@ -27,7 +29,9 @@ export default function HabitTrackerTab() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentHabit, setCurrentHabit] = useState<Partial<Habit> | null>(null);
   const [viewDate, setViewDate] = useState(new Date()); // For daily view
-  
+  const [habitViewMode, setHabitViewMode] = useState<'daily' | 'weekly-overview'>('daily');
+
+
   const openEditor = (habit?: Habit) => {
     setCurrentHabit(habit ? { ...habit } : { name: '', frequency: 'daily', color: PREDEFINED_COLORS[0], targetCompletions: 1 });
     setIsEditing(true);
@@ -117,7 +121,7 @@ export default function HabitTrackerTab() {
                   onClick={() => handleInputChange('color', color)}
                   className="rounded-full border-2"
                 >
-                  {currentHabit.color === color && <CheckSquare className="h-4 w-4" />}
+                  {currentHabit.color === color && <Check className="h-4 w-4" />}
                 </Button>
               ))}
             </div>
@@ -283,7 +287,7 @@ export default function HabitTrackerTab() {
                                         style={isDone ? {backgroundColor: habit.color} : {borderColor: habit.color}}
                                     />
                                   </TooltipTrigger>
-                                  <TooltipContent><p>{format(day, 'EEE, MMM d')} - {isDone ? "Completed" : "Pending"}</p></TooltipContent>
+                                  <ShadTooltipContent><p>{format(day, 'EEE, MMM d')} - {isDone ? "Completed" : "Pending"}</p></ShadTooltipContent>
                                </Tooltip>
                             </TooltipProvider>
                           );
@@ -307,9 +311,3 @@ export default function HabitTrackerTab() {
     </Card>
   );
 }
-
-// Add a state for view mode in HabitTrackerTab
-const [habitViewMode, setHabitViewMode] = useState<'daily' | 'weekly-overview'>('daily');
-
-
-    
