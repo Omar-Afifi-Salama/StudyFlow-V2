@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Basic AI chat flow.
@@ -9,7 +10,7 @@
 
 import { genkit, Ai } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { z } from 'genkit/zod';
+import { z } from 'genkit'; // Corrected import
 
 // Use the globally configured `ai` instance from genkit.ts for defining schemas, etc.
 // but the actual model call will use a dynamically configured instance if an API key is provided.
@@ -43,12 +44,13 @@ const chatFlow = globalAi.defineFlow(
   },
   async (input) => {
     let currentAi: Ai = globalAi; // Use global by default
+    const modelName = 'googleai/gemini-2.0-flash'; // Define model name once
 
     if (input.apiKey) {
       // Dynamically configure a new Genkit instance with the provided API key for this call
       currentAi = genkit({
         plugins: [googleAI({ apiKey: input.apiKey })],
-        model: 'googleai/gemini-2.0-flash', // Or your preferred model
+        model: modelName, 
       });
     }
     
@@ -56,6 +58,7 @@ const chatFlow = globalAi.defineFlow(
     // For conversational history, you'd add a history field to inputSchema
     // and construct a more complex prompt or use model's history capabilities.
     const { output } = await currentAi.generate({
+        model: modelName, // Explicitly specify the model for the generate call
         prompt: `You are a helpful study assistant. Keep your responses concise and informative.
         User: ${input.message}
         Assistant:`,
