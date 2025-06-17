@@ -25,7 +25,8 @@ export interface UserProfile {
   lastStudyDate: string | null; // YYYY-MM-DD format
   wakeUpTime?: { hour: number; period: 'AM' | 'PM' };
   sleepTime?: { hour: number; period: 'AM' | 'PM' };
-  unlockedAchievementIds?: string[]; // New: To store IDs of unlocked achievements
+  unlockedAchievementIds?: string[];
+  revisionConcepts?: RevisionConcept[];
 }
 
 export interface Skin {
@@ -86,12 +87,24 @@ export interface NotepadLink {
   tags?: string[];
 }
 
+export interface RevisionConcept {
+  id: string;
+  name: string;
+  learnedDate: string; // YYYY-MM-DD
+  lastRevisedDate: string; // YYYY-MM-DD
+  nextRevisionDate: string; // YYYY-MM-DD
+  revisionStage: number; // 0, 1, 2, 3, 4 etc.
+  tags?: string[];
+}
+
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
   goals: NotepadGoal[];
   links: NotepadLink[];
+  revisionConcepts: RevisionConcept[]; // Added
 }
+
 
 export interface DailyChallenge {
   id: string;
@@ -108,12 +121,18 @@ export interface DailyChallenge {
   lastProgressUpdate?: number; 
 }
 
-// New: Achievement type
 export interface Achievement {
   id: string;
   name: string;
   description: string;
-  // icon?: React.ComponentType<{ className?: string }>; // Example if using Lucide icons
-  iconName?: string; // Store icon name, resolve to component in UI
+  iconName?: string; 
   criteria: (profile: UserProfile, sessions: StudySession[], challenges: DailyChallenge[]) => boolean;
+}
+
+// For Ambiance Mixer
+export interface AmbientSound {
+  id: string;
+  name: string;
+  filePath: string; // e.g., /sounds/rain.mp3
+  icon: React.ComponentType<{ className?: string }>;
 }

@@ -1,10 +1,11 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement } from '@/types';
+import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer as TimerIcon } from 'lucide-react';
+import { format, addDays, differenceInDays } from 'date-fns';
 
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -57,6 +58,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   wakeUpTime: { hour: 8, period: 'AM' },
   sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [],
+  revisionConcepts: [],
 };
 
 const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -64,6 +66,7 @@ const DEFAULT_NOTEPAD_DATA: NotepadData = {
   notes: [],
   goals: [],
   links: [],
+  revisionConcepts: [],
 };
 
 const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
@@ -73,20 +76,20 @@ const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
     { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
 ];
 
-// Achievements Definition
 export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'firstSteps', name: 'First Steps', description: 'Log your first study session.', iconName: 'BookOpen', criteria: (profile, sessions) => sessions.length >= 1 },
   { id: 'hourOfPower', name: 'Hour of Power', description: 'Study for a total of 1 hour.', iconName: 'Clock', criteria: (profile, sessions) => sessions.reduce((sum, s) => sum + s.duration, 0) >= 3600 },
   { id: 'pomodoroStarter', name: 'Pomodoro Starter', description: 'Complete 5 full Pomodoro focus cycles.', iconName: 'TimerIcon', criteria: (profile, sessions) => sessions.filter(s => s.type === 'Pomodoro Focus' && s.isFullPomodoroCycle).length >= 5 },
   { id: 'levelUpNovice', name: 'Level 5 Reached', description: 'Reach Level 5.', iconName: 'Award', criteria: (profile) => profile.level >= 5 },
   { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 3 daily challenges.', iconName: 'CalendarCheck', criteria: (profile) => (profile.completedChallengeIds?.length || 0) >= 3 },
-  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first skin from the shop.', iconName: 'ShoppingCart', criteria: (profile) => profile.ownedSkinIds.length > 2 }, // 2 defaults
+  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first skin from the shop.', iconName: 'ShoppingCart', criteria: (profile) => profile.ownedSkinIds.length > 2 },
   { id: 'streakStarter', name: 'Streak Starter', description: 'Achieve a 3-day study streak.', iconName: 'Zap', criteria: (profile) => profile.currentStreak >= 3 },
   { id: 'dedicatedLearner', name: 'Dedicated Learner', description: 'Study for a total of 10 hours.', iconName: 'BarChart', criteria: (profile, sessions) => sessions.reduce((sum, s) => sum + s.duration, 0) >= 36000 },
   { id: 'pomodoroPro', name: 'Pomodoro Pro', description: 'Complete 25 full Pomodoro focus cycles.', iconName: 'Coffee', criteria: (profile, sessions) => sessions.filter(s => s.type === 'Pomodoro Focus' && s.isFullPomodoroCycle).length >= 25 },
   { id: 'masterOfTheMind', name: 'Master of the Mind', description: 'Reach Level 10.', iconName: 'ShieldCheck', criteria: (profile) => profile.level >= 10 },
 ];
 
+const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; // Days after last revision
 
 interface SessionContextType {
   sessions: StudySession[];
@@ -101,6 +104,9 @@ interface SessionContextType {
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
   deleteNotepadNote: (noteId: string) => void;
+  addRevisionConcept: (name: string, learnedDate: Date) => void;
+  markConceptRevised: (conceptId: string) => void;
+  deleteRevisionConcept: (conceptId: string) => void;
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
@@ -112,8 +118,8 @@ interface SessionContextType {
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
   updateTaskChallengeProgress: (completedTasksCount: number) => void;
-  getUnlockedAchievements: () => Achievement[]; // New
-  checkAndUnlockAchievements: () => void; // New
+  getUnlockedAchievements: () => Achievement[];
+  checkAndUnlockAchievements: () => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -153,15 +159,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (!mergedProfile.lastStudyDate) mergedProfile.lastStudyDate = null;
         if (!mergedProfile.wakeUpTime) mergedProfile.wakeUpTime = DEFAULT_USER_PROFILE.wakeUpTime;
         if (!mergedProfile.sleepTime) mergedProfile.sleepTime = DEFAULT_USER_PROFILE.sleepTime;
-        if (!mergedProfile.unlockedAchievementIds) mergedProfile.unlockedAchievementIds = []; // Ensure exists
+        if (!mergedProfile.unlockedAchievementIds) mergedProfile.unlockedAchievementIds = [];
+        if (!mergedProfile.revisionConcepts) mergedProfile.revisionConcepts = []; // Load revision concepts
         setUserProfile(mergedProfile);
       } else {
         setUserProfile(DEFAULT_USER_PROFILE);
       }
       
       const storedNotepad = localStorage.getItem('notepadData');
-      if (storedNotepad) setNotepadData(JSON.parse(storedNotepad));
-      else setNotepadData(DEFAULT_NOTEPAD_DATA);
+      // Ensure revisionConcepts is part of notepadData loading
+      if (storedNotepad) {
+        const parsedNotepad = JSON.parse(storedNotepad) as NotepadData;
+        if (!parsedNotepad.revisionConcepts) parsedNotepad.revisionConcepts = [];
+         setNotepadData(parsedNotepad);
+      } else {
+        setNotepadData(DEFAULT_NOTEPAD_DATA);
+      }
+
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
@@ -194,7 +208,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [applyThemePreference]);
 
   useEffect(() => {
-    if (!isLoaded) { // Ensures loadData is called only once on initial mount
+    if (!isLoaded) { 
         loadData();
     }
   }, [isLoaded, loadData]);
@@ -285,27 +299,27 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStreakAndGetBonus = useCallback(() => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = format(today, 'yyyy-MM-dd');
     let currentStreak = userProfile.currentStreak;
     let longestStreak = userProfile.longestStreak;
     let lastStudyDate = userProfile.lastStudyDate;
 
     if (lastStudyDate) {
-      const lastDate = new Date(lastStudyDate);
-      const diffTime = today.getTime() - lastDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const lastDate = new Date(lastStudyDate); // Parse from string
+      const diff = differenceInDays(today, lastDate);
 
-      if (diffDays === 1) {
+      if (diff === 1) {
         currentStreak++;
-      } else if (diffDays > 1) { 
+      } else if (diff > 1) { 
         currentStreak = 1; 
       }
+      // If diff is 0, it means studied today already, streak remains.
     } else { 
       currentStreak = 1;
     }
     
     let newLastStudyDate = lastStudyDate;
-    if (lastStudyDate !== todayStr) {
+    if (lastStudyDate !== todayStr) { // Only update if today is a new study day
         if (currentStreak > longestStreak) {
             longestStreak = currentStreak;
         }
@@ -518,6 +532,58 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [notepadData.notes, toast]);
 
+  // Revision Hub Logic
+  const calculateNextRevisionDate = (learnedDateStr: string, stage: number): string => {
+    const interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1]; // Use last interval if stage exceeds
+    return format(addDays(new Date(learnedDateStr), interval), 'yyyy-MM-dd');
+  };
+
+  const addRevisionConcept = useCallback((name: string, learnedDate: Date) => {
+    const learnedDateStr = format(learnedDate, 'yyyy-MM-dd');
+    const newConcept: RevisionConcept = {
+      id: crypto.randomUUID(),
+      name,
+      learnedDate: learnedDateStr,
+      lastRevisedDate: learnedDateStr,
+      nextRevisionDate: calculateNextRevisionDate(learnedDateStr, 0),
+      revisionStage: 0,
+    };
+    setNotepadData(prev => ({ ...prev, revisionConcepts: [...prev.revisionConcepts, newConcept] }));
+    toast({ title: "Concept Added", description: `"${name}" added for revision.`});
+  }, [toast]);
+
+  const markConceptRevised = useCallback((conceptId: string) => {
+    setNotepadData(prev => {
+      const concepts = prev.revisionConcepts.map(c => {
+        if (c.id === conceptId) {
+          const todayStr = format(new Date(), 'yyyy-MM-dd');
+          const newStage = c.revisionStage + 1;
+          return {
+            ...c,
+            lastRevisedDate: todayStr,
+            nextRevisionDate: calculateNextRevisionDate(todayStr, newStage),
+            revisionStage: newStage,
+          };
+        }
+        return c;
+      });
+      return { ...prev, revisionConcepts: concepts };
+    });
+    toast({ title: "Concept Revised!", description: "Revision schedule updated."});
+  }, [toast]);
+
+  const deleteRevisionConcept = useCallback((conceptId: string) => {
+    const conceptToDelete = notepadData.revisionConcepts.find(c => c.id === conceptId);
+     setNotepadData(prev => ({
+      ...prev,
+      revisionConcepts: prev.revisionConcepts.filter(c => c.id !== conceptId),
+    }));
+    if (conceptToDelete) {
+        toast({ title: "Concept Removed", description: `"${conceptToDelete.name}" removed from revision.` });
+    }
+  }, [notepadData.revisionConcepts, toast]);
+
+
   const generateOffers = (): CapitalistOffer[] => {
     const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
         { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24 },
@@ -619,6 +685,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       sessions, addSession, clearSessions, updateSessionDescription,
       userProfile, updateUserProfile, updateSleepWakeTimes,
       notepadData, updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
+      addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
       dailyChallenges, claimChallengeReward, updateTaskChallengeProgress,
@@ -636,6 +703,3 @@ export const useSessions = () => {
   }
   return context;
 };
-
-
-    
