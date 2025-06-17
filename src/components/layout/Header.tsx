@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, DollarSign, Flame, Keyboard } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Keyboard, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ export default function Header() {
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" />, hotkey: 'c' },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" />, hotkey: 'n' },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" />, hotkey: 'h' },
+    { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5 mr-2" />, hotkey: 'v' }, // 'v' for view achievements
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" />, hotkey: 'a' },
   ];
 
@@ -114,7 +115,7 @@ export default function Header() {
               <TooltipContent>
                 <p>Current Streak: {userProfile.currentStreak} days</p>
                 <p>Longest Streak: {userProfile.longestStreak} days</p>
-                {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * 1, 20)).toFixed(0)}% XP/Cash</p>}
+                {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * 0.01, 0.20) * 100).toFixed(0)}% XP/Cash</p>}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

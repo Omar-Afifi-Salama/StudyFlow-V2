@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatTime } from '@/lib/utils';
-import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer, CalendarDays, BedDouble, SunMedium, TargetIcon, Percent } from 'lucide-react';
+import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, CalendarDays, SunMedium, TargetIcon, Percent, CheckCircle, TrendingDown } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend, Cell } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { StudySession, UserProfile } from '@/types';
 import React, { useEffect, useState, useMemo } from 'react';
-import { format, startOfWeek, addDays, eachDayOfInterval, subDays, getDay, isSameDay } from 'date-fns';
+import { format, startOfWeek, addDays, eachDayOfInterval, subDays, getDay, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval } from 'date-fns';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
+
 
 interface DailyStat {
   date: string; 
@@ -137,14 +139,14 @@ export default function StatsDashboard() {
         
         if (statsByDay[dateKey]) {
           statsByDay[dateKey].totalTime += session.duration;
-          if (session.type === 'Pomodoro Focus') {
+          if (session.type === 'Pomodoro Focus' && session.isFullPomodoroCycle) { // Count only full cycles
             statsByDay[dateKey].pomodoros += 1;
           }
         }
       });
       
       const formattedData = Object.entries(statsByDay).map(([dateKey, data]) => {
-        const dateObj = new Date(dateKey + 'T00:00:00Z'); // Use T00:00:00Z for UTC date
+        const dateObj = new Date(dateKey + 'T00:00:00Z'); 
          return {
           originalDate: dateObj,
           date: format(dateObj, 'MMM d'),
@@ -181,51 +183,35 @@ export default function StatsDashboard() {
     return data;
   }, [sessions]);
   
-  const HeatmapCell = ({ x, y, width, height, fill, payload, value }: any) => {
-     if (value === undefined || value < 0) return null; // Don't render for padding or no data
-      const color = payload.level === 0 ? 'hsl(var(--muted))' 
-                  : payload.level === 1 ? 'hsl(var(--primary) / 0.2)'
-                  : payload.level === 2 ? 'hsl(var(--primary) / 0.4)'
-                  : payload.level === 3 ? 'hsl(var(--primary) / 0.6)'
-                  : payload.level === 4 ? 'hsl(var(--primary) / 0.8)'
-                  : 'hsl(var(--primary))';
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                     <rect x={x} y={y} width={width} height={height} fill={color} rx="3" ry="3" />
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{format(new Date(payload.date), 'MMM d, yyyy')}</p>
-                    <p>Study Time: {formatTime(payload.count * 60)}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-  };
 
-  // Prepare data for Recharts heatmap (calendar-like)
   const calendarHeatmapData = useMemo(() => {
     const today = new Date();
-    const weeksToShow = 13; // Approx 3 months
-    const startDate = startOfWeek(subDays(today, (weeksToShow -1) * 7 ), { weekStartsOn: 0 }); // Start on Sunday
+    const weeksToShow = 13; 
+    const firstDayOfYear = startOfWeek(subDays(today, (weeksToShow -1) * 7 ), { weekStartsOn: 0 }); 
     
-    let currentData: any[] = [];
     const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let currentData: ({ name: string } & Record<string, number | string>)[] = [];
 
-    for (let i = 0; i < weeksToShow; i++) {
-        const weekStart = addDays(startDate, i * 7);
-        const weekData: any = { name: format(weekStart, 'MMM d') }; // Label for the week
+
+    const weekStarts = eachWeekOfInterval({
+        start: firstDayOfYear,
+        end: today,
+    }, { weekStartsOn: 0 });
+
+
+    weekStarts.slice(-weeksToShow).forEach(weekStart => {
+        const weekData: any = { name: format(weekStart, 'MMM d') };
         for (let j = 0; j < 7; j++) {
-            const day = addDays(weekStart, j);
-            const dayKey = format(day, 'yyyy-MM-dd');
+            const dayInWeek = addDays(weekStart, j);
+            const dayKey = format(dayInWeek, 'yyyy-MM-dd');
             const dataPoint = heatmapData.find(p => p.date === dayKey);
-            weekData[dayLabels[j]] = dataPoint ? dataPoint.level : 0; // Store level for color
-            weekData[`${dayLabels[j]}_date`] = dayKey; // Store date for tooltip
-            weekData[`${dayLabels[j]}_count`] = dataPoint ? dataPoint.count : 0; // Store count for tooltip
+
+            weekData[dayLabels[j]] = dataPoint ? dataPoint.level : (isSameDay(dayInWeek, today) || dayInWeek < today ? 0 : -1); // -1 for future days
+            weekData[`${dayLabels[j]}_date`] = dayKey; 
+            weekData[`${dayLabels[j]}_count`] = dataPoint ? dataPoint.count : 0;
         }
         currentData.push(weekData);
-    }
+    });
     return currentData;
   }, [heatmapData]);
 
@@ -233,15 +219,28 @@ export default function StatsDashboard() {
   const totalStudyTime = sessions.reduce((acc, session) => acc + session.duration, 0);
   const totalSessions = sessions.length;
   const averageSessionLength = totalSessions > 0 ? totalStudyTime / totalSessions : 0;
-  const pomodoroFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus').length;
+  
+  const allPomodoroFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus');
+  const completedPomodoroFocusSessions = allPomodoroFocusSessions.filter(s => s.isFullPomodoroCycle).length;
+  const pomodoroCompletionRate = allPomodoroFocusSessions.length > 0 ? (completedPomodoroFocusSessions / allPomodoroFocusSessions.length) * 100 : 0;
+
   const pomodoroBreakSessions = sessions.filter(s => s.type === 'Pomodoro Break').length;
   const stopwatchSessions = sessions.filter(s => s.type === 'Stopwatch').length;
+
+  const totalStudyTimeThisMonth = useMemo(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    return sessions
+      .filter(s => new Date(s.startTime) >= monthStart && new Date(s.startTime) <= monthEnd)
+      .reduce((acc, s) => acc + s.duration, 0);
+  }, [sessions]);
 
 
   const chartConfig = {
     totalTime: { label: "Study Time (min)", color: "hsl(var(--primary))" },
-    pomodoros: { label: "Pomodoros", color: "hsl(var(--accent))" },
-  } satisfies Record<string, { label: string; color: string }>;
+    pomodoros: { label: "Completed Pomodoros", color: "hsl(var(--accent))" },
+  } satisfies ChartConfig;
 
   const StatCard = ({ title, value, icon, description, children }: { title: string, value?: string, icon?: React.ReactNode, description?: string, children?: React.ReactNode }) => (
     <Card className="shadow-md hover:shadow-lg transition-shadow">
@@ -275,11 +274,12 @@ export default function StatsDashboard() {
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatCard title="Total Study Time" value={formatTime(totalStudyTime, true)} icon={<Sigma className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Total Study Time (This Month)" value={formatTime(totalStudyTimeThisMonth, true)} icon={<CalendarDays className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Total Sessions" value={totalSessions.toString()} icon={<ListChecks className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Avg. Session Length" value={formatTime(averageSessionLength)} icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Pomodoro Focus" value={pomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} description="Completed focus sessions" />
-            <StatCard title="Pomodoro Breaks" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} description="Completed break sessions" />
-            <StatCard title="Stopwatch Sessions" value={stopwatchSessions.toString()} icon={<Timer className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Completed Pomodoros" value={completedPomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} description={`${pomodoroCompletionRate.toFixed(1)}% completion rate`} />
+            <StatCard title="Pomodoro Breaks Taken" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Stopwatch Sessions" value={stopwatchSessions.toString()} icon={<TimerIcon className="h-5 w-5 text-muted-foreground" />} />
           </div>
 
           <Card className="shadow-md">
@@ -304,36 +304,51 @@ export default function StatsDashboard() {
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Study Activity Heatmap (Last ~3 Months)</CardTitle>
-              <CardDescription>Darker cells indicate more study time on that day.</CardDescription>
+              <CardDescription>Darker cells indicate more study time on that day. Hover for details.</CardDescription>
             </CardHeader>
             <CardContent className="overflow-x-auto">
-                <div style={{ width: '100%', height: 200 }}> {/* Container for responsiveness */}
+                <div style={{ width: '100%', height: 200 }}> 
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={calendarHeatmapData} layout="vertical" barCategoryGap={1} barGap={1} margin={{ top: 20, right: 0, left: 40, bottom: 0 }}>
+                        <BarChart data={calendarHeatmapData} layout="vertical" barCategoryGap={1} barGap={2} margin={{ top: 5, right: 0, left: 40, bottom: 0 }}>
                             <XAxis type="number" hide />
                             <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} width={40} fontSize={10}/>
                             <ChartTooltip 
-                                contentStyle={{ display: 'none' }} // Use custom cell tooltip
-                                cursor={false}
+                                cursor={false} 
+                                wrapperStyle={{ display: 'none' }} // Hide default Recharts tooltip
                             />
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayLabel, index) => (
-                                <Bar key={dayLabel} dataKey={dayLabel} fill="#8884d8" radius={2} stackId="a">
-                                     {calendarHeatmapData.map((entry, entryIndex) => (
-                                        <Cell 
-                                            key={`cell-${entryIndex}-${index}`} 
-                                            fill={
-                                                entry[dayLabel] === 0 ? 'hsl(var(--muted) / 0.5)' : // No study
-                                                entry[dayLabel] === 1 ? 'hsl(var(--primary) / 0.2)' :
-                                                entry[dayLabel] === 2 ? 'hsl(var(--primary) / 0.4)' :
-                                                entry[dayLabel] === 3 ? 'hsl(var(--primary) / 0.6)' :
-                                                entry[dayLabel] === 4 ? 'hsl(var(--primary) / 0.8)' :
-                                                'hsl(var(--primary))' // Max study
-                                            }
-                                            radius={3}
-                                            data-date={entry[`${dayLabel}_date`]}
-                                            data-count={entry[`${dayLabel}_count`]}
-                                        />
-                                    ))}
+                                <Bar key={dayLabel} dataKey={dayLabel} fill="#8884d8" radius={2} stackId="a" barSize={18}>
+                                     {calendarHeatmapData.map((entry, entryIndex) => {
+                                        const dateForCell = entry[`${dayLabel}_date`] as string;
+                                        const countForCell = entry[`${dayLabel}_count`] as number;
+                                        const levelForCell = entry[dayLabel] as number;
+                                        
+                                        let cellFill = 'hsl(var(--muted) / 0.3)'; // Default for future/no data
+                                        if (levelForCell === 0) cellFill = 'hsl(var(--muted) / 0.6)'; // No study
+                                        else if (levelForCell === 1) cellFill = 'hsl(var(--primary) / 0.2)';
+                                        else if (levelForCell === 2) cellFill = 'hsl(var(--primary) / 0.4)';
+                                        else if (levelForCell === 3) cellFill = 'hsl(var(--primary) / 0.6)';
+                                        else if (levelForCell === 4) cellFill = 'hsl(var(--primary) / 0.8)';
+                                        else if (levelForCell === 5) cellFill = 'hsl(var(--primary))';
+
+                                        if (levelForCell < 0) return null; // Skip rendering for future dates explicitly marked
+
+                                        return (
+                                            <Cell key={`cell-${entryIndex}-${index}`} fill={cellFill} radius={3}>
+                                              <TooltipProvider delayDuration={100}>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <rect width="100%" height="100%" fill="transparent" />
+                                                  </TooltipTrigger>
+                                                  <ShadTooltipContent>
+                                                    <p>{format(new Date(dateForCell + 'T00:00:00Z'), 'MMM d, yyyy')}</p>
+                                                    <p>Study Time: {formatTime(countForCell * 60)}</p>
+                                                  </ShadTooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            </Cell>
+                                        );
+                                    })}
                                 </Bar>
                             ))}
                         </BarChart>
@@ -341,7 +356,7 @@ export default function StatsDashboard() {
                 </div>
                 <div className="flex justify-end items-center space-x-2 text-xs mt-2">
                     <span>Less</span>
-                    <div className="w-3 h-3 rounded-sm bg-muted/50 border"></div>
+                    <div className="w-3 h-3 rounded-sm bg-muted/60 border"></div>
                     <div className="w-3 h-3 rounded-sm" style={{backgroundColor: 'hsl(var(--primary) / 0.2)'}}></div>
                     <div className="w-3 h-3 rounded-sm" style={{backgroundColor: 'hsl(var(--primary) / 0.6)'}}></div>
                     <div className="w-3 h-3 rounded-sm" style={{backgroundColor: 'hsl(var(--primary))'}}></div>
@@ -362,18 +377,18 @@ export default function StatsDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dailyData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                       <YAxis yAxisId="left" orientation="left" stroke={`hsl(${getComputedStyle(document.documentElement).getPropertyValue('--chart-1').trim()})`} unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} domain={[0, 'dataMax + 10']} />
-                       <YAxis yAxisId="right" orientation="right" stroke={`hsl(${getComputedStyle(document.documentElement).getPropertyValue('--chart-2').trim()})`} tickFormatter={(value) => Math.round(value).toString()} fontSize={12} domain={[0, 'dataMax + 1']} />
+                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} domain={[0, 'dataMax + 10']} />
+                       <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => Math.round(value).toString()} fontSize={12} domain={[0, 'dataMax + 1']} />
                        <ChartTooltip 
                         cursor={false}
                         content={<ChartTooltipContent 
                                   formatter={(value, name, props) => {
                                     if (name === 'Study Time (min)') return `${formatTime(props.payload.totalTime)} study`;
-                                    if (name === 'Pomodoros') return `${props.payload.pomodoros} sessions`;
+                                    if (name === 'Completed Pomodoros') return `${props.payload.pomodoros} sessions`;
                                     return `${value}`;
                                   }}
                                   labelFormatter={(label, payload) => {
-                                    if (payload && payload.length > 0) {
+                                    if (payload && payload.length > 0 && payload[0].payload.originalDate) {
                                        return `Date: ${format(payload[0].payload.originalDate, 'MMM d, yyyy')}`;
                                     }
                                     return label;
@@ -383,7 +398,7 @@ export default function StatsDashboard() {
                         />
                       <Legend />
                       <Bar yAxisId="left" dataKey="totalTime" fill="var(--color-totalTime)" radius={4} name="Study Time (min)" />
-                      <Bar yAxisId="right" dataKey="pomodoros" fill="var(--color-pomodoros)" radius={4} name="Pomodoros"/>
+                      <Bar yAxisId="right" dataKey="pomodoros" fill="var(--color-pomodoros)" radius={4} name="Completed Pomodoros"/>
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>

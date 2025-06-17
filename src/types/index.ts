@@ -6,7 +6,8 @@ export interface StudySession {
   endTime: number;   // Unix timestamp in milliseconds
   duration: number;  // in seconds
   description?: string; // User-added description
-  tags?: string[]; // New: Tags for sessions
+  tags?: string[];
+  isFullPomodoroCycle?: boolean; // True if a Pomodoro focus session completed its full intended duration
 }
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
@@ -22,8 +23,9 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastStudyDate: string | null; // YYYY-MM-DD format
-  wakeUpTime?: { hour: number; period: 'AM' | 'PM' }; // New
-  sleepTime?: { hour: number; period: 'AM' | 'PM' };  // New
+  wakeUpTime?: { hour: number; period: 'AM' | 'PM' };
+  sleepTime?: { hour: number; period: 'AM' | 'PM' };
+  unlockedAchievementIds?: string[]; // New: To store IDs of unlocked achievements
 }
 
 export interface Skin {
@@ -55,7 +57,7 @@ export interface NotepadTask {
   text: string;
   completed: boolean;
   createdAt: number;
-  tags?: string[]; // New
+  tags?: string[];
 }
 
 export interface NotepadNote {
@@ -64,7 +66,7 @@ export interface NotepadNote {
   content: string;
   lastModified: number;
   createdAt: number;
-  tags?: string[]; // New
+  tags?: string[];
 }
 
 export interface NotepadGoal {
@@ -73,7 +75,7 @@ export interface NotepadGoal {
   dueDate?: string; // YYYY-MM-DD
   completed: boolean;
   createdAt: number;
-  tags?: string[]; // New
+  tags?: string[];
 }
 
 export interface NotepadLink {
@@ -81,7 +83,7 @@ export interface NotepadLink {
   url: string;
   description: string;
   createdAt: number;
-  tags?: string[]; // New
+  tags?: string[];
 }
 
 export interface NotepadData {
@@ -104,4 +106,14 @@ export interface DailyChallenge {
   type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak';
   resetsDaily: boolean; 
   lastProgressUpdate?: number; 
+}
+
+// New: Achievement type
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  // icon?: React.ComponentType<{ className?: string }>; // Example if using Lucide icons
+  iconName?: string; // Store icon name, resolve to component in UI
+  criteria: (profile: UserProfile, sessions: StudySession[], challenges: DailyChallenge[]) => boolean;
 }

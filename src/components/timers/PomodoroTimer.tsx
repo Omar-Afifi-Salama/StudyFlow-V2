@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
-import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS } from '@/contexts/SessionContext';
+import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { usePomodoro, type PomodoroMode } from '@/hooks/use-pomodoro';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -29,49 +29,81 @@ export default function PomodoroTimer() {
     setSettings,
     sessionStartTimeRef,
     currentSessionElapsedTime,
+    currentSessionTotalDuration
   } = usePomodoro();
   
-  const { addSession, userProfile } = useSessions();
+  const { addSession, userProfile, checkAndUnlockAchievements } = useSessions();
   const { toast } = useToast();
 
   const [localSettings, setLocalSettings] = useState(settings);
+
+  const modeTextMap: Record<PomodoroMode, string> = {
+    work: "Focus Time",
+    shortBreak: "Short Break",
+    longBreak: "Long Break"
+  };
+
+  const showNotification = useCallback((title: string, body: string) => {
+    if (!("Notification" in window)) {
+      console.log("This browser does not support desktop notification");
+    } else if (Notification.permission === "granted") {
+      new Notification(title, { body });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification(title, { body });
+        }
+      });
+    }
+  }, []);
+
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
 
   useEffect(() => {
-    if (timeLeft === 0 && isRunning) {
+    if (timeLeft === 0 && isRunning) { // Timer naturally completed
         pauseTimer(); 
         
         const sessionType = mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-        const duration = (mode === 'work' ? settings.workDuration : mode === 'shortBreak' ? settings.shortBreakDuration : settings.longBreakDuration) * 60;
+        const duration = currentSessionTotalDuration; // Use the actual duration for the mode
         
         addSession({
             type: sessionType,
             startTime: sessionStartTimeRef.current,
             durationInSeconds: duration,
+            isFullPomodoroCycle: mode === 'work', // Mark as full cycle if work mode completed
         });
+        checkAndUnlockAchievements();
 
-        toast({
-            title: `${mode.charAt(0).toUpperCase() + mode.slice(1)} ended!`,
-            description: mode === 'work' ? "Time for a break!" : "Time to get back to work!",
-        });
+        const notificationTitle = `${modeTextMap[mode]} Ended!`;
+        const notificationBody = mode === 'work' ? "Time for a break!" : "Time to get back to work!";
         
-        switchMode(); 
+        toast({
+            title: notificationTitle,
+            description: notificationBody,
+        });
+        showNotification(notificationTitle, notificationBody);
+        
+        switchMode(); // Automatically switch to the next mode
     }
-  }, [timeLeft, isRunning, mode, settings, pauseTimer, addSession, switchMode, toast, sessionStartTimeRef]);
+  }, [timeLeft, isRunning, mode, settings, pauseTimer, addSession, switchMode, toast, sessionStartTimeRef, currentSessionTotalDuration, modeTextMap, showNotification, checkAndUnlockAchievements]);
 
 
-  const handleLogSession = () => {
+  const handleLogSession = () => { // Manually logging progress
     if (currentSessionElapsedTime > 0) {
       const sessionType = mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
       addSession({
         type: sessionType,
         startTime: sessionStartTimeRef.current,
         durationInSeconds: currentSessionElapsedTime,
+        isFullPomodoroCycle: false, // Manually logged sessions are not considered full cycles for this purpose
       });
+      checkAndUnlockAchievements();
       resetTimer(); 
+      if(isRunning) pauseTimer();
+      toast({ title: "Progress Logged", description: `Your current ${modeTextMap[mode]} progress has been logged.`});
     }
   };
 
@@ -80,15 +112,10 @@ export default function PomodoroTimer() {
         toast({ title: "Invalid Settings", description: "Durations and cycles must be at least 1.", variant: "destructive" });
         return;
     }
-    setSettings(localSettings);
+    setSettings(localSettings); // This will trigger the useEffect in usePomodoro to update timeLeft
     toast({ title: "Settings Saved", description: "Pomodoro timer updated."});
   };
 
-  const modeTextMap: Record<PomodoroMode, string> = {
-    work: "Focus Time",
-    shortBreak: "Short Break",
-    longBreak: "Long Break"
-  };
 
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
@@ -100,8 +127,8 @@ export default function PomodoroTimer() {
   // Hotkeys
   useHotkeys('p', () => { if (isRunning) pauseTimer(); else startTimer(); }, { preventDefault: true }, [isRunning, startTimer, pauseTimer]);
   useHotkeys('r', () => { resetTimer(); if(isRunning) pauseTimer(); }, { preventDefault: true }, [resetTimer, isRunning, pauseTimer]);
-  useHotkeys('s', () => switchMode(), { preventDefault: true }, [switchMode]); // 's' for skip
-  useHotkeys('l', handleLogSession, { preventDefault: true, enabled: currentSessionElapsedTime > 0 && !isRunning }, [handleLogSession, currentSessionElapsedTime, isRunning]);
+  useHotkeys('s', () => switchMode(), { preventDefault: true }, [switchMode]); 
+  useHotkeys('l', handleLogSession, { preventDefault: true, enabled: currentSessionElapsedTime > 0 }, [handleLogSession, currentSessionElapsedTime]);
 
 
   return (
@@ -117,7 +144,7 @@ export default function PomodoroTimer() {
                             <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Focus: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS}/5min</p>
+                            <p>Focus: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS.toLocaleString()}/5min</p>
                             <p>Breaks do not grant rewards.</p>
                             {userProfile.currentStreak > 0 && <p className="text-green-500">Current Streak Bonus: +{streakBonusPercent}% XP/Cash</p>}
                         </TooltipContent>
@@ -208,7 +235,7 @@ export default function PomodoroTimer() {
         <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0 || isRunning} size="lg" variant="secondary" aria-label="Log current pomodoro progress">
+                    <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0} size="lg" variant="secondary" aria-label="Log current pomodoro progress">
                         <ListPlus className="mr-2 h-5 w-5" /> Log Progress
                     </Button>
                 </TooltipTrigger>

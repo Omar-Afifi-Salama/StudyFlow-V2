@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useCallback, useRef } from 'react';
 
@@ -43,7 +44,7 @@ export function usePomodoro(initialSettings?: Partial<PomodoroSettings>) {
 
   useEffect(() => {
     updateTimerForMode(mode, cyclesCompleted, settings);
-  }, [settings, updateTimerForMode]);
+  }, [settings, updateTimerForMode, mode, cyclesCompleted]); // Added mode and cyclesCompleted as per original, ensure consistency
 
 
   const startTimer = useCallback(() => {
@@ -53,8 +54,7 @@ export function usePomodoro(initialSettings?: Partial<PomodoroSettings>) {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            // Time's up, handle mode transition
-            // This logic will be enhanced in the component or via a callback
+            // Time's up, interval will be cleared by the component watching timeLeft
             return 0; 
           }
           return prevTime - 1;
@@ -85,15 +85,14 @@ export function usePomodoro(initialSettings?: Partial<PomodoroSettings>) {
 
     if (nextMode) { // Manual switch
         newMode = nextMode;
-        if (newMode === 'work' && mode !== 'work') {
-             // if switching to work from break, don't increment cycle
-        } else if (mode === 'work' && newMode !== 'work') {
-            newCyclesCompleted = cyclesCompleted + 1;
+        // If switching to work from a break, or from work to work (e.g. reset and pick work again), reset/don't increment cycle logic
+        // If switching from work to a break, it means a work cycle was completed (or skipped to break)
+        if (mode === 'work' && (newMode === 'shortBreak' || newMode === 'longBreak')) {
+             newCyclesCompleted = cyclesCompleted + 1;
         }
-
-    } else { // Automatic switch
+    } else { // Automatic switch (timer ran out)
         if (mode === 'work') {
-            newCyclesCompleted = cyclesCompleted + 1;
+            newCyclesCompleted = cyclesCompleted + 1; // Increment cycle when work finishes
             if (newCyclesCompleted % settings.cyclesPerLongBreak === 0) {
             newMode = 'longBreak';
             } else {
@@ -149,4 +148,3 @@ export function usePomodoro(initialSettings?: Partial<PomodoroSettings>) {
     currentSessionTotalDuration
   };
 }
-
