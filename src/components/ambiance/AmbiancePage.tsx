@@ -5,9 +5,11 @@ import type { AmbientSound } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, SunMedium, Moon } from 'lucide-react'; // Moon for white noise (calm night)
+import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, SunMedium, Moon } from 'lucide-react'; 
+import { useSessions } from '@/contexts/SessionContext';
 
-// Example sounds from archive.org. Replace with your own reliable sources.
+// Example sounds from archive.org. 
+// IMPORTANT: These URLs might change or become unavailable. Replace with your own reliable sources for production.
 const AVAILABLE_SOUNDS: AmbientSound[] = [
   { id: 'rain', name: 'Gentle Rain', filePath: 'https://archive.org/download/RainyMood/RainyMood.mp3', icon: CloudRain },
   { id: 'cafe', name: 'Busy Cafe', filePath: 'https://archive.org/download/RestaurantAmbiance/Restaurant%20Ambiance.mp3', icon: CoffeeIcon },
@@ -31,6 +33,10 @@ export default function AmbiancePage() {
       return acc;
     }, {} as Record<string, AudioPlayerState>)
   );
+  const { updateChallengeProgress } = useSessions();
+  const usageTrackerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeUsageStartTimeRef = useRef<number | null>(null);
+
 
   // Initialize Audio elements
   useEffect(() => {
@@ -38,6 +44,7 @@ export default function AmbiancePage() {
       if (!audioPlayersRef.current[sound.id]) {
         const audio = new Audio(sound.filePath);
         audio.loop = true;
+        audio.crossOrigin = "anonymous"; // Important for some external sources
         audioPlayersRef.current[sound.id] = audio;
       }
     });
@@ -46,10 +53,11 @@ export default function AmbiancePage() {
       Object.values(audioPlayersRef.current).forEach(audio => {
         if (audio) {
           audio.pause();
-          audio.src = ''; // Release resource
+          audio.src = ''; 
         }
       });
       audioPlayersRef.current = {};
+      if (usageTrackerRef.current) clearInterval(usageTrackerRef.current);
     };
   }, []);
 
@@ -70,7 +78,34 @@ export default function AmbiancePage() {
     Object.entries(playerStates).forEach(([soundId, state]) => {
       updateAudioProperties(soundId, state);
     });
-  }, [playerStates, masterVolume, isMasterMuted, updateAudioProperties]);
+
+    // Challenge progress tracking
+    const anySoundPlaying = Object.values(playerStates).some(s => s.isPlaying);
+    if (anySoundPlaying && !activeUsageStartTimeRef.current) {
+        activeUsageStartTimeRef.current = Date.now();
+    } else if (!anySoundPlaying && activeUsageStartTimeRef.current) {
+        const durationMs = Date.now() - activeUsageStartTimeRef.current;
+        updateChallengeProgress('ambianceUsage', Math.floor(durationMs / (1000 * 60))); // Convert ms to minutes
+        activeUsageStartTimeRef.current = null;
+    }
+
+    if (anySoundPlaying && !usageTrackerRef.current) {
+      usageTrackerRef.current = setInterval(() => {
+        if (activeUsageStartTimeRef.current) {
+          const durationSinceLastTickMs = Date.now() - activeUsageStartTimeRef.current;
+          // Update challenge every minute of continuous play
+          if(durationSinceLastTickMs > 0) { // only update if there's a new duration
+            updateChallengeProgress('ambianceUsage', Math.floor(durationSinceLastTickMs / (1000 * 60)));
+            activeUsageStartTimeRef.current = Date.now(); // Reset start time for next minute increment
+          }
+        }
+      }, 60000); // Check every minute
+    } else if (!anySoundPlaying && usageTrackerRef.current) {
+      clearInterval(usageTrackerRef.current);
+      usageTrackerRef.current = null;
+    }
+
+  }, [playerStates, masterVolume, isMasterMuted, updateAudioProperties, updateChallengeProgress]);
 
   const togglePlay = (soundId: string) => {
     setPlayerStates(prev => ({
@@ -106,7 +141,7 @@ export default function AmbiancePage() {
 
 
   return (
-    <Card className="shadow-lg w-full">
+    <Card className="shadow-lg w-full card-animated">
       <CardHeader>
         <div className="flex items-center space-x-3">
           <Wind className="h-8 w-8 text-primary" />
@@ -120,7 +155,7 @@ export default function AmbiancePage() {
         <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
             <h3 className="text-lg font-semibold">Master Controls</h3>
             <div className="flex items-center space-x-4">
-                <Button onClick={toggleMasterMute} variant="outline" size="icon" aria-label={isMasterMuted ? "Unmute all sounds" : "Mute all sounds"}>
+                <Button onClick={toggleMasterMute} variant="outline" size="icon" aria-label={isMasterMuted ? "Unmute all sounds" : "Mute all sounds"} className="btn-animated">
                     {isMasterMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
                 <Slider
@@ -132,7 +167,7 @@ export default function AmbiancePage() {
                     aria-label="Master volume"
                     disabled={isMasterMuted}
                 />
-                <Button onClick={stopAllSounds} variant="destructive" size="sm">Stop All</Button>
+                <Button onClick={stopAllSounds} variant="destructive" size="sm" className="btn-animated">Stop All</Button>
             </div>
         </div>
 
@@ -141,14 +176,14 @@ export default function AmbiancePage() {
             const state = playerStates[sound.id];
             const IconComponent = sound.icon;
             return (
-              <Card key={sound.id} className="shadow-md">
+              <Card key={sound.id} className="shadow-md card-animated">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                         <IconComponent className="h-6 w-6 text-primary" />
                         <CardTitle className="text-xl">{sound.name}</CardTitle>
                     </div>
-                    <Button onClick={() => togglePlay(sound.id)} variant="outline" size="icon" aria-label={state.isPlaying ? `Pause ${sound.name}` : `Play ${sound.name}`}>
+                    <Button onClick={() => togglePlay(sound.id)} variant="outline" size="icon" aria-label={state.isPlaying ? `Pause ${sound.name}` : `Play ${sound.name}`} className="btn-animated">
                       {state.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                     </Button>
                   </div>
@@ -168,10 +203,11 @@ export default function AmbiancePage() {
           })}
         </div>
          <p className="text-xs text-muted-foreground text-center">
-            Note: Sounds are linked from external URLs (e.g., archive.org). Playback depends on their availability and CORS settings.
-            You can replace these URLs with your own hosted files in <code className="bg-muted px-1 rounded-sm">public/sounds/</code> or other reliable external links.
+            Note: Sounds are linked from external URLs (e.g., archive.org). Playback depends on their availability and CORS settings. For best results, replace with your own hosted audio files in <code className="bg-muted px-1 rounded-sm">public/sounds/</code>.
         </p>
       </CardContent>
     </Card>
   );
 }
+
+```

@@ -43,7 +43,6 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Sidebar variables are not heavily used in this design but kept for ShadCN consistency */
     --sidebar-background: 212 83% 92%; 
     --sidebar-foreground: 224 71.4% 4.1%;
     --sidebar-primary: 207 82% 68%;
@@ -55,46 +54,93 @@ body {
   }
 
   .dark {
-    /* For dark mode, we can invert or use a different scheme if specified.
-       Keeping it simple for now, derived from light mode.
-       A proper dark theme would need separate color definitions.
-    */
-    --background: 224 71.4% 4.1%; /* Dark blue */
-    --foreground: 212 83% 94%; /* Light blue */
+    --background: 220 13% 10%; /* Darker, less saturated blue-gray */
+    --foreground: 210 30% 90%; /* Lighter, muted blue-gray for text */
 
-    --card: 224 71.4% 8%; 
-    --card-foreground: 212 83% 94%;
+    --card: 220 13% 15%; 
+    --card-foreground: 210 30% 90%;
 
-    --popover: 224 71.4% 8%;
-    --popover-foreground: 212 83% 94%;
+    --popover: 220 13% 12%;
+    --popover-foreground: 210 30% 90%;
 
-    --primary: 207 82% 68%; /* Calm blue #6FB5F0 - can remain same */
-    --primary-foreground: 224 71.4% 4.1%;
+    --primary: 207 70% 55%; /* Slightly desaturated primary blue for dark mode */
+    --primary-foreground: 210 30% 95%; /* Very light text on primary */
 
-    --secondary: 262 19% 35%; /* Darker muted purple */
-    --secondary-foreground: 212 83% 94%;
+    --secondary: 262 15% 45%; /* Darker, desaturated purple */
+    --secondary-foreground: 210 30% 90%;
 
-    --muted: 224 71.4% 12%;
-    --muted-foreground: 212 83% 80%;
+    --muted: 220 13% 20%;
+    --muted-foreground: 210 25% 70%;
 
-    --accent: 262 19% 55%; /* Muted purple #8475A1 - can remain same */
+    --accent: 262 25% 65%; /* Muted purple, slightly brighter for dark mode accents */
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 50%; /* Slightly less intense red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 207 30% 40%;
-    --input: 207 30% 35%;
-    --ring: 207 82% 68%;
+    --border: 220 13% 25%;
+    --input: 220 13% 22%;
+    --ring: 207 70% 55%;
     
-    --sidebar-background: 224 71.4% 6%;
-    --sidebar-foreground: 212 83% 94%;
-    --sidebar-primary: 207 82% 68%;
-    --sidebar-primary-foreground: 224 71.4% 4.1%;
-    --sidebar-accent: 262 19% 55%;
+    --sidebar-background: 220 13% 12%;
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 207 70% 55%;
+    --sidebar-primary-foreground: 210 30% 95%;
+    --sidebar-accent: 262 25% 65%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 207 30% 40%;
-    --sidebar-ring: 207 82% 68%;
+    --sidebar-border: 220 13% 25%;
+    --sidebar-ring: 207 70% 55%;
+
+    --chart-1: 207 70% 55%;
+    --chart-2: 262 25% 65%;
+    --chart-3: 197 30% 40%;
+    --chart-4: 43 65% 55%;
+    --chart-5: 27 75% 58%;
+  }
+
+  .sepia {
+    --background: 45 30% 90%; /* Creamy beige */
+    --foreground: 40 40% 20%; /* Dark brown */
+
+    --card: 45 30% 85%; 
+    --card-foreground: 40 40% 20%;
+
+    --popover: 45 30% 82%;
+    --popover-foreground: 40 40% 20%;
+
+    --primary: 35 65% 50%; /* Muted terracotta/rust */
+    --primary-foreground: 45 30% 95%; /* Off-white text on primary */
+
+    --secondary: 40 20% 65%; /* Desaturated olive/brown */
+    --secondary-foreground: 40 40% 20%;
+
+    --muted: 45 30% 94%;
+    --muted-foreground: 40 30% 45%;
+
+    --accent: 25 50% 60%; /* Muted orange/ochre */
+    --accent-foreground: 45 30% 95%;
+
+    --destructive: 0 50% 45%; /* Muted red-brown */
+    --destructive-foreground: 45 30% 95%;
+
+    --border: 40 30% 70%;
+    --input: 40 30% 80%;
+    --ring: 35 65% 50%;
+    
+    --sidebar-background: 45 30% 88%;
+    --sidebar-foreground: 40 40% 20%;
+    --sidebar-primary: 35 65% 50%;
+    --sidebar-primary-foreground: 45 30% 95%;
+    --sidebar-accent: 25 50% 60%;
+    --sidebar-accent-foreground: 45 30% 95%;
+    --sidebar-border: 40 30% 70%;
+    --sidebar-ring: 35 65% 50%;
+
+    --chart-1: 35 65% 50%;
+    --chart-2: 25 50% 60%;
+    --chart-3: 40 45% 35%;
+    --chart-4: 50 40% 50%;
+    --chart-5: 20 40% 55%;
   }
 }
 
@@ -105,5 +151,24 @@ body {
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Subtle animations for interactive elements */
+@layer components {
+  .btn-animated {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  .btn-animated:hover {
+    @apply brightness-110;
+  }
+  .btn-animated:active {
+    @apply scale-95;
+  }
+  .card-animated {
+     @apply transition-all duration-300 ease-in-out;
+  }
+  .card-animated:hover {
+    @apply shadow-xl transform -translate-y-1;
   }
 }

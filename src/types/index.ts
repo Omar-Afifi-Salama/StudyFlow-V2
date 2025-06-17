@@ -40,7 +40,8 @@ export interface Skin {
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
-  isTheme?: boolean;
+  isTheme?: boolean; // Indicates if this skin primarily changes CSS theme variables
+  themeClass?: 'dark' | 'sepia'; // Optional class to apply to <html> if isTheme is true
 }
 
 export interface CapitalistOffer {
@@ -120,7 +121,7 @@ export interface DailyChallenge {
   currentValue: number;
   isCompleted: boolean; 
   rewardClaimed: boolean; 
-  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak';
+  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry';
   resetsDaily: boolean; 
   lastProgressUpdate?: number; 
 }
@@ -143,6 +144,7 @@ export interface Achievement {
     challenges: DailyChallenge[],
     investmentStats: AchievementCriteriaInvestmentPayload 
   ) => boolean;
+  category?: 'General' | 'Study Time' | 'Pomodoro' | 'Progression' | 'Collection' | 'Streaks & Challenges' | 'Capitalist' | 'Notepad & Revision';
 }
 
 // For Ambiance Mixer
@@ -153,5 +155,5 @@ export interface AmbientSound {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-
     
+```

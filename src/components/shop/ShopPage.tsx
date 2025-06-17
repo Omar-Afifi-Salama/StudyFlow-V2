@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSessions, PREDEFINED_SKINS } from '@/contexts/SessionContext';
@@ -6,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Gem, DollarSign } from 'lucide-react';
 
 export default function ShopPage() {
-  const { userProfile, getSkinById, buySkin, equipSkin, isSkinOwned } = useSessions();
+  const { userProfile, buySkin, equipSkin, isSkinOwned } = useSessions();
 
   return (
     <div className="space-y-6">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg card-animated">
         <CardHeader>
           <div className="flex items-center space-x-3">
             <Gem className="h-8 w-8 text-primary" />
@@ -47,3 +48,5 @@ export default function ShopPage() {
     </div>
   );
 }
+
+```

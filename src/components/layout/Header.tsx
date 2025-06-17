@@ -2,32 +2,35 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Keyboard, Award, Sparkles, Wind } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, LEVEL_THRESHOLDS, TITLES } from '@/contexts/SessionContext'; 
+import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS } from '@/contexts/SessionContext'; 
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile } = useSessions();
+  const { userProfile, equipSkin } = useSessions();
 
   const navItems = [
-    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5 mr-2" />, hotkey: 't' },
-    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5 mr-2" />, hotkey: 's' },
-    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5 mr-2" />, hotkey: 'm' }, // m for music/mood
-    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5 mr-2" />, hotkey: 'x' },
-    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" />, hotkey: 'c' },
-    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" />, hotkey: 'n' },
-    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" />, hotkey: 'h' },
-    { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5 mr-2" />, hotkey: 'v' },
-    { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" />, hotkey: 'a' },
+    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't' },
+    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's' },
+    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm' }, 
+    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd' },
+    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x' },
+    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
+    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n' },
+    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h' },
+    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v' }, // Changed icon for achievements
+    { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a' },
   ];
 
   navItems.forEach(item => {
@@ -47,43 +50,75 @@ export default function Header() {
   const xpProgressPercent = xpForNextLevelRaw > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelRaw) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
 
+  const handleThemeChange = (skinId: string) => {
+    equipSkin(skinId);
+  };
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 text-primary">
-            <path d="M12 2C6.48 2 2 6.48 2 2s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-            <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+      <div className="container flex h-16 max-w-screen-2xl items-center px-4 md:px-6">
+        <Link href="/" className="mr-4 flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-primary transition-transform duration-300 hover:rotate-12">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
           </svg>
-          <span className="font-bold text-xl font-headline">StudyFlow</span>
+          <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
         </Link>
-        <nav className="flex flex-1 items-center space-x-1 overflow-x-auto">
-          {navItems.map((item) => (
-            <TooltipProvider key={item.href} delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    asChild
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary shrink-0",
-                      pathname === item.href ? "text-primary" : "text-foreground/60"
-                    )}
-                  >
-                    <Link href={item.href} className="flex items-center">
-                      {item.icon}
-                      <span className="hidden sm:inline-block">{item.label}</span>
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </nav>
+        
+        <div className="flex-1 min-w-0"> {/* Added min-w-0 to allow shrinking */}
+          <nav className="flex items-center space-x-1 overflow-x-auto pb-2 -mb-2 scrollbar-hide"> {/* scrollbar-hide for Tailwind if plugin exists, or custom CSS */}
+            {navItems.map((item) => (
+              <TooltipProvider key={item.href} delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      asChild
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated",
+                        pathname === item.href ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground"
+                      )}
+                    >
+                      <Link href={item.href} className="flex items-center">
+                        {item.icon}
+                        <span className="hidden md:inline-block ml-2">{item.label}</span>
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </nav>
+        </div>
+
         <div className="flex items-center space-x-2 md:space-x-3 ml-auto pl-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="btn-animated">
+                {userProfile.equippedSkinId === 'dark_mode' ? <Moon className="h-5 w-5"/> : userProfile.equippedSkinId === 'sepia_tone' ? <Palette className="h-5 w-5" /> : <Sun className="h-5 w-5"/>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2">
+              <div className="text-sm font-medium mb-2 px-2">Themes</div>
+              {PREDEFINED_SKINS.filter(s => s.isTheme || s.id === 'classic').map(skin => (
+                 <Button 
+                    key={skin.id} 
+                    variant={userProfile.equippedSkinId === skin.id ? "secondary" : "ghost"} 
+                    size="sm"
+                    className="w-full justify-start mb-1 btn-animated"
+                    onClick={() => handleThemeChange(skin.id)}
+                  >
+                   {skin.id === 'dark_mode' ? <Moon className="mr-2 h-4 w-4"/> : skin.id === 'sepia_tone' ? <Palette className="mr-2 h-4 w-4"/> : <Sun className="mr-2 h-4 w-4"/>}
+                   {skin.name}
+                 </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -116,9 +151,10 @@ export default function Header() {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Current Streak: {userProfile.currentStreak} days</p>
-                <p>Longest Streak: {userProfile.longestStreak} days</p>
-                {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * 0.01, 0.20) * 100).toFixed(0)}% XP/Cash</p>}
+                <p>Current Study Streak: {userProfile.currentStreak} days</p>
+                <p>Longest Study Streak: {userProfile.longestStreak} days</p>
+                {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0)}% XP/Cash</p>}
+                 <p className="mt-1">Daily Login Streak: {userProfile.dailyLoginStreak} days</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -127,24 +163,34 @@ export default function Header() {
             <DollarSign className="h-4 w-4 text-green-500" />
             <span>{userProfile.cash.toLocaleString()}</span>
           </div>
-
-           {userTitle && (
-             <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="hidden md:flex items-center space-x-1 text-xs bg-accent/20 px-2 py-1 rounded-md cursor-default">
-                            <ShieldCheck className="h-4 w-4 text-accent" />
-                            <span className="text-accent font-medium">{userTitle}</span>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Your current title: {userTitle}</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-           )}
+            
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" className="hidden md:flex items-center space-x-1 text-xs bg-accent/20 px-2 py-1 rounded-md cursor-pointer btn-animated">
+                        <ShieldCheck className="h-4 w-4 text-accent" />
+                        <span className="text-accent font-medium">{userTitle}</span>
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0">
+                    <ScrollArea className="h-[200px] p-2">
+                        <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1">All Titles</div>
+                        {TITLES.map((title, index) => {
+                            const levelReq = index + 1;
+                            const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
+                            return (
+                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'bg-muted/50'}`}>
+                                    <p>{title}</p>
+                                    <p className="text-muted-foreground text-[0.7rem]">Requires: Level {levelReq} (Approx. {xpReq.toLocaleString()} XP)</p>
+                                </div>
+                            );
+                        })}
+                    </ScrollArea>
+                </PopoverContent>
+            </Popover>
         </div>
       </div>
     </header>
   );
 }
+
+```

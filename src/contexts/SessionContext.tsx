@@ -4,7 +4,7 @@
 import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, AchievementCriteriaInvestmentPayload } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO } from 'date-fns';
 
 
@@ -18,27 +18,28 @@ export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max cash from streak po
 
 export const LEVEL_THRESHOLDS = [ 
   0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, 4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300, 
-  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, 
-  43900, 47100, 50400, 53800, 57300, 60900, 64600, 68400, 72300, 76300, 
-  80400, 84600, 88900, 93300, 97800, 102400, 107100, 111900, 116800, 121800, 
+  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, // Levels 20-30
+  43900, 47100, 50400, 53800, 57300, 60900, 64600, 68400, 72300, 76300, // Levels 31-40
+  80400, 84600, 88900, 93300, 97800, 102400, 107100, 111900, 116800, 121800, // Levels 41-50
 ];
 
 export const TITLES = [
-  "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", 
-  "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", 
-  "Enlightened Savant", "Venerable Sage", "Zenith Guru", "Ascendant Master", "Study God", 
-  "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", 
-  "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", 
-  "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", 
-  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", "The Oracle",
-  "Architect of Knowledge", "Sage of Ages", "Keeper of Lore", "Master of Disciplines", "The Illuminated",
-  "Quantum Thinker", "Philosopher King/Queen", "Cosmic Voyager", "Nexus of Intellect", "Apex Scholar"
+  "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", // 1-10
+  "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", // 11-15
+  "Enlightened Savant", "Venerable Sage", "Zenith Guru", "Ascendant Master", "Study God", // 16-20
+  "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", // 21-25
+  "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", // 26-30
+  "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", // 31-35
+  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", "The Oracle", // 36-40
+  "Architect of Knowledge", "Sage of Ages", "Keeper of Lore", "Master of Disciplines", "The Illuminated", // 41-45
+  "Quantum Thinker", "Philosopher King/Queen", "Cosmic Voyager", "Nexus of Intellect", "Apex Scholar" // 46-50
 ];
 
 
 export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/6FB5F0/FFFFFF.png', dataAiHint: 'blue gradient' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/1A202C/A0AEC0.png', dataAiHint: 'dark theme', isTheme: true },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/1A202C/A0AEC0.png', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/D2B48C/4A3B31.png', dataAiHint: 'sepia vintage', isTheme: true, themeClass: 'sepia' },
   { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/300x200/2F4F4F/90EE90.png', dataAiHint: 'forest pattern' },
   { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/300x200/FF8C00/FFD700.png', dataAiHint: 'sunset gradient' },
   { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/300x200/483D8B/E6E6FA.png', dataAiHint: 'galaxy stars' },
@@ -52,10 +53,10 @@ export const PREDEFINED_SKINS: Skin[] = [
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0,
-  cash: 50000,
+  cash: 1000, // Reduced starting cash
   level: 1,
   title: TITLES[0],
-  ownedSkinIds: ['classic', 'dark_mode'], 
+  ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], 
   equippedSkinId: 'classic',
   completedChallengeIds: [],
   currentStreak: 0,
@@ -78,49 +79,67 @@ const DEFAULT_NOTEPAD_DATA: NotepadData = {
 };
 
 const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
-    { id: 'study60', title: 'Focused Learner', description: 'Study for a total of 60 minutes today.', xpReward: 100, cashReward: 1000, targetValue: 60, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
-    { id: 'pomodoro2', title: 'Pomodoro Power', description: 'Complete 2 Pomodoro focus cycles.', xpReward: 75, cashReward: 500, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
-    { id: 'tasks3', title: 'Task Master', description: 'Complete 3 tasks from your checklist.', xpReward: 50, cashReward: 500, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
+    { id: 'study30', title: 'Quick Learner', description: 'Study for a total of 30 minutes today.', xpReward: 50, cashReward: 500, targetValue: 30, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
+    { id: 'study90', title: 'Deep Dive', description: 'Study for a total of 90 minutes today.', xpReward: 150, cashReward: 1500, targetValue: 90, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
+    { id: 'pomodoro1', title: 'Pomodoro Warm-up', description: 'Complete 1 Pomodoro focus cycle.', xpReward: 40, cashReward: 300, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
+    { id: 'pomodoro3', title: 'Pomodoro Pro', description: 'Complete 3 Pomodoro focus cycles.', xpReward: 100, cashReward: 800, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
+    { id: 'tasks2', title: 'Task Ticker', description: 'Complete 2 tasks from your checklist.', xpReward: 30, cashReward: 300, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
+    { id: 'ambiance15', title: 'Sound Scaper', description: 'Use the Ambiance Mixer for 15 minutes.', xpReward: 25, cashReward: 200, targetValue: 15, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
+    { id: 'notepadNote1', title: 'Note Taker', description: 'Create one new note in your notepad.', xpReward: 20, cashReward: 150, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true },
     { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
 ];
 
+// Achievement Categories: 'General', 'Study Time', 'Pomodoro', 'Progression', 'Collection', 'Streaks & Challenges', 'Capitalist', 'Notepad & Revision'
 export const ALL_ACHIEVEMENTS: Achievement[] = [
-  // Tier 1: Early Game
-  { id: 'firstSteps', name: 'First Steps', description: 'Log your first study session.', iconName: 'BookOpen', cashReward: 250, criteria: (p, s) => s.length >= 1 },
-  { id: 'hourOfPower', name: 'Hour of Power', description: 'Study for a total of 1 hour.', iconName: 'Clock', cashReward: 500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600 },
-  { id: 'pomodoroStarter', name: 'Pomodoro Starter', description: 'Complete 5 full Pomodoro focus cycles.', iconName: 'Timer', cashReward: 750, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 5 },
-  { id: 'levelUpNovice', name: 'Level 5 Reached', description: 'Reach Level 5: Adept.', iconName: 'Award', cashReward: 1000, criteria: (p) => p.level >= 5 },
-  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode').length >= 1 },
-  { id: 'streakStarter', name: 'Streak Starter', description: 'Achieve a 3-day study streak.', iconName: 'Zap', cashReward: 1000, criteria: (p) => p.currentStreak >= 3 },
-  { id: 'challengeNewbie', name: 'Challenge Newbie', description: 'Complete 1 daily challenge.', iconName: 'CalendarCheck', cashReward: 300, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 1 },
+  // Study Time
+  { id: 'firstSteps', name: 'First Steps', description: 'Log your first study session.', iconName: 'BookOpen', cashReward: 250, criteria: (p, s) => s.length >= 1, category: 'Study Time' },
+  { id: 'hourOfPower', name: 'Hour of Power', description: 'Study for a total of 1 hour.', iconName: 'Clock', cashReward: 500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600, category: 'Study Time' },
+  { id: 'dedicatedLearner', name: 'Dedicated Learner', description: 'Study for a total of 10 hours.', iconName: 'BarChart', cashReward: 2500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 36000, category: 'Study Time' },
+  { id: 'studyVeteran', name: 'Study Veteran', description: 'Study for a total of 50 hours.', iconName: 'Sigma', cashReward: 10000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 180000, category: 'Study Time' },
+  { id: 'hundredHourHero', name: 'Hundred Hour Hero', description: 'Study for a total of 100 hours.', iconName: 'Trophy', cashReward: 25000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 360000, category: 'Study Time' },
+  { id: 'timeLord', name: 'Time Lord', description: 'Study for a total of 500 hours.', iconName: 'Sun', cashReward: 100000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 1800000, category: 'Study Time' },
+
+  // Pomodoro
+  { id: 'pomodoroStarter', name: 'Pomodoro Starter', description: 'Complete 5 full Pomodoro focus cycles.', iconName: 'Timer', cashReward: 750, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 5, category: 'Pomodoro' },
+  { id: 'pomodoroPro', name: 'Pomodoro Pro', description: 'Complete 25 full Pomodoro focus cycles.', iconName: 'Coffee', cashReward: 3000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 25, category: 'Pomodoro' },
+  { id: 'pomodoroSensei', name: 'Pomodoro Sensei', description: 'Complete 100 full Pomodoro focus cycles.', iconName: 'Activity', cashReward: 7500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 100, category: 'Pomodoro' },
+  { id: 'pomodoroGrandmaster', name: 'Pomodoro Grandmaster', description: 'Complete 250 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 15000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 250, category: 'Pomodoro' },
+  { id: 'pomodoroZenith', name: 'Pomodoro Zenith', description: 'Complete 500 full Pomodoro focus cycles.', iconName: 'Moon', cashReward: 30000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 500, category: 'Pomodoro' },
   
-  // Tier 2: Mid Game
-  { id: 'dedicatedLearner', name: 'Dedicated Learner', description: 'Study for a total of 10 hours.', iconName: 'BarChart', cashReward: 2500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 36000 },
-  { id: 'pomodoroPro', name: 'Pomodoro Pro', description: 'Complete 25 full Pomodoro focus cycles.', iconName: 'Coffee', cashReward: 3000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 25 },
-  { id: 'masterOfTheMind', name: 'Master of the Mind', description: 'Reach Level 10: Master.', iconName: 'ShieldCheck', cashReward: 5000, criteria: (p) => p.level >= 10 },
-  { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 10 daily challenges in total.', iconName: 'Gift', cashReward: 2000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 10 },
-  { id: 'capitalistInitiate', name: 'Capitalist Initiate', description: 'Make your first investment.', iconName: 'TrendingUp', cashReward: 1000, criteria: (p,s,c,inv) => inv.firstInvestmentMade },
-  { id: 'wardrobeBeginner', name: 'Wardrobe Beginner', description: 'Own 3 different skins (excluding defaults).', iconName: 'Sparkles', cashReward: 1500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode').length >= 3 },
-  { id: 'diligentRevisionist', name: 'Diligent Revisionist', description: 'Add 5 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 1000, criteria: (p) => (p.revisionConcepts?.length || 0) >= 5 },
+  // Progression
+  { id: 'levelUpNovice', name: 'Adept Learner', description: 'Reach Level 5: Adept.', iconName: 'Award', cashReward: 1000, criteria: (p) => p.level >= 5, category: 'Progression' },
+  { id: 'masterOfTheMind', name: 'Master of the Mind', description: 'Reach Level 10: Master.', iconName: 'ShieldCheck', cashReward: 5000, criteria: (p) => p.level >= 10, category: 'Progression' },
+  { id: 'levelTwentyTitan', name: 'Study God', description: 'Reach Level 20: Study God.', iconName: 'Star', cashReward: 15000, criteria: (p) => p.level >= 20, category: 'Progression' },
+  { id: 'levelThirtyLegend', name: 'Galactic Prodigy', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'Package', cashReward: 30000, criteria: (p) => p.level >= 30, category: 'Progression' },
+  { id: 'levelFiftyOracle', name: 'The Oracle', description: 'Reach Level 50: The Oracle.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 50, category: 'Progression' },
 
-  // Tier 3: Late Game
-  { id: 'studyVeteran', name: 'Study Veteran', description: 'Study for a total of 50 hours.', iconName: 'Star', cashReward: 10000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 180000 },
-  { id: 'pomodoroSensei', name: 'Pomodoro Sensei', description: 'Complete 100 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 7500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 100 },
-  { id: 'levelTwentyTitan', name: 'Level 20 Titan', description: 'Reach Level 20: Study God.', iconName: 'ShieldCheck', cashReward: 15000, criteria: (p) => p.level >= 20 },
-  { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 25 daily challenges in total.', iconName: 'Gift', cashReward: 5000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 25 },
-  { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 from Capitalist Corner.', iconName: 'DollarSign', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000 },
-  { id: 'fashionista', name: 'Fashionista', description: 'Own 5 different skins (excluding defaults).', iconName: 'Sparkles', cashReward: 4000, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode').length >= 5 },
-  { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle.', iconName: 'Brain', cashReward: 3000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage > 3).length || 0) >= 10 }, 
+  // Collection
+  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 1, category: 'Collection' },
+  { id: 'wardrobeBeginner', name: 'Wardrobe Beginner', description: 'Own 3 different paid skins.', iconName: 'Palette', cashReward: 1500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 3, category: 'Collection' },
+  { id: 'fashionista', name: 'Fashionista', description: 'Own 5 different paid skins.', iconName: 'Sparkles', cashReward: 4000, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 5, category: 'Collection' },
+  { id: 'skinCollector', name: 'Ultimate Skin Collector', description: 'Own all available skins.', iconName: 'Briefcase', cashReward: 25000, criteria: (p) => p.ownedSkinIds.length === PREDEFINED_SKINS.length, category: 'Collection' },
 
-  // Tier 4: Endgame / Prestige
-  { id: 'hundredHourHero', name: 'Hundred Hour Hero', description: 'Study for a total of 100 hours.', iconName: 'Star', cashReward: 25000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 360000 },
-  { id: 'pomodoroGrandmaster', name: 'Pomodoro Grandmaster', description: 'Complete 250 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 15000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 250 },
-  { id: 'levelThirtyLegend', name: 'Level 30 Legend', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'ShieldCheck', cashReward: 30000, criteria: (p) => p.level >= 30 },
-  { id: 'unstoppableStreaker', name: 'Unstoppable Streaker', description: 'Achieve a 30-day study streak.', iconName: 'Zap', cashReward: 20000, criteria: (p) => p.currentStreak >= 30 },
-  { id: 'tycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash.', iconName: 'DollarSign', cashReward: 50000, criteria: (p) => p.cash >= 1000000 },
-  { id: 'skinCollector', name: 'Ultimate Skin Collector', description: 'Own all available skins.', iconName: 'ShoppingCart', cashReward: 25000, criteria: (p) => p.ownedSkinIds.length === PREDEFINED_SKINS.length },
-  { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'Brain', cashReward: 10000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20 },
-  { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s,c,inv) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1 },
+  // Streaks & Challenges
+  { id: 'streakStarter', name: 'Streak Starter', description: 'Achieve a 3-day study streak.', iconName: 'Zap', cashReward: 1000, criteria: (p) => p.longestStreak >= 3, category: 'Streaks & Challenges' },
+  { id: 'weekLongWarrior', name: 'Week-Long Warrior', description: 'Achieve a 7-day study streak.', iconName: 'CalendarCheck', cashReward: 2500, criteria: (p) => p.longestStreak >= 7, category: 'Streaks & Challenges' },
+  { id: 'unstoppableStreaker', name: 'Unstoppable Streaker', description: 'Achieve a 30-day study streak.', iconName: 'Flame', cashReward: 20000, criteria: (p) => p.longestStreak >= 30, category: 'Streaks & Challenges' },
+  { id: 'challengeNewbie', name: 'Challenge Newbie', description: 'Complete 1 daily challenge.', iconName: 'TargetIcon', cashReward: 300, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 1, category: 'Streaks & Challenges' },
+  { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 10 daily challenges in total.', iconName: 'Gift', cashReward: 2000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 10, category: 'Streaks & Challenges' },
+  { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 25 daily challenges in total.', iconName: 'Edit', cashReward: 5000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 25, category: 'Streaks & Challenges' },
+
+  // Capitalist
+  { id: 'capitalistInitiate', name: 'Capitalist Initiate', description: 'Make your first investment.', iconName: 'TrendingUp', cashReward: 1000, criteria: (p,s,c,inv) => inv.firstInvestmentMade, category: 'Capitalist' },
+  { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000, category: 'Capitalist' },
+  { id: 'studyTycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash in total.', iconName: 'TrendingDown', cashReward: 50000, criteria: (p) => p.cash >= 1000000, category: 'Capitalist' }, // Note: 'TrendingDown' is an odd icon choice here, consider changing
+  
+  // Notepad & Revision
+  { id: 'diligentRevisionist', name: 'Diligent Revisionist', description: 'Add 5 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 1000, criteria: (p) => (p.revisionConcepts?.length || 0) >= 5, category: 'Notepad & Revision' },
+  { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle (stage 4+).', iconName: 'AlignLeft', cashReward: 3000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 3).length || 0) >= 10, category: 'Notepad & Revision' }, 
+  { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'Link2', cashReward: 10000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20, category: 'Notepad & Revision' },
+  { id: 'taskScheduler', name: 'Task Scheduler', description: 'Complete 20 tasks from your checklist.', iconName: 'CheckSquare', cashReward: 1500, criteria: (p,s,c,inv) => (p.notepadData?.tasks.filter(t => t.completed).length || 0) >= 20, category: 'Notepad & Revision' },
+
+  // General (Meta)
+  { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s,c,inv) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1, category: 'General' },
 ];
 
 
@@ -158,6 +177,7 @@ interface SessionContextType {
   updateTaskChallengeProgress: (completedTasksCount: number) => void;
   getUnlockedAchievements: () => Achievement[];
   checkAndUnlockAchievements: (investmentPayload?: Partial<AchievementCriteriaInvestmentPayload>) => void;
+  isLoaded: boolean; // Expose isLoaded
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -175,13 +195,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
 
 
-  const applyThemePreference = useCallback((theme?: 'light' | 'dark' | null) => {
+  const applyThemePreference = useCallback((themeClass?: 'dark' | 'sepia' | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+    root.classList.remove('dark', 'sepia'); // Remove all theme classes first
+    if (themeClass) {
+      root.classList.add(themeClass);
     }
   }, []);
   
@@ -191,38 +210,47 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (storedSessions) setSessions(JSON.parse(storedSessions));
 
       const storedProfile = localStorage.getItem('userProfile');
+      let parsedProfile = DEFAULT_USER_PROFILE;
       if (storedProfile) {
-        let parsedProfile = JSON.parse(storedProfile) as UserProfile;
+        const tempProfile = JSON.parse(storedProfile) as UserProfile;
+        // Ensure all fields from DEFAULT_USER_PROFILE are present, especially new ones or arrays
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
-            ...parsedProfile,
-            ownedSkinIds: Array.isArray(parsedProfile.ownedSkinIds) ? parsedProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
-            completedChallengeIds: Array.isArray(parsedProfile.completedChallengeIds) ? parsedProfile.completedChallengeIds : [],
-            unlockedAchievementIds: Array.isArray(parsedProfile.unlockedAchievementIds) ? parsedProfile.unlockedAchievementIds : [],
-            revisionConcepts: Array.isArray(parsedProfile.revisionConcepts) ? parsedProfile.revisionConcepts : [],
-            wakeUpTime: parsedProfile.wakeUpTime || DEFAULT_USER_PROFILE.wakeUpTime,
-            sleepTime: parsedProfile.sleepTime || DEFAULT_USER_PROFILE.sleepTime,
+            ...tempProfile,
+            xp: tempProfile.xp || DEFAULT_USER_PROFILE.xp,
+            cash: tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' ? DEFAULT_USER_PROFILE.cash : tempProfile.cash, // Handle potential undefined cash from old storage
+            level: tempProfile.level || DEFAULT_USER_PROFILE.level,
+            ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
+            equippedSkinId: tempProfile.equippedSkinId || DEFAULT_USER_PROFILE.equippedSkinId,
+            completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
+            unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
+            revisionConcepts: Array.isArray(tempProfile.revisionConcepts) ? tempProfile.revisionConcepts : [],
+            wakeUpTime: tempProfile.wakeUpTime || DEFAULT_USER_PROFILE.wakeUpTime,
+            sleepTime: tempProfile.sleepTime || DEFAULT_USER_PROFILE.sleepTime,
+            lastLoginDate: tempProfile.lastLoginDate || null,
+            dailyLoginStreak: tempProfile.dailyLoginStreak || 0,
+            lastStudyDate: tempProfile.lastStudyDate || null,
+            currentStreak: tempProfile.currentStreak || 0,
+            longestStreak: tempProfile.longestStreak || 0,
         };
-        setUserProfile(parsedProfile);
-      } else {
-        setUserProfile(DEFAULT_USER_PROFILE);
       }
+      setUserProfile(parsedProfile);
       
       const storedNotepad = localStorage.getItem('notepadData');
+      let parsedNotepad = DEFAULT_NOTEPAD_DATA;
       if (storedNotepad) {
-        const parsedNotepad = JSON.parse(storedNotepad) as NotepadData;
-        setNotepadData({
+        const tempNotepad = JSON.parse(storedNotepad) as NotepadData;
+        parsedNotepad = {
             ...DEFAULT_NOTEPAD_DATA,
-            ...parsedNotepad,
-            tasks: Array.isArray(parsedNotepad.tasks) ? parsedNotepad.tasks : [],
-            notes: Array.isArray(parsedNotepad.notes) ? parsedNotepad.notes : [],
-            goals: Array.isArray(parsedNotepad.goals) ? parsedNotepad.goals : [],
-            links: Array.isArray(parsedNotepad.links) ? parsedNotepad.links : [],
-            revisionConcepts: Array.isArray(parsedNotepad.revisionConcepts) ? parsedNotepad.revisionConcepts : [],
-        });
-      } else {
-        setNotepadData(DEFAULT_NOTEPAD_DATA);
+            ...tempNotepad,
+            tasks: Array.isArray(tempNotepad.tasks) ? tempNotepad.tasks : [],
+            notes: Array.isArray(tempNotepad.notes) ? tempNotepad.notes : [],
+            goals: Array.isArray(tempNotepad.goals) ? tempNotepad.goals : [],
+            links: Array.isArray(tempNotepad.links) ? tempNotepad.links : [],
+            revisionConcepts: Array.isArray(tempNotepad.revisionConcepts) ? tempNotepad.revisionConcepts : [],
+        };
       }
+      setNotepadData(parsedNotepad);
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
@@ -230,8 +258,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedOfferTime = localStorage.getItem('lastOfferGenerationTime');
       if (storedOfferTime) setLastOfferGenerationTime(parseInt(storedOfferTime, 10));
 
-      const storedTheme = localStorage.getItem('themePreference');
-      applyThemePreference(storedTheme as 'light' | 'dark' | null);
+      const equippedSkinFromProfile = PREDEFINED_SKINS.find(s => s.id === parsedProfile.equippedSkinId);
+      if (equippedSkinFromProfile?.isTheme && equippedSkinFromProfile.themeClass) {
+        applyThemePreference(equippedSkinFromProfile.themeClass);
+        localStorage.setItem('themePreference', equippedSkinFromProfile.themeClass);
+      } else {
+         applyThemePreference(null); // Default theme
+         localStorage.setItem('themePreference', 'classic'); // or 'light'
+      }
       
       const storedChallenges = localStorage.getItem('dailyChallenges');
       const storedResetDate = localStorage.getItem('lastChallengeResetDate');
@@ -241,7 +275,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setDailyChallenges(JSON.parse(storedChallenges));
         setLastChallengeResetDate(todayDateString); 
       } else {
-        const freshChallenges = INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+        // Shuffle and pick 6 challenges
+        const shuffledChallenges = [...INITIAL_DAILY_CHALLENGES].sort(() => 0.5 - Math.random());
+        const freshChallenges = shuffledChallenges.slice(0, Math.min(6, shuffledChallenges.length)).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
         setDailyChallenges(freshChallenges);
         setLastChallengeResetDate(todayDateString);
         localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
@@ -251,35 +287,37 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedCapitalistStats = localStorage.getItem('capitalistStatsForAchievements');
       if (storedCapitalistStats) setCapitalistStatsForAchievements(JSON.parse(storedCapitalistStats));
 
-
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
+      // Fallback to defaults to ensure app stability
       setUserProfile(DEFAULT_USER_PROFILE); 
       setNotepadData(DEFAULT_NOTEPAD_DATA);
-      const freshChallenges = INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+      applyThemePreference(null); // Default theme
+      const freshChallenges = INITIAL_DAILY_CHALLENGES.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
       setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
       localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
       localStorage.setItem('lastChallengeResetDate', format(new Date(), 'yyyy-MM-dd'));
+    } finally {
+        setIsLoaded(true); // Crucial: ensure isLoaded is set to true
     }
-    setIsLoaded(true);
   }, [applyThemePreference]);
 
 
  
   useEffect(() => {
-    if(isLoaded) {
+    if(isLoaded) { // Only run after initial load
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         let currentLoginStreak = userProfile.dailyLoginStreak || 0;
         let newCash = userProfile.cash;
         let loginBonusAwarded = 0;
 
         if (userProfile.lastLoginDate !== todayStr) {
-            if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) { // Use parseISO for stored string date
+            if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) { 
                 currentLoginStreak++;
-            } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) { // If not yesterday and not today, reset.
+            } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) { 
                 currentLoginStreak = 1; 
-            } else if (!userProfile.lastLoginDate) { // First login
+            } else if (!userProfile.lastLoginDate) { 
                 currentLoginStreak = 1;
             }
             
@@ -287,7 +325,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             loginBonusAwarded = DAILY_LOGIN_BASE_CASH + streakBonus;
             newCash += loginBonusAwarded;
 
-            setUserProfile(prev => ({
+            setUserProfile(prev => ({ // This will trigger another save due to userProfile dependency if not careful
                 ...prev,
                 cash: newCash,
                 lastLoginDate: todayStr,
@@ -301,7 +339,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, toast]); // Removed userProfile dependencies to prevent re-triggering on its own update
+  }, [isLoaded, toast]); // Removed userProfile to avoid re-triggering on its own update
 
 
   useEffect(() => {
@@ -317,10 +355,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           localStorage.removeItem('lastOfferGenerationTime');
         }
         const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
-        if (equippedSkin?.isTheme && equippedSkin.id === 'dark_mode') {
-            localStorage.setItem('themePreference', 'dark');
+        if (equippedSkin?.isTheme && equippedSkin.themeClass) {
+            localStorage.setItem('themePreference', equippedSkin.themeClass);
         } else {
-            localStorage.setItem('themePreference', 'light');
+            localStorage.setItem('themePreference', 'classic');
         }
         localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
         if (lastChallengeResetDate) {
@@ -342,14 +380,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
   }, [toast]);
 
-  const checkAndUnlockAchievements = useCallback((investmentPayloadUpdate?: Partial<AchievementCriteriaInvestmentPayload>) => {
+  const checkAndUnlockAchievements = useCallback(() => { // Removed parameters, will use current state
     setUserProfile(prevUserProfile => {
-        const currentInvestmentStats = { ...capitalistStatsForAchievements, ...investmentPayloadUpdate };
+        const currentInvestmentStats = capitalistStatsForAchievements; // Use state directly
+        const currentSessions = sessions; // Use state directly
+        const currentDailyChallenges = dailyChallenges; // Use state directly
+
         const newlyUnlocked: string[] = [];
         let totalCashRewardFromAchievements = 0;
 
         ALL_ACHIEVEMENTS.forEach(ach => {
-        if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, sessions, dailyChallenges, currentInvestmentStats)) {
+        if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions, currentDailyChallenges, currentInvestmentStats)) {
             newlyUnlocked.push(ach.id);
             totalCashRewardFromAchievements += ach.cashReward;
             toast({
@@ -366,17 +407,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             cash: prevUserProfile.cash + totalCashRewardFromAchievements,
         };
         }
-        return prevUserProfile; // No changes to profile if no new achievements
+        return prevUserProfile; 
     });
-  }, [sessions, dailyChallenges, toast, capitalistStatsForAchievements]);
+  }, [toast, capitalistStatsForAchievements, sessions, dailyChallenges]);
 
 
   useEffect(() => {
-    if (isLoaded) { // Ensure this only runs after data is loaded
+    if (isLoaded) { 
         checkAndUnlockAchievements();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, sessions, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds, userProfile.completedChallengeIds, dailyChallenges, capitalistStatsForAchievements, userProfile.revisionConcepts?.length]);
+  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.revisionConcepts.length]);
 
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
@@ -399,46 +440,45 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { newLevel, newTitle, leveledUp };
   }, [toast]);
 
-  const updateStreakAndGetBonus = useCallback(() => {
+  const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => { // Pass current profile
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
-    let currentStudyStreak = userProfile.currentStreak;
-    let longestStudyStreak = userProfile.longestStreak;
-    let lastStudyDay = userProfile.lastStudyDate;
+    let currentStudyStreak = currentProfile.currentStreak;
+    let longestStudyStreak = currentProfile.longestStreak;
+    let lastStudyDay = currentProfile.lastStudyDate;
 
     if (lastStudyDay) {
-      const lastDate = parseISO(lastStudyDay); // Use parseISO for stored string date
+      const lastDate = parseISO(lastStudyDay); 
       const diff = differenceInDays(today, lastDate);
 
-      if (diff === 1) { // Studied yesterday
+      if (diff === 1) { 
         currentStudyStreak++;
-      } else if (diff > 1) { // Missed one or more days
-        currentStudyStreak = 1; // Reset to 1 (for today's study)
+      } else if (diff > 1) { 
+        currentStudyStreak = 1; 
       }
-      // If diff is 0, it means already studied today, streak doesn't change here.
-    } else { // First study session ever
+    } else { 
       currentStudyStreak = 1;
     }
     
     let newLastStudyDate = lastStudyDay;
-    if (lastStudyDay !== todayStr) { // Only update if today is a new study day
+    if (lastStudyDay !== todayStr) { 
         if (currentStudyStreak > longestStudyStreak) {
             longestStudyStreak = currentStudyStreak;
         }
-        newLastStudyDate = todayStr; // Mark today as the last study day
+        newLastStudyDate = todayStr; 
     }
 
     const streakBonusMultiplier = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
     
     return { streakBonusMultiplier, updatedCurrentStreak: currentStudyStreak, updatedLongestStreak: longestStudyStreak, updatedLastStudyDate: newLastStudyDate };
-  }, [userProfile.currentStreak, userProfile.longestStreak, userProfile.lastStudyDate]);
+  }, []);
 
 
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number) => {
     setDailyChallenges(prevChallenges => 
         prevChallenges.map(challenge => {
             if (challenge.type === type && !challenge.isCompleted && !challenge.rewardClaimed) {
-                const newCurrentValue = Math.min(challenge.currentValue + value, challenge.targetValue);
+                const newCurrentValue = Math.min((challenge.currentValue || 0) + value, challenge.targetValue);
                 const isNowCompleted = newCurrentValue >= challenge.targetValue;
                 if (isNowCompleted && !challenge.isCompleted) { 
                      toast({ title: "Challenge Goal Met!", description: `You've met the goal for '${challenge.title}'! Claim your reward.` });
@@ -454,6 +494,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       setDailyChallenges(prevChallenges => 
         prevChallenges.map(challenge => {
             if (challenge.type === 'tasksCompleted' && !challenge.rewardClaimed) {
+                // Here, completedTasksCount is the new total, not an increment.
                 const newCurrentValue = Math.min(completedTasksCount, challenge.targetValue);
                 const isNowCompleted = newCurrentValue >= challenge.targetValue;
                  if (isNowCompleted && !challenge.isCompleted) { 
@@ -482,27 +523,26 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
 
-    const { streakBonusMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus();
-    
-    let awardedXp = 0;
-    let awardedCash = 0;
-    const minutesStudied = sessionDetails.durationInSeconds / 60;
+    setUserProfile(prevProfile => { // Update profile based on its previous state
+        const { streakBonusMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
+        
+        let awardedXp = 0;
+        let awardedCash = 0;
+        const minutesStudied = sessionDetails.durationInSeconds / 60;
 
-    if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
-      awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * (1 + streakBonusMultiplier));
-      awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * (1 + streakBonusMultiplier));
-      updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
-    }
-    if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) { 
-        updateChallengeProgress('pomodoroCycles', 1);
-    }
+        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
+        awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * (1 + streakBonusMultiplier));
+        awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * (1 + streakBonusMultiplier));
+        updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
+        }
+        if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) { 
+            updateChallengeProgress('pomodoroCycles', 1);
+        }
 
-    // Update study streak challenge only if it's a new study day
-    if (userProfile.lastStudyDate !== updatedLastStudyDate) {
-        updateChallengeProgress('studyStreak', 1);
-    }
+        if (prevProfile.lastStudyDate !== updatedLastStudyDate) {
+            updateChallengeProgress('studyStreak', 1);
+        }
 
-    setUserProfile(prevProfile => {
         const newXp = prevProfile.xp + awardedXp;
         const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
         
@@ -526,7 +566,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           lastStudyDate: updatedLastStudyDate,
         };
       });
-  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus, userProfile.lastStudyDate]);
+  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus]);
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -573,9 +613,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       ownedSkinIds: [...prev.ownedSkinIds, skinId],
     }));
     toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${skin.price.toLocaleString()}.` });
-    checkAndUnlockAchievements(); 
+    // checkAndUnlockAchievements(); // This call is handled by useEffect dependency on ownedSkinIds.length
     return true;
-  }, [userProfile, getSkinById, isSkinOwned, toast, checkAndUnlockAchievements]);
+  }, [userProfile, getSkinById, isSkinOwned, toast]);
 
   const equipSkin = useCallback((skinId: string) => {
     if (!isSkinOwned(skinId)) {
@@ -587,12 +627,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
     
-    if (skinToEquip.isTheme && skinToEquip.id === 'dark_mode') {
-      applyThemePreference('dark');
-      localStorage.setItem('themePreference', 'dark');
+    if (skinToEquip.isTheme && skinToEquip.themeClass) {
+      applyThemePreference(skinToEquip.themeClass);
+      localStorage.setItem('themePreference', skinToEquip.themeClass);
     } else {
-      applyThemePreference('light'); 
-      localStorage.setItem('themePreference', 'light');
+      applyThemePreference(null); 
+      localStorage.setItem('themePreference', 'classic');
     }
 
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.` });
@@ -609,14 +649,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       createdAt: Date.now(),
       lastModified: Date.now(),
     };
-    setNotepadData(prev => ({ ...prev, notes: [newNote, ...prev.notes] }));
+    setNotepadData(prev => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
+    updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Note Added", description: `"${note.title}" has been saved.` });
-  }, [toast]);
+  }, [toast, updateChallengeProgress]);
 
   const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
     setNotepadData(prev => ({
       ...prev,
-      notes: prev.notes.map(note =>
+      notes: (prev.notes || []).map(note =>
         note.id === updatedNote.id ? { ...updatedNote, lastModified: Date.now() } : note
       ),
     }));
@@ -627,7 +668,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const noteToDelete = notepadData.notes.find(n => n.id === noteId);
     setNotepadData(prev => ({
       ...prev,
-      notes: prev.notes.filter(note => note.id !== noteId),
+      notes: (prev.notes || []).filter(note => note.id !== noteId),
     }));
     if (noteToDelete) {
         toast({ title: "Note Deleted", description: `"${noteToDelete.title}" has been removed.` });
@@ -735,8 +776,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         message += ` Plus, a completion bonus of $${offer.completionBonusCash.toLocaleString()}!`;
     }
     
-    const newTotalProfit = capitalistStatsForAchievements.totalProfit + Math.max(0, finalCashChange); 
-
     setUserProfile(prev => ({ ...prev, cash: prev.cash + finalCashChange })); 
     setCapitalistStatsForAchievements(prev => ({
         firstInvestmentMade: true,
@@ -746,10 +785,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
     toast({ title: "Investment Result", description: message });
-    checkAndUnlockAchievements({ firstInvestmentMade: true, totalProfit: newTotalProfit });
+    // checkAndUnlockAchievements(); // Handled by useEffect
     return { success: true, message, profit: finalCashChange };
 
-  }, [capitalistOffers, userProfile.cash, toast, checkAndUnlockAchievements, capitalistStatsForAchievements]);
+  }, [capitalistOffers, userProfile.cash, toast]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     setDailyChallenges(prevChallenges => {
@@ -762,11 +801,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                     
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
                     
-                    // Trigger achievement check after user profile is updated
-                    // This needs to be handled carefully to avoid stale closures for userProfile inside checkAndUnlockAchievements
-                    // One way is to pass the updated profile directly or make checkAndUnlockAchievements rely on its own UserProfile state update.
-                    // For now, calling it without direct new profile, relying on its internal state update.
-
                     return {
                         ...prevProfile,
                         xp: newXp,
@@ -776,18 +810,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                         completedChallengeIds: updatedCompletedIds,
                     };
                 });
-                // Call checkAndUnlockAchievements after the state has presumably updated
-                // This is tricky; ideally, checkAndUnlockAchievements would be called in a useEffect that depends on the specific profile parts that changed.
-                // Or, it should be designed to take the new profile state.
-                // For simplicity here, we call it, hoping the state update happens quickly enough or that its logic is robust.
-                checkAndUnlockAchievements(); 
+                // checkAndUnlockAchievements(); // Handled by useEffect
                 return { ...challenge, rewardClaimed: true };
             }
             return challenge;
         });
         return updatedChallenges;
     });
-  }, [toast, checkForLevelUp, checkAndUnlockAchievements]);
+  }, [toast, checkForLevelUp]);
 
   const getUnlockedAchievements = useCallback((): Achievement[] => {
     return ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id));
@@ -812,7 +842,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
       dailyChallenges, claimChallengeReward, updateTaskChallengeProgress,
-      getUnlockedAchievements, checkAndUnlockAchievements
+      getUnlockedAchievements, checkAndUnlockAchievements,
+      isLoaded
     }}>
       {children}
     </SessionContext.Provider>
@@ -827,5 +858,5 @@ export const useSessions = () => {
   return context;
 };
 
-
     
+```

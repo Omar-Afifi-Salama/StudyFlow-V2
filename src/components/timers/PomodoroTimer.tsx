@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
 import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { usePomodoro, type PomodoroMode } from '@/hooks/use-pomodoro';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { formatTime } from '@/lib/utils';
 
 export default function PomodoroTimer() {
   const {
@@ -73,7 +74,7 @@ export default function PomodoroTimer() {
         
         addSession({
             type: sessionType,
-            startTime: sessionStartTimeRef.current,
+            startTime: sessionStartTimeRef.current || Date.now() - duration * 1000,
             durationInSeconds: duration,
             isFullPomodoroCycle: mode === 'work', 
         });
@@ -99,7 +100,7 @@ export default function PomodoroTimer() {
       const sessionType = mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
       addSession({
         type: sessionType,
-        startTime: sessionStartTimeRef.current,
+        startTime: sessionStartTimeRef.current || Date.now() - currentSessionElapsedTime * 1000,
         durationInSeconds: currentSessionElapsedTime,
         isFullPomodoroCycle: false, 
       });
@@ -123,9 +124,14 @@ export default function PomodoroTimer() {
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
-  const xpForNextLevel = nextLevelXpTarget - currentLevelXpStart;
-  const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
-  const streakBonusPercent = (Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0);
+  const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp; // XP needed to reach the target of the next level from current total XP
+  
+  const xpProgressPercent = nextLevelXpTarget > currentLevelXpStart ? Math.min(100, Math.floor((xpIntoCurrentLevel / (nextLevelXpTarget - currentLevelXpStart)) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
+  
+  const streakBonusPercentVal = Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal);
+  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
+
 
   useHotkeys('p', () => { if (isRunning) pauseTimer(); else startTimer(); }, { preventDefault: true }, [isRunning, startTimer, pauseTimer]);
   useHotkeys('r', () => { resetTimer(); if(isRunning) pauseTimer(); }, { preventDefault: true }, [resetTimer, isRunning, pauseTimer]);
@@ -134,28 +140,39 @@ export default function PomodoroTimer() {
 
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg card-animated">
       <CardHeader className="text-center">
         <div className="flex justify-between items-center mb-2">
-            <div className="w-1/4">  </div>
+            <div className="w-1/4">  </div> {/* Spacer */}
             <CardTitle className="text-2xl font-headline">{modeTextMap[mode]}</CardTitle>
             <div className="w-1/4 flex justify-end">
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 btn-animated">
+                                <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                            </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Focus: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS.toLocaleString()}/5min</p>
-                            <p>Breaks do not grant rewards.</p>
-                            {userProfile.currentStreak > 0 && <p className="text-green-500">Current Streak Bonus: +{streakBonusPercent}% XP/Cash</p>}
+                        <TooltipContent className="max-w-xs text-sm">
+                            <p className="font-semibold mb-1">Earning Rates (Focus Mode):</p>
+                            <p><Zap className="inline h-4 w-4 mr-1 text-yellow-400"/>{XP_PER_MINUTE_FOCUS} XP per minute.</p>
+                            <p><DollarSign className="inline h-4 w-4 mr-1 text-green-500"/>${CASH_PER_5_MINUTES_FOCUS.toLocaleString()} per 5 minutes.</p>
+                            {userProfile.currentStreak > 0 && <p className="text-green-600 mt-1"><ChevronsRight className="inline h-4 w-4 mr-1"/>Current Streak Bonus: +{(streakBonusPercentVal * 100).toFixed(0)}% XP/Cash!</p>}
+                            <p className="mt-2 text-xs text-muted-foreground">Breaks do not grant rewards.</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </div>
         </div>
-        <CardDescription className="text-lg text-primary">Level {userProfile.level} ({xpProgressPercent}%)</CardDescription>
+         <div className="text-sm text-muted-foreground">
+            Level {userProfile.level}: {xpIntoCurrentLevel.toLocaleString()} / {(nextLevelXpTarget - currentLevelXpStart > 0 ? (nextLevelXpTarget - currentLevelXpStart) : userProfile.xp - currentLevelXpStart).toLocaleString()} XP
+        </div>
         <Progress value={xpProgressPercent} className="w-3/4 mx-auto h-2 mt-1" />
+        {xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
+            <p className="text-xs text-primary mt-1">
+                Approx. {formatTime(timeToLevelUpSeconds, true)} of focus to next level
+            </p>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-8 py-8">
         <TimerDisplay seconds={timeLeft} />
@@ -164,7 +181,7 @@ export default function PomodoroTimer() {
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={startTimer} size="lg" aria-label={`Start ${mode} session`}>
+                  <Button onClick={startTimer} size="lg" aria-label={`Start ${mode} session`} className="btn-animated">
                     <Play className="mr-2 h-5 w-5" /> Start
                   </Button>
                 </TooltipTrigger>
@@ -175,7 +192,7 @@ export default function PomodoroTimer() {
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={pauseTimer} size="lg" variant="outline" aria-label={`Pause ${mode} session`}>
+                  <Button onClick={pauseTimer} size="lg" variant="outline" aria-label={`Pause ${mode} session`} className="btn-animated">
                     <Pause className="mr-2 h-5 w-5" /> Pause
                   </Button>
                 </TooltipTrigger>
@@ -186,7 +203,7 @@ export default function PomodoroTimer() {
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={() => { resetTimer(); if(isRunning) pauseTimer(); }} size="lg" variant="outline" aria-label={`Reset ${mode} session`}>
+                <Button onClick={() => { resetTimer(); if(isRunning) pauseTimer(); }} size="lg" variant="outline" aria-label={`Reset ${mode} session`} className="btn-animated">
                   <RotateCcw className="mr-2 h-5 w-5" /> Reset
                 </Button>
               </TooltipTrigger>
@@ -196,7 +213,7 @@ export default function PomodoroTimer() {
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={() => switchMode()} size="lg" variant="outline" aria-label="Skip to next session">
+                <Button onClick={() => switchMode()} size="lg" variant="outline" aria-label="Skip to next session" className="btn-animated">
                   <SkipForward className="mr-2 h-5 w-5" /> Skip
                 </Button>
               </TooltipTrigger>
@@ -208,7 +225,7 @@ export default function PomodoroTimer() {
       <CardFooter className="flex justify-between items-center">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Pomodoro settings">
+            <Button variant="ghost" size="icon" aria-label="Pomodoro settings" className="btn-animated">
               <Settings className="h-6 w-6" />
             </Button>
           </PopoverTrigger>
@@ -230,14 +247,14 @@ export default function PomodoroTimer() {
                 <Label htmlFor="cyclesPerLongBreak">Cycles for Long Break</Label>
                 <Input id="cyclesPerLongBreak" type="number" min="1" value={localSettings.cyclesPerLongBreak} onChange={(e) => setLocalSettings(s => ({...s, cyclesPerLongBreak: parseInt(e.target.value,10) || 1}))} />
               </div>
-              <Button onClick={handleSettingsSave}>Save Settings</Button>
+              <Button onClick={handleSettingsSave} className="btn-animated">Save Settings</Button>
             </div>
           </PopoverContent>
         </Popover>
         <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0} size="lg" variant="secondary" aria-label="Log current pomodoro progress">
+                    <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0} size="lg" variant="secondary" aria-label="Log current pomodoro progress" className="btn-animated">
                         <ListPlus className="mr-2 h-5 w-5" /> Log Progress
                     </Button>
                 </TooltipTrigger>
@@ -250,3 +267,4 @@ export default function PomodoroTimer() {
 }
 
     
+```
