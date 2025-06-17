@@ -6,9 +6,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useToast } from '@/hooks/use-toast';
 
 export const XP_PER_MINUTE_FOCUS = 10;
-export const CASH_PER_5_MINUTES_FOCUS = 100; // Scaled up: $100 per 5 minutes
-const STREAK_BONUS_PER_DAY = 0.01; // 1% bonus per day of streak
-const MAX_STREAK_BONUS = 0.20; // Max 20% bonus
+export const CASH_PER_5_MINUTES_FOCUS = 100;
+const STREAK_BONUS_PER_DAY = 0.01; 
+const MAX_STREAK_BONUS = 0.20; 
 
 export const LEVEL_THRESHOLDS = [ 
   0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, 4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300, 
@@ -45,7 +45,7 @@ export const PREDEFINED_SKINS: Skin[] = [
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0,
-  cash: 50000, // Scaled up
+  cash: 50000,
   level: 1,
   title: TITLES[0],
   ownedSkinIds: ['classic', 'dark_mode'], 
@@ -54,6 +54,8 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   currentStreak: 0,
   longestStreak: 0,
   lastStudyDate: null,
+  wakeUpTime: { hour: 8, period: 'AM' }, // Default wake up 8 AM
+  sleepTime: { hour: 10, period: 'PM' }, // Default sleep 10 PM
 };
 
 const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -72,11 +74,12 @@ const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
 
 interface SessionContextType {
   sessions: StudySession[];
-  addSession: (sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number }) => void;
+  addSession: (sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[] }) => void;
   clearSessions: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   userProfile: UserProfile;
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
+  updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
   notepadData: NotepadData;
   updateNotepadData: (newData: Partial<NotepadData>) => void;
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
@@ -125,11 +128,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedProfile = localStorage.getItem('userProfile');
       if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile) as UserProfile;
-        if (!parsedProfile.completedChallengeIds) parsedProfile.completedChallengeIds = [];
-        if (typeof parsedProfile.currentStreak !== 'number') parsedProfile.currentStreak = 0;
-        if (typeof parsedProfile.longestStreak !== 'number') parsedProfile.longestStreak = 0;
-        if (!parsedProfile.lastStudyDate) parsedProfile.lastStudyDate = null;
-        setUserProfile(prev => ({...DEFAULT_USER_PROFILE, ...parsedProfile})); // Merge with defaults to ensure all fields
+        // Ensure all fields exist, merging with defaults
+        const mergedProfile = {...DEFAULT_USER_PROFILE, ...parsedProfile};
+        if (!mergedProfile.completedChallengeIds) mergedProfile.completedChallengeIds = [];
+        if (typeof mergedProfile.currentStreak !== 'number') mergedProfile.currentStreak = 0;
+        if (typeof mergedProfile.longestStreak !== 'number') mergedProfile.longestStreak = 0;
+        if (!mergedProfile.lastStudyDate) mergedProfile.lastStudyDate = null;
+        if (!mergedProfile.wakeUpTime) mergedProfile.wakeUpTime = DEFAULT_USER_PROFILE.wakeUpTime;
+        if (!mergedProfile.sleepTime) mergedProfile.sleepTime = DEFAULT_USER_PROFILE.sleepTime;
+        setUserProfile(mergedProfile);
       } else {
         setUserProfile(DEFAULT_USER_PROFILE);
       }
@@ -204,6 +211,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
   }, []);
 
+  const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
+    setUserProfile(prev => ({...prev, wakeUpTime, sleepTime }));
+    toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
+  }, [toast]);
+
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
     let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
@@ -233,33 +245,31 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     if (lastStudyDate) {
       const lastDate = new Date(lastStudyDate);
-      const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffTime = today.getTime() - lastDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 1) { // Studied yesterday
+      if (diffDays === 1) {
         currentStreak++;
-      } else if (diffDays > 1) { // Missed a day or more
-        currentStreak = 1; // Reset streak but count today
+      } else if (diffDays > 1) { 
+        currentStreak = 1; 
       }
-      // If diffDays === 0, already studied today, streak doesn't change yet from this specific call
-    } else { // First study session
+    } else { 
       currentStreak = 1;
     }
     
-    if (lastStudyDate !== todayStr) { // Only update if it's a new study day
+    let newLastStudyDate = lastStudyDate;
+    if (lastStudyDate !== todayStr) {
         if (currentStreak > longestStreak) {
             longestStreak = currentStreak;
         }
-        updateChallengeProgress('studyStreak', 1); // Increment studyStreak challenge
-        lastStudyDate = todayStr; // Update last study date
+        updateChallengeProgress('studyStreak', 1);
+        newLastStudyDate = todayStr;
     }
-
 
     const streakBonus = Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
     
-    // This update happens after addSession processes rewards.
-    // The userProfile update will be batched in addSession.
-    return { streakBonus, updatedCurrentStreak: currentStreak, updatedLongestStreak: longestStreak, updatedLastStudyDate: lastStudyDate };
-  }, [userProfile.currentStreak, userProfile.longestStreak, userProfile.lastStudyDate]);
+    return { streakBonus, updatedCurrentStreak: currentStreak, updatedLongestStreak: longestStreak, updatedLastStudyDate: newLastStudyDate };
+  }, [userProfile.currentStreak, userProfile.longestStreak, userProfile.lastStudyDate, updateChallengeProgress]);
 
 
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number) => {
@@ -294,7 +304,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [toast]);
 
-  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number }) => {
+  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[] }) => {
     if (sessionDetails.durationInSeconds <= 0) {
       console.warn("Attempted to log a session with zero or negative duration.");
       return;
@@ -305,6 +315,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       startTime: sessionDetails.startTime,
       endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000,
       duration: sessionDetails.durationInSeconds,
+      tags: sessionDetails.tags || [],
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
 
@@ -323,18 +334,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         updateChallengeProgress('pomodoroCycles', 1);
     }
 
-    if (awardedXp > 0 || awardedCash > 0) {
-      setUserProfile(prevProfile => {
+    setUserProfile(prevProfile => {
         const newXp = prevProfile.xp + awardedXp;
         const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
         
         let rewardMessages = [];
-        if (awardedXp > 0) rewardMessages.push(`+$${awardedXp} XP`);
-        if (awardedCash > 0) rewardMessages.push(`+$${awardedCash}`);
-        if (streakBonus > 0) rewardMessages.push(`(${(streakBonus * 100).toFixed(0)}% streak bonus!)`);
+        if (awardedXp > 0) rewardMessages.push(`${awardedXp} XP`);
+        if (awardedCash > 0) rewardMessages.push(`$${awardedCash}`);
+        if (streakBonus > 0 && (awardedCash > 0 || awardedXp > 0)) rewardMessages.push(`(${(streakBonus * 100).toFixed(0)}% streak bonus!)`);
         
         if (rewardMessages.length > 0) {
-            toast({ title: "Session Rewards", description: rewardMessages.join(', ') });
+            toast({ title: "Session Rewards", description: `Gained: ${rewardMessages.join(', ')}` });
         }
 
         return {
@@ -348,14 +358,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           lastStudyDate: updatedLastStudyDate,
         };
       });
-    } else { // Still update streak info even if no direct XP/cash (e.g. break session)
-         setUserProfile(prevProfile => ({
-          ...prevProfile,
-          currentStreak: updatedCurrentStreak,
-          longestStreak: updatedLongestStreak,
-          lastStudyDate: updatedLastStudyDate,
-        }));
-    }
   }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus]);
 
   const clearSessions = useCallback(() => {
@@ -493,8 +495,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const offer = capitalistOffers.find(o => o.id === offerId);
     if (!offer) return { success: false, message: "Offer not found." };
     if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
-    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount}.` };
-    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount}.`};
+    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
+    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
 
 
     const randomFactor = Math.random(); 
@@ -511,7 +513,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
-    const message = profit >= 0 ? `Investment successful! You gained $${profit}.` : `Investment risky... You lost $${Math.abs(profit)}.`;
+    const message = profit >= 0 ? `Investment successful! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
     toast({ title: "Investment Result", description: message });
     return { success: true, message, profit };
 
@@ -524,7 +526,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 setUserProfile(prevProfile => {
                     const newXp = prevProfile.xp + challenge.xpReward;
                     const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
-                    toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward} for '${challenge.title}'`});
+                    toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward.toLocaleString()} for '${challenge.title}'`});
                     return {
                         ...prevProfile,
                         xp: newXp,
@@ -550,7 +552,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SessionContext.Provider value={{ 
       sessions, addSession, clearSessions, updateSessionDescription,
-      userProfile, updateUserProfile, 
+      userProfile, updateUserProfile, updateSleepWakeTimes,
       notepadData, updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,

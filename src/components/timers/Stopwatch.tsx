@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useStopwatch } from '@/hooks/use-stopwatch';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export default function Stopwatch() {
   const { timeElapsed, isRunning, start, stop, reset } = useStopwatch();
@@ -29,7 +31,13 @@ export default function Stopwatch() {
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevel = nextLevelXpTarget - currentLevelXpStart;
   const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
-  const streakBonusPercent = (Math.min(userProfile.currentStreak * 0.01, 0.20) * 100).toFixed(0);
+  const streakBonusPercent = (Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0);
+
+  // Hotkeys
+  useHotkeys('p', () => { if (isRunning) stop(); else start(); }, { preventDefault: true }, [isRunning, start, stop]);
+  useHotkeys('r', reset, { preventDefault: true, enabled: timeElapsed > 0 || isRunning }, [reset, timeElapsed, isRunning]);
+  useHotkeys('l', handleLogSession, { preventDefault: true, enabled: timeElapsed > 0 && !isRunning }, [handleLogSession, timeElapsed, isRunning]);
+
 
   return (
     <Card className="shadow-lg">
@@ -58,23 +66,51 @@ export default function Stopwatch() {
         <TimerDisplay seconds={timeElapsed} forceHours={timeElapsed >= 3600} />
         <div className="flex space-x-3">
           {!isRunning ? (
-            <Button onClick={start} size="lg" aria-label="Start stopwatch">
-              <Play className="mr-2 h-5 w-5" /> Start
-            </Button>
+             <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button onClick={start} size="lg" aria-label="Start stopwatch">
+                            <Play className="mr-2 h-5 w-5" /> Start
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Start/Pause Stopwatch <span className="text-xs p-1 bg-muted rounded-sm ml-1">P</span></p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
           ) : (
-            <Button onClick={stop} size="lg" variant="outline" aria-label="Pause stopwatch">
-              <Pause className="mr-2 h-5 w-5" /> Pause
-            </Button>
+            <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button onClick={stop} size="lg" variant="outline" aria-label="Pause stopwatch">
+                            <Pause className="mr-2 h-5 w-5" /> Pause
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Start/Pause Stopwatch <span className="text-xs p-1 bg-muted rounded-sm ml-1">P</span></p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
           )}
-          <Button onClick={reset} size="lg" variant="outline" disabled={timeElapsed === 0 && !isRunning} aria-label="Reset stopwatch">
-            <RotateCcw className="mr-2 h-5 w-5" /> Reset
-          </Button>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={reset} size="lg" variant="outline" disabled={timeElapsed === 0 && !isRunning} aria-label="Reset stopwatch">
+                        <RotateCcw className="mr-2 h-5 w-5" /> Reset
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Reset Stopwatch <span className="text-xs p-1 bg-muted rounded-sm ml-1">R</span></p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Button onClick={handleLogSession} disabled={timeElapsed === 0} size="lg" variant="secondary" aria-label="Log session">
-          <ListPlus className="mr-2 h-5 w-5" /> Log Session
-        </Button>
+        <TooltipProvider delayDuration={300}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleLogSession} disabled={timeElapsed === 0} size="lg" variant="secondary" aria-label="Log session">
+                        <ListPlus className="mr-2 h-5 w-5" /> Log Session
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Log Session <span className="text-xs p-1 bg-muted rounded-sm ml-1">L</span></p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );

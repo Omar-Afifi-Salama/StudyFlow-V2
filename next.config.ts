@@ -1,4 +1,15 @@
+
 import type {NextConfig} from 'next';
+import withPWA from 'next-pwa';
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+const pwaConfig = withPWA({
+  dest: 'public',
+  disable: isDev,
+  register: true,
+  skipWaiting: true,
+});
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -20,4 +31,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default pwaConfig(nextConfig);

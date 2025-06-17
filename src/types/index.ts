@@ -6,13 +6,14 @@ export interface StudySession {
   endTime: number;   // Unix timestamp in milliseconds
   duration: number;  // in seconds
   description?: string; // User-added description
+  tags?: string[]; // New: Tags for sessions
 }
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
 
 export interface UserProfile {
   xp: number;
-  cash: number; // Changed from coins to a general number, displayed as $
+  cash: number; 
   level: number;
   title: string;
   ownedSkinIds: string[];
@@ -21,13 +22,15 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastStudyDate: string | null; // YYYY-MM-DD format
+  wakeUpTime?: { hour: number; period: 'AM' | 'PM' }; // New
+  sleepTime?: { hour: number; period: 'AM' | 'PM' };  // New
 }
 
 export interface Skin {
   id: string;
   name: string;
   description: string;
-  price: number; // Will be scaled up for dollars
+  price: number;
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
@@ -38,8 +41,8 @@ export interface CapitalistOffer {
   id: string;
   name: string;
   description: string;
-  minInvestmentAmount: number; // Minimum required to invest
-  maxInvestmentAmount?: number; // Optional: Max they can invest in this offer
+  minInvestmentAmount: number;
+  maxInvestmentAmount?: number;
   minRoiPercent: number; 
   maxRoiPercent: number; 
   volatilityFactor: number; 
@@ -52,6 +55,7 @@ export interface NotepadTask {
   text: string;
   completed: boolean;
   createdAt: number;
+  tags?: string[]; // New
 }
 
 export interface NotepadNote {
@@ -60,6 +64,7 @@ export interface NotepadNote {
   content: string;
   lastModified: number;
   createdAt: number;
+  tags?: string[]; // New
 }
 
 export interface NotepadGoal {
@@ -68,6 +73,7 @@ export interface NotepadGoal {
   dueDate?: string; // YYYY-MM-DD
   completed: boolean;
   createdAt: number;
+  tags?: string[]; // New
 }
 
 export interface NotepadLink {
@@ -75,6 +81,7 @@ export interface NotepadLink {
   url: string;
   description: string;
   createdAt: number;
+  tags?: string[]; // New
 }
 
 export interface NotepadData {
@@ -89,7 +96,7 @@ export interface DailyChallenge {
   title: string;
   description: string;
   xpReward: number;
-  cashReward: number; // Will be scaled up for dollars
+  cashReward: number;
   targetValue: number; 
   currentValue: number;
   isCompleted: boolean; 

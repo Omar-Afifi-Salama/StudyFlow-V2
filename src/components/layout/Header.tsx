@@ -2,28 +2,37 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, DollarSign, Flame } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, DollarSign, Flame, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useSessions, LEVEL_THRESHOLDS, TITLES } from '@/contexts/SessionContext'; 
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { useRouter } from 'next/navigation';
 
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { userProfile } = useSessions();
 
   const navItems = [
-    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5 mr-2" /> },
-    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5 mr-2" /> },
-    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5 mr-2" /> },
-    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" /> },
-    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" /> },
-    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" /> },
-    { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" /> },
+    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5 mr-2" />, hotkey: 't' },
+    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5 mr-2" />, hotkey: 's' },
+    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5 mr-2" />, hotkey: 'x' },
+    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" />, hotkey: 'c' },
+    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" />, hotkey: 'n' },
+    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" />, hotkey: 'h' },
+    { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" />, hotkey: 'a' },
   ];
+
+  navItems.forEach(item => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useHotkeys(item.hotkey, (e) => { e.preventDefault(); router.push(item.href);}, { preventDefault: true });
+  });
+
 
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length 
@@ -46,20 +55,28 @@ export default function Header() {
         </Link>
         <nav className="flex flex-1 items-center space-x-1 overflow-x-auto">
           {navItems.map((item) => (
-            <Button
-              key={item.href}
-              variant="ghost"
-              asChild
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary shrink-0",
-                pathname === item.href ? "text-primary" : "text-foreground/60"
-              )}
-            >
-              <Link href={item.href} className="flex items-center">
-                {item.icon}
-                <span className="hidden sm:inline-block">{item.label}</span>
-              </Link>
-            </Button>
+            <TooltipProvider key={item.href} delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-primary shrink-0",
+                      pathname === item.href ? "text-primary" : "text-foreground/60"
+                    )}
+                  >
+                    <Link href={item.href} className="flex items-center">
+                      {item.icon}
+                      <span className="hidden sm:inline-block">{item.label}</span>
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ))}
         </nav>
         <div className="flex items-center space-x-3 md:space-x-4 ml-auto pl-2">

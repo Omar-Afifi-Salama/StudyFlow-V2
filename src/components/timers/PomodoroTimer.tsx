@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export default function PomodoroTimer() {
   const {
@@ -93,7 +95,13 @@ export default function PomodoroTimer() {
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevel = nextLevelXpTarget - currentLevelXpStart;
   const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
-  const streakBonusPercent = (Math.min(userProfile.currentStreak * 0.01, 0.20) * 100).toFixed(0);
+  const streakBonusPercent = (Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0);
+
+  // Hotkeys
+  useHotkeys('p', () => { if (isRunning) pauseTimer(); else startTimer(); }, { preventDefault: true }, [isRunning, startTimer, pauseTimer]);
+  useHotkeys('r', () => { resetTimer(); if(isRunning) pauseTimer(); }, { preventDefault: true }, [resetTimer, isRunning, pauseTimer]);
+  useHotkeys('s', () => switchMode(), { preventDefault: true }, [switchMode]); // 's' for skip
+  useHotkeys('l', handleLogSession, { preventDefault: true, enabled: currentSessionElapsedTime > 0 && !isRunning }, [handleLogSession, currentSessionElapsedTime, isRunning]);
 
 
   return (
@@ -124,20 +132,48 @@ export default function PomodoroTimer() {
         <TimerDisplay seconds={timeLeft} />
         <div className="flex space-x-3">
           {!isRunning ? (
-            <Button onClick={startTimer} size="lg" aria-label={`Start ${mode} session`}>
-              <Play className="mr-2 h-5 w-5" /> Start
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={startTimer} size="lg" aria-label={`Start ${mode} session`}>
+                    <Play className="mr-2 h-5 w-5" /> Start
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Start/Pause Timer <span className="text-xs p-1 bg-muted rounded-sm ml-1">P</span></p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
-            <Button onClick={pauseTimer} size="lg" variant="outline" aria-label={`Pause ${mode} session`}>
-              <Pause className="mr-2 h-5 w-5" /> Pause
-            </Button>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={pauseTimer} size="lg" variant="outline" aria-label={`Pause ${mode} session`}>
+                    <Pause className="mr-2 h-5 w-5" /> Pause
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Start/Pause Timer <span className="text-xs p-1 bg-muted rounded-sm ml-1">P</span></p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
-          <Button onClick={() => { resetTimer(); if(isRunning) pauseTimer(); }} size="lg" variant="outline" aria-label={`Reset ${mode} session`}>
-            <RotateCcw className="mr-2 h-5 w-5" /> Reset
-          </Button>
-          <Button onClick={() => switchMode()} size="lg" variant="outline" aria-label="Skip to next session">
-            <SkipForward className="mr-2 h-5 w-5" /> Skip
-          </Button>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={() => { resetTimer(); if(isRunning) pauseTimer(); }} size="lg" variant="outline" aria-label={`Reset ${mode} session`}>
+                  <RotateCcw className="mr-2 h-5 w-5" /> Reset
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Reset Timer <span className="text-xs p-1 bg-muted rounded-sm ml-1">R</span></p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={() => switchMode()} size="lg" variant="outline" aria-label="Skip to next session">
+                  <SkipForward className="mr-2 h-5 w-5" /> Skip
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Skip Session <span className="text-xs p-1 bg-muted rounded-sm ml-1">S</span></p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
@@ -169,9 +205,16 @@ export default function PomodoroTimer() {
             </div>
           </PopoverContent>
         </Popover>
-        <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0 || isRunning} size="lg" variant="secondary" aria-label="Log current pomodoro progress">
-          <ListPlus className="mr-2 h-5 w-5" /> Log Progress
-        </Button>
+        <TooltipProvider delayDuration={300}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button onClick={handleLogSession} disabled={currentSessionElapsedTime === 0 || isRunning} size="lg" variant="secondary" aria-label="Log current pomodoro progress">
+                        <ListPlus className="mr-2 h-5 w-5" /> Log Progress
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Log Progress <span className="text-xs p-1 bg-muted rounded-sm ml-1">L</span></p></TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );
