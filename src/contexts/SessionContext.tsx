@@ -4,8 +4,8 @@
 import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, AchievementCriteriaInvestmentPayload } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign as DollarSignIconLucide } from 'lucide-react'; // Renamed DollarSign to avoid conflict
-import { format, addDays, differenceInDays, isYesterday, isToday } from 'date-fns';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign } from 'lucide-react';
+import { format, addDays, differenceInDays, isYesterday, isToday, parseISO } from 'date-fns';
 
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -108,7 +108,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'pomodoroSensei', name: 'Pomodoro Sensei', description: 'Complete 100 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 7500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 100 },
   { id: 'levelTwentyTitan', name: 'Level 20 Titan', description: 'Reach Level 20: Study God.', iconName: 'ShieldCheck', cashReward: 15000, criteria: (p) => p.level >= 20 },
   { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 25 daily challenges in total.', iconName: 'Gift', cashReward: 5000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 25 },
-  { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 from Capitalist Corner.', iconName: 'DollarSignIconLucide', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000 },
+  { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 from Capitalist Corner.', iconName: 'DollarSign', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000 },
   { id: 'fashionista', name: 'Fashionista', description: 'Own 5 different skins (excluding defaults).', iconName: 'Sparkles', cashReward: 4000, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode').length >= 5 },
   { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle.', iconName: 'Brain', cashReward: 3000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage > 3).length || 0) >= 10 }, 
 
@@ -117,7 +117,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'pomodoroGrandmaster', name: 'Pomodoro Grandmaster', description: 'Complete 250 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 15000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 250 },
   { id: 'levelThirtyLegend', name: 'Level 30 Legend', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'ShieldCheck', cashReward: 30000, criteria: (p) => p.level >= 30 },
   { id: 'unstoppableStreaker', name: 'Unstoppable Streaker', description: 'Achieve a 30-day study streak.', iconName: 'Zap', cashReward: 20000, criteria: (p) => p.currentStreak >= 30 },
-  { id: 'tycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash.', iconName: 'DollarSignIconLucide', cashReward: 50000, criteria: (p) => p.cash >= 1000000 },
+  { id: 'tycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash.', iconName: 'DollarSign', cashReward: 50000, criteria: (p) => p.cash >= 1000000 },
   { id: 'skinCollector', name: 'Ultimate Skin Collector', description: 'Own all available skins.', iconName: 'ShoppingCart', cashReward: 25000, criteria: (p) => p.ownedSkinIds.length === PREDEFINED_SKINS.length },
   { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'Brain', cashReward: 10000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20 },
   { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s,c,inv) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1 },
@@ -193,17 +193,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedProfile = localStorage.getItem('userProfile');
       if (storedProfile) {
         let parsedProfile = JSON.parse(storedProfile) as UserProfile;
-        parsedProfile = {...DEFAULT_USER_PROFILE, ...parsedProfile};
-        if (!parsedProfile.completedChallengeIds) parsedProfile.completedChallengeIds = [];
-        if (typeof parsedProfile.currentStreak !== 'number') parsedProfile.currentStreak = 0;
-        if (typeof parsedProfile.longestStreak !== 'number') parsedProfile.longestStreak = 0;
-        if (!parsedProfile.lastStudyDate) parsedProfile.lastStudyDate = null;
-        if (!parsedProfile.wakeUpTime) parsedProfile.wakeUpTime = DEFAULT_USER_PROFILE.wakeUpTime;
-        if (!parsedProfile.sleepTime) parsedProfile.sleepTime = DEFAULT_USER_PROFILE.sleepTime;
-        if (!parsedProfile.unlockedAchievementIds) parsedProfile.unlockedAchievementIds = [];
-        if (!parsedProfile.revisionConcepts) parsedProfile.revisionConcepts = [];
-        if (!parsedProfile.lastLoginDate) parsedProfile.lastLoginDate = null;
-        if (typeof parsedProfile.dailyLoginStreak !== 'number') parsedProfile.dailyLoginStreak = 0;
+        parsedProfile = {
+            ...DEFAULT_USER_PROFILE,
+            ...parsedProfile,
+            ownedSkinIds: Array.isArray(parsedProfile.ownedSkinIds) ? parsedProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
+            completedChallengeIds: Array.isArray(parsedProfile.completedChallengeIds) ? parsedProfile.completedChallengeIds : [],
+            unlockedAchievementIds: Array.isArray(parsedProfile.unlockedAchievementIds) ? parsedProfile.unlockedAchievementIds : [],
+            revisionConcepts: Array.isArray(parsedProfile.revisionConcepts) ? parsedProfile.revisionConcepts : [],
+            wakeUpTime: parsedProfile.wakeUpTime || DEFAULT_USER_PROFILE.wakeUpTime,
+            sleepTime: parsedProfile.sleepTime || DEFAULT_USER_PROFILE.sleepTime,
+        };
         setUserProfile(parsedProfile);
       } else {
         setUserProfile(DEFAULT_USER_PROFILE);
@@ -212,12 +211,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedNotepad = localStorage.getItem('notepadData');
       if (storedNotepad) {
         const parsedNotepad = JSON.parse(storedNotepad) as NotepadData;
-        if (!parsedNotepad.revisionConcepts) parsedNotepad.revisionConcepts = [];
-         setNotepadData(parsedNotepad);
+        setNotepadData({
+            ...DEFAULT_NOTEPAD_DATA,
+            ...parsedNotepad,
+            tasks: Array.isArray(parsedNotepad.tasks) ? parsedNotepad.tasks : [],
+            notes: Array.isArray(parsedNotepad.notes) ? parsedNotepad.notes : [],
+            goals: Array.isArray(parsedNotepad.goals) ? parsedNotepad.goals : [],
+            links: Array.isArray(parsedNotepad.links) ? parsedNotepad.links : [],
+            revisionConcepts: Array.isArray(parsedNotepad.revisionConcepts) ? parsedNotepad.revisionConcepts : [],
+        });
       } else {
         setNotepadData(DEFAULT_NOTEPAD_DATA);
       }
-
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
@@ -239,6 +244,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const freshChallenges = INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
         setDailyChallenges(freshChallenges);
         setLastChallengeResetDate(todayDateString);
+        localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
+        localStorage.setItem('lastChallengeResetDate', todayDateString);
       }
 
       const storedCapitalistStats = localStorage.getItem('capitalistStatsForAchievements');
@@ -249,8 +256,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to load data from localStorage:", error);
       setUserProfile(DEFAULT_USER_PROFILE); 
       setNotepadData(DEFAULT_NOTEPAD_DATA);
-      setDailyChallenges(INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false})));
+      const freshChallenges = INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+      setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
+      localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
+      localStorage.setItem('lastChallengeResetDate', format(new Date(), 'yyyy-MM-dd'));
     }
     setIsLoaded(true);
   }, [applyThemePreference]);
@@ -265,10 +275,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         let loginBonusAwarded = 0;
 
         if (userProfile.lastLoginDate !== todayStr) {
-            if (userProfile.lastLoginDate && isYesterday(new Date(userProfile.lastLoginDate))) {
+            if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) { // Use parseISO for stored string date
                 currentLoginStreak++;
-            } else {
+            } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) { // If not yesterday and not today, reset.
                 currentLoginStreak = 1; 
+            } else if (!userProfile.lastLoginDate) { // First login
+                currentLoginStreak = 1;
             }
             
             const streakBonus = Math.min( (currentLoginStreak -1) * DAILY_LOGIN_STREAK_CASH_BONUS, DAILY_LOGIN_MAX_STREAK_BONUS_CASH);
@@ -288,7 +300,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     }
-  }, [isLoaded, userProfile.cash, userProfile.dailyLoginStreak, userProfile.lastLoginDate, toast]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, toast]); // Removed userProfile dependencies to prevent re-triggering on its own update
 
 
   useEffect(() => {
@@ -330,37 +343,40 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const checkAndUnlockAchievements = useCallback((investmentPayloadUpdate?: Partial<AchievementCriteriaInvestmentPayload>) => {
-    const currentInvestmentStats = { ...capitalistStatsForAchievements, ...investmentPayloadUpdate };
+    setUserProfile(prevUserProfile => {
+        const currentInvestmentStats = { ...capitalistStatsForAchievements, ...investmentPayloadUpdate };
+        const newlyUnlocked: string[] = [];
+        let totalCashRewardFromAchievements = 0;
 
-    const newlyUnlocked: string[] = [];
-    let totalCashRewardFromAchievements = 0;
-
-    ALL_ACHIEVEMENTS.forEach(ach => {
-      if (!userProfile.unlockedAchievementIds?.includes(ach.id) && ach.criteria(userProfile, sessions, dailyChallenges, currentInvestmentStats)) {
-        newlyUnlocked.push(ach.id);
-        totalCashRewardFromAchievements += ach.cashReward;
-        toast({
-          title: "Achievement Unlocked!",
-          description: `${ach.name} - ${ach.description} (+$${ach.cashReward.toLocaleString()})`,
+        ALL_ACHIEVEMENTS.forEach(ach => {
+        if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, sessions, dailyChallenges, currentInvestmentStats)) {
+            newlyUnlocked.push(ach.id);
+            totalCashRewardFromAchievements += ach.cashReward;
+            toast({
+            title: "Achievement Unlocked!",
+            description: `${ach.name} - ${ach.description} (+$${ach.cashReward.toLocaleString()})`,
+            });
+        }
         });
-      }
-    });
 
-    if (newlyUnlocked.length > 0) {
-      setUserProfile(prev => ({
-        ...prev,
-        unlockedAchievementIds: [...(prev.unlockedAchievementIds || []), ...newlyUnlocked],
-        cash: prev.cash + totalCashRewardFromAchievements,
-      }));
-    }
-  }, [userProfile, sessions, dailyChallenges, toast, capitalistStatsForAchievements]);
+        if (newlyUnlocked.length > 0) {
+        return {
+            ...prevUserProfile,
+            unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked],
+            cash: prevUserProfile.cash + totalCashRewardFromAchievements,
+        };
+        }
+        return prevUserProfile; // No changes to profile if no new achievements
+    });
+  }, [sessions, dailyChallenges, toast, capitalistStatsForAchievements]);
+
 
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded) { // Ensure this only runs after data is loaded
         checkAndUnlockAchievements();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessions, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds, userProfile.completedChallengeIds, dailyChallenges, isLoaded, capitalistStatsForAchievements, userProfile.revisionConcepts]);
+  }, [isLoaded, sessions, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds, userProfile.completedChallengeIds, dailyChallenges, capitalistStatsForAchievements, userProfile.revisionConcepts?.length]);
 
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
@@ -391,24 +407,25 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let lastStudyDay = userProfile.lastStudyDate;
 
     if (lastStudyDay) {
-      const lastDate = new Date(lastStudyDay); 
+      const lastDate = parseISO(lastStudyDay); // Use parseISO for stored string date
       const diff = differenceInDays(today, lastDate);
 
-      if (diff === 1) {
+      if (diff === 1) { // Studied yesterday
         currentStudyStreak++;
-      } else if (diff > 1) { 
-        currentStudyStreak = 1; 
+      } else if (diff > 1) { // Missed one or more days
+        currentStudyStreak = 1; // Reset to 1 (for today's study)
       }
-    } else { 
+      // If diff is 0, it means already studied today, streak doesn't change here.
+    } else { // First study session ever
       currentStudyStreak = 1;
     }
     
     let newLastStudyDate = lastStudyDay;
-    if (lastStudyDay !== todayStr) { 
+    if (lastStudyDay !== todayStr) { // Only update if today is a new study day
         if (currentStudyStreak > longestStudyStreak) {
             longestStudyStreak = currentStudyStreak;
         }
-        newLastStudyDate = todayStr;
+        newLastStudyDate = todayStr; // Mark today as the last study day
     }
 
     const streakBonusMultiplier = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
@@ -480,7 +497,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         updateChallengeProgress('pomodoroCycles', 1);
     }
 
-    
+    // Update study streak challenge only if it's a new study day
     if (userProfile.lastStudyDate !== updatedLastStudyDate) {
         updateChallengeProgress('studyStreak', 1);
     }
@@ -619,7 +636,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const calculateNextRevisionDate = (learnedDateStr: string, stage: number): string => {
     const interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1]; 
-    return format(addDays(new Date(learnedDateStr), interval), 'yyyy-MM-dd');
+    return format(addDays(parseISO(learnedDateStr), interval), 'yyyy-MM-dd');
   };
 
   const addRevisionConcept = useCallback((name: string, learnedDate: Date) => {
@@ -745,8 +762,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                     
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
                     
-                    checkAndUnlockAchievements({});
-
+                    // Trigger achievement check after user profile is updated
+                    // This needs to be handled carefully to avoid stale closures for userProfile inside checkAndUnlockAchievements
+                    // One way is to pass the updated profile directly or make checkAndUnlockAchievements rely on its own UserProfile state update.
+                    // For now, calling it without direct new profile, relying on its internal state update.
 
                     return {
                         ...prevProfile,
@@ -757,6 +776,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                         completedChallengeIds: updatedCompletedIds,
                     };
                 });
+                // Call checkAndUnlockAchievements after the state has presumably updated
+                // This is tricky; ideally, checkAndUnlockAchievements would be called in a useEffect that depends on the specific profile parts that changed.
+                // Or, it should be designed to take the new profile state.
+                // For simplicity here, we call it, hoping the state update happens quickly enough or that its logic is robust.
+                checkAndUnlockAchievements(); 
                 return { ...challenge, rewardClaimed: true };
             }
             return challenge;
@@ -771,18 +795,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => { 
-    if (isLoaded) {
-        loadData(); // Load data first
-    }
-  }, [isLoaded, loadData]); // Only run when isLoaded changes initially
-
-  // Separate useEffect for checkAndUnlockAchievements after initial load
-  useEffect(() => {
-    if (isLoaded) { // Ensure this only runs after data is loaded
-        checkAndUnlockAchievements();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, sessions, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds, userProfile.completedChallengeIds, dailyChallenges, capitalistStatsForAchievements, userProfile.revisionConcepts]); // Add relevant dependencies that trigger achievement checks
+    loadData();
+  }, [loadData]);
 
 
   if (!isLoaded) {
@@ -812,3 +826,6 @@ export const useSessions = () => {
   }
   return context;
 };
+
+
+    

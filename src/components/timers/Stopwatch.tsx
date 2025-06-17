@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
-import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS } from '@/contexts/SessionContext';
+import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { useStopwatch } from '@/hooks/use-stopwatch';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -33,7 +33,6 @@ export default function Stopwatch() {
   const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
   const streakBonusPercent = (Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0);
 
-  // Hotkeys
   useHotkeys('p', () => { if (isRunning) stop(); else start(); }, { preventDefault: true }, [isRunning, start, stop]);
   useHotkeys('r', reset, { preventDefault: true, enabled: timeElapsed > 0 || isRunning }, [reset, timeElapsed, isRunning]);
   useHotkeys('l', handleLogSession, { preventDefault: true, enabled: timeElapsed > 0 && !isRunning }, [handleLogSession, timeElapsed, isRunning]);
@@ -43,7 +42,7 @@ export default function Stopwatch() {
     <Card className="shadow-lg">
       <CardHeader className="text-center">
         <div className="flex justify-between items-center mb-2">
-            <div className="w-1/4"> {/* Placeholder for balance */} </div>
+            <div className="w-1/4">  </div>
             <CardTitle className="text-2xl font-headline">Stopwatch</CardTitle>
             <div className="w-1/4 flex justify-end">
                 <TooltipProvider>
@@ -52,7 +51,7 @@ export default function Stopwatch() {
                             <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                             <p>Stopwatch: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS}/5min</p>
+                             <p>Stopwatch: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS.toLocaleString()}/5min</p>
                             {userProfile.currentStreak > 0 && <p className="text-green-500">Current Streak Bonus: +{streakBonusPercent}% XP/Cash</p>}
                         </TooltipContent>
                     </Tooltip>
@@ -115,3 +114,5 @@ export default function Stopwatch() {
     </Card>
   );
 }
+
+    

@@ -20,16 +20,16 @@ export interface UserProfile {
   title: string;
   ownedSkinIds: string[];
   equippedSkinId: string | null;
-  completedChallengeIds?: string[];
+  completedChallengeIds: string[];
   currentStreak: number; // Study streak
   longestStreak: number; // Study streak
   lastStudyDate: string | null; // YYYY-MM-DD format for study streak
-  wakeUpTime?: { hour: number; period: 'AM' | 'PM' };
-  sleepTime?: { hour: number; period: 'AM' | 'PM' };
-  unlockedAchievementIds?: string[];
-  revisionConcepts?: RevisionConcept[];
-  lastLoginDate?: string | null; // YYYY-MM-DD format for daily login bonus
-  dailyLoginStreak?: number; // For daily login bonus
+  wakeUpTime: { hour: number; period: 'AM' | 'PM' };
+  sleepTime: { hour: number; period: 'AM' | 'PM' };
+  unlockedAchievementIds: string[];
+  revisionConcepts: RevisionConcept[];
+  lastLoginDate: string | null; // YYYY-MM-DD format for daily login bonus
+  dailyLoginStreak: number; // For daily login bonus
 }
 
 export interface Skin {
@@ -141,7 +141,7 @@ export interface Achievement {
     profile: UserProfile, 
     sessions: StudySession[], 
     challenges: DailyChallenge[],
-    investmentStats: AchievementCriteriaInvestmentPayload // Added investmentStats
+    investmentStats: AchievementCriteriaInvestmentPayload 
   ) => boolean;
 }
 
@@ -152,3 +152,6 @@ export interface AmbientSound {
   filePath: string; 
   icon: React.ComponentType<{ className?: string }>;
 }
+
+
+    

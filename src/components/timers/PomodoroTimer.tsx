@@ -44,16 +44,18 @@ export default function PomodoroTimer() {
   };
 
   const showNotification = useCallback((title: string, body: string) => {
-    if (!("Notification" in window)) {
-      console.log("This browser does not support desktop notification");
-    } else if (Notification.permission === "granted") {
-      new Notification(title, { body });
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          new Notification(title, { body });
+    if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+        new Notification(title, { body });
+        } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+            new Notification(title, { body });
+            }
+        });
         }
-      });
+    } else {
+        console.log("Desktop notifications not supported or not in browser environment.");
     }
   }, []);
 
@@ -63,17 +65,17 @@ export default function PomodoroTimer() {
   }, [settings]);
 
   useEffect(() => {
-    if (timeLeft === 0 && isRunning) { // Timer naturally completed
+    if (timeLeft === 0 && isRunning) { 
         pauseTimer(); 
         
         const sessionType = mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-        const duration = currentSessionTotalDuration; // Use the actual duration for the mode
+        const duration = currentSessionTotalDuration; 
         
         addSession({
             type: sessionType,
             startTime: sessionStartTimeRef.current,
             durationInSeconds: duration,
-            isFullPomodoroCycle: mode === 'work', // Mark as full cycle if work mode completed
+            isFullPomodoroCycle: mode === 'work', 
         });
         checkAndUnlockAchievements();
 
@@ -86,19 +88,20 @@ export default function PomodoroTimer() {
         });
         showNotification(notificationTitle, notificationBody);
         
-        switchMode(); // Automatically switch to the next mode
+        switchMode(); 
     }
-  }, [timeLeft, isRunning, mode, settings, pauseTimer, addSession, switchMode, toast, sessionStartTimeRef, currentSessionTotalDuration, modeTextMap, showNotification, checkAndUnlockAchievements]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, isRunning, mode, settings, pauseTimer, addSession, switchMode, toast, sessionStartTimeRef, currentSessionTotalDuration, modeTextMap, showNotification]);
 
 
-  const handleLogSession = () => { // Manually logging progress
+  const handleLogSession = () => { 
     if (currentSessionElapsedTime > 0) {
       const sessionType = mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
       addSession({
         type: sessionType,
         startTime: sessionStartTimeRef.current,
         durationInSeconds: currentSessionElapsedTime,
-        isFullPomodoroCycle: false, // Manually logged sessions are not considered full cycles for this purpose
+        isFullPomodoroCycle: false, 
       });
       checkAndUnlockAchievements();
       resetTimer(); 
@@ -112,7 +115,7 @@ export default function PomodoroTimer() {
         toast({ title: "Invalid Settings", description: "Durations and cycles must be at least 1.", variant: "destructive" });
         return;
     }
-    setSettings(localSettings); // This will trigger the useEffect in usePomodoro to update timeLeft
+    setSettings(localSettings); 
     toast({ title: "Settings Saved", description: "Pomodoro timer updated."});
   };
 
@@ -124,7 +127,6 @@ export default function PomodoroTimer() {
   const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
   const streakBonusPercent = (Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0);
 
-  // Hotkeys
   useHotkeys('p', () => { if (isRunning) pauseTimer(); else startTimer(); }, { preventDefault: true }, [isRunning, startTimer, pauseTimer]);
   useHotkeys('r', () => { resetTimer(); if(isRunning) pauseTimer(); }, { preventDefault: true }, [resetTimer, isRunning, pauseTimer]);
   useHotkeys('s', () => switchMode(), { preventDefault: true }, [switchMode]); 
@@ -135,7 +137,7 @@ export default function PomodoroTimer() {
     <Card className="shadow-lg">
       <CardHeader className="text-center">
         <div className="flex justify-between items-center mb-2">
-            <div className="w-1/4"> {/* Placeholder for balance */} </div>
+            <div className="w-1/4">  </div>
             <CardTitle className="text-2xl font-headline">{modeTextMap[mode]}</CardTitle>
             <div className="w-1/4 flex justify-end">
                  <TooltipProvider>
@@ -246,3 +248,5 @@ export default function PomodoroTimer() {
     </Card>
   );
 }
+
+    
