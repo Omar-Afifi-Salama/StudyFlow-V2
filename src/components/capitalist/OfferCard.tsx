@@ -6,23 +6,24 @@ import type { CapitalistOffer } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowDownRight, ArrowUpRight, BarChart, DollarSign, Percent, Gift } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, BarChart, DollarSign, Percent, Gift, RefreshCw } from 'lucide-react'; // Added RefreshCw for loading
 
 interface OfferCardProps {
   offer: CapitalistOffer;
   userCash: number;
-  onInvest: (investmentAmount: number) => void;
+  onInvest: (investmentAmount: number) => Promise<{ success: boolean; message: string; profit?: number }>; // Changed to Promise
 }
 
 export default function OfferCard({ offer, userCash, onInvest }: OfferCardProps) {
   const [investmentAmount, setInvestmentAmount] = useState(offer.minInvestmentAmount);
+  const [isInvesting, setIsInvesting] = useState(false); // New state for loading
 
   const handleInvestmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
-      setInvestmentAmount(Math.max(0, value)); // Ensure non-negative
+      setInvestmentAmount(Math.max(0, value)); 
     } else if (e.target.value === '') {
-      setInvestmentAmount(0); // Allow empty input to clear
+      setInvestmentAmount(0); 
     }
   };
   
@@ -30,6 +31,13 @@ export default function OfferCard({ offer, userCash, onInvest }: OfferCardProps)
   const meetsMinInvestment = investmentAmount >= offer.minInvestmentAmount;
   const meetsMaxInvestment = offer.maxInvestmentAmount ? investmentAmount <= offer.maxInvestmentAmount : true;
   const isValidInvestment = investmentAmount > 0 && canAfford && meetsMinInvestment && meetsMaxInvestment;
+
+  const handleInvestClick = async () => {
+    if (!isValidInvestment || isInvesting) return;
+    setIsInvesting(true);
+    await onInvest(investmentAmount); // onInvest now returns a promise, toast is handled in parent
+    setIsInvesting(false); 
+  };
 
 
   return (
@@ -78,6 +86,7 @@ export default function OfferCard({ offer, userCash, onInvest }: OfferCardProps)
                 min={offer.minInvestmentAmount}
                 max={offer.maxInvestmentAmount || userCash}
                 className="h-10"
+                disabled={isInvesting}
             />
         </div>
          {offer.expiresAt && (
@@ -87,13 +96,23 @@ export default function OfferCard({ offer, userCash, onInvest }: OfferCardProps)
         )}
       </CardContent>
       <CardFooter className="p-4 border-t">
-        <Button onClick={() => onInvest(investmentAmount)} disabled={!isValidInvestment} className="w-full">
-          Invest <DollarSign className="ml-2 h-4 w-4" />
-          {!canAfford && <span className="ml-1 text-xs">(Need ${ (investmentAmount - userCash).toLocaleString() } more)</span>}
-          {canAfford && !meetsMinInvestment && <span className="ml-1 text-xs">(Min ${offer.minInvestmentAmount.toLocaleString()})</span>}
-          {canAfford && meetsMinInvestment && !meetsMaxInvestment && offer.maxInvestmentAmount && <span className="ml-1 text-xs">(Max ${offer.maxInvestmentAmount.toLocaleString()})</span>}
+        <Button onClick={handleInvestClick} disabled={!isValidInvestment || isInvesting} className="w-full">
+          {isInvesting ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Processing...
+            </>
+          ) : (
+            <>
+              Invest <DollarSign className="ml-2 h-4 w-4" />
+            </>
+          )}
+          {!isInvesting && !canAfford && <span className="ml-1 text-xs">(Need ${ (investmentAmount - userCash).toLocaleString() } more)</span>}
+          {!isInvesting && canAfford && !meetsMinInvestment && <span className="ml-1 text-xs">(Min ${offer.minInvestmentAmount.toLocaleString()})</span>}
+          {!isInvesting && canAfford && meetsMinInvestment && !meetsMaxInvestment && offer.maxInvestmentAmount && <span className="ml-1 text-xs">(Max ${offer.maxInvestmentAmount.toLocaleString()})</span>}
         </Button>
       </CardFooter>
     </Card>
   );
 }
+
+    

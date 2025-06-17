@@ -1,11 +1,11 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, AchievementCriteriaInvestmentPayload } from '@/types';
+import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit } from 'lucide-react';
-import { format, addDays, differenceInDays, isYesterday, isToday, parseISO } from 'date-fns';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon } from 'lucide-react';
+import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -51,9 +51,18 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/300x200/1A237E/C5CAE9.png', dataAiHint: 'dark blue elegant' },
 ];
 
+const DEFAULT_NOTEPAD_DATA: NotepadData = {
+  tasks: [],
+  notes: [],
+  goals: [],
+  links: [],
+  revisionConcepts: [],
+  habits: [],
+};
+
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0,
-  cash: 1000, // Reduced starting cash
+  cash: 1000, 
   level: 1,
   title: TITLES[0],
   ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], 
@@ -65,43 +74,48 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   wakeUpTime: { hour: 8, period: 'AM' },
   sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [],
-  revisionConcepts: [],
   lastLoginDate: null,
   dailyLoginStreak: 0,
+  notepadData: DEFAULT_NOTEPAD_DATA, // Initialize notepadData within userProfile
 };
 
-const DEFAULT_NOTEPAD_DATA: NotepadData = {
-  tasks: [],
-  notes: [],
-  goals: [],
-  links: [],
-  revisionConcepts: [],
-};
 
-const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
+const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
     { id: 'study30', title: 'Quick Learner', description: 'Study for a total of 30 minutes today.', xpReward: 50, cashReward: 500, targetValue: 30, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
     { id: 'study90', title: 'Deep Dive', description: 'Study for a total of 90 minutes today.', xpReward: 150, cashReward: 1500, targetValue: 90, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
+    { id: 'study180', title: 'Marathon Session', description: 'Study for a total of 3 hours today.', xpReward: 300, cashReward: 3000, targetValue: 180, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
     { id: 'pomodoro1', title: 'Pomodoro Warm-up', description: 'Complete 1 Pomodoro focus cycle.', xpReward: 40, cashReward: 300, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
     { id: 'pomodoro3', title: 'Pomodoro Pro', description: 'Complete 3 Pomodoro focus cycles.', xpReward: 100, cashReward: 800, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
+    { id: 'pomodoro5', title: 'Pomodoro Powerhouse', description: 'Complete 5 Pomodoro focus cycles.', xpReward: 180, cashReward: 1500, targetValue: 5, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
     { id: 'tasks2', title: 'Task Ticker', description: 'Complete 2 tasks from your checklist.', xpReward: 30, cashReward: 300, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
+    { id: 'tasks5', title: 'Task Master', description: 'Complete 5 tasks from your checklist.', xpReward: 75, cashReward: 700, targetValue: 5, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
     { id: 'ambiance15', title: 'Sound Scaper', description: 'Use the Ambiance Mixer for 15 minutes.', xpReward: 25, cashReward: 200, targetValue: 15, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
+    { id: 'ambiance60', title: 'Audio Aficionado', description: 'Use the Ambiance Mixer for 60 minutes.', xpReward: 100, cashReward: 600, targetValue: 60, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
     { id: 'notepadNote1', title: 'Note Taker', description: 'Create one new note in your notepad.', xpReward: 20, cashReward: 150, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true },
+    { id: 'notepadRevision1', title: 'Revision Starter', description: 'Add one new concept to the Revision Hub.', xpReward: 30, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true }, // Assuming type 'notepadEntry' for simplicity
     { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
+    { id: 'habitTracker1', title: 'Habit Hero', description: 'Complete one daily habit.', xpReward: 30, cashReward: 200, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'habitCompletions', resetsDaily: true},
+    { id: 'habitTracker3', title: 'Habit Honcho', description: 'Complete three daily habits.', xpReward: 70, cashReward: 500, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'habitCompletions', resetsDaily: true},
 ];
 
-// Achievement Categories: 'General', 'Study Time', 'Pomodoro', 'Progression', 'Collection', 'Streaks & Challenges', 'Capitalist', 'Notepad & Revision'
 export const ALL_ACHIEVEMENTS: Achievement[] = [
   // Study Time
   { id: 'firstSteps', name: 'First Steps', description: 'Log your first study session.', iconName: 'BookOpen', cashReward: 250, criteria: (p, s) => s.length >= 1, category: 'Study Time' },
   { id: 'hourOfPower', name: 'Hour of Power', description: 'Study for a total of 1 hour.', iconName: 'Clock', cashReward: 500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600, category: 'Study Time' },
+  { id: 'fiveHourFocus', name: 'Five Hour Focus', description: 'Study for a total of 5 hours.', iconName: 'Clock', cashReward: 1000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 18000, category: 'Study Time' },
   { id: 'dedicatedLearner', name: 'Dedicated Learner', description: 'Study for a total of 10 hours.', iconName: 'BarChart', cashReward: 2500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 36000, category: 'Study Time' },
+  { id: 'twentyFiveHourTriumph', name: '25 Hour Triumph', description: 'Study for a total of 25 hours.', iconName: 'BarChart', cashReward: 5000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 90000, category: 'Study Time' },
   { id: 'studyVeteran', name: 'Study Veteran', description: 'Study for a total of 50 hours.', iconName: 'Sigma', cashReward: 10000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 180000, category: 'Study Time' },
   { id: 'hundredHourHero', name: 'Hundred Hour Hero', description: 'Study for a total of 100 hours.', iconName: 'Trophy', cashReward: 25000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 360000, category: 'Study Time' },
+  { id: 'twoFiftyHourForce', name: '250 Hour Force', description: 'Study for a total of 250 hours.', iconName: 'Trophy', cashReward: 50000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 900000, category: 'Study Time' },
   { id: 'timeLord', name: 'Time Lord', description: 'Study for a total of 500 hours.', iconName: 'Sun', cashReward: 100000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 1800000, category: 'Study Time' },
-
+  
   // Pomodoro
+  { id: 'pomodoroInitiate', name: 'Pomodoro Initiate', description: 'Complete 1 full Pomodoro focus cycle.', iconName: 'Timer', cashReward: 100, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 1, category: 'Pomodoro' },
   { id: 'pomodoroStarter', name: 'Pomodoro Starter', description: 'Complete 5 full Pomodoro focus cycles.', iconName: 'Timer', cashReward: 750, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 5, category: 'Pomodoro' },
+  { id: 'pomodoroAdept', name: 'Pomodoro Adept', description: 'Complete 10 full Pomodoro focus cycles.', iconName: 'Timer', cashReward: 1500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 10, category: 'Pomodoro' },
   { id: 'pomodoroPro', name: 'Pomodoro Pro', description: 'Complete 25 full Pomodoro focus cycles.', iconName: 'Coffee', cashReward: 3000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 25, category: 'Pomodoro' },
+  { id: 'pomodoroExpert', name: 'Pomodoro Expert', description: 'Complete 50 full Pomodoro focus cycles.', iconName: 'Coffee', cashReward: 5000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 50, category: 'Pomodoro' },
   { id: 'pomodoroSensei', name: 'Pomodoro Sensei', description: 'Complete 100 full Pomodoro focus cycles.', iconName: 'Activity', cashReward: 7500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 100, category: 'Pomodoro' },
   { id: 'pomodoroGrandmaster', name: 'Pomodoro Grandmaster', description: 'Complete 250 full Pomodoro focus cycles.', iconName: 'Zap', cashReward: 15000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 250, category: 'Pomodoro' },
   { id: 'pomodoroZenith', name: 'Pomodoro Zenith', description: 'Complete 500 full Pomodoro focus cycles.', iconName: 'Moon', cashReward: 30000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 500, category: 'Pomodoro' },
@@ -109,34 +123,53 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   // Progression
   { id: 'levelUpNovice', name: 'Adept Learner', description: 'Reach Level 5: Adept.', iconName: 'Award', cashReward: 1000, criteria: (p) => p.level >= 5, category: 'Progression' },
   { id: 'masterOfTheMind', name: 'Master of the Mind', description: 'Reach Level 10: Master.', iconName: 'ShieldCheck', cashReward: 5000, criteria: (p) => p.level >= 10, category: 'Progression' },
+  { id: 'virtuosoLearner', name: 'Virtuoso Learner', description: 'Reach Level 15: Virtuoso Prodigy.', iconName: 'ShieldCheck', cashReward: 10000, criteria: (p) => p.level >= 15, category: 'Progression' },
   { id: 'levelTwentyTitan', name: 'Study God', description: 'Reach Level 20: Study God.', iconName: 'Star', cashReward: 15000, criteria: (p) => p.level >= 20, category: 'Progression' },
+  { id: 'transcendentScholar', name: 'Transcendent Scholar', description: 'Reach Level 25: Transcendent Scholar.', iconName: 'Star', cashReward: 20000, criteria: (p) => p.level >= 25, category: 'Progression' },
   { id: 'levelThirtyLegend', name: 'Galactic Prodigy', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'Package', cashReward: 30000, criteria: (p) => p.level >= 30, category: 'Progression' },
-  { id: 'levelFiftyOracle', name: 'The Oracle', description: 'Reach Level 50: The Oracle.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 50, category: 'Progression' },
+  { id: 'thoughtEmperor', name: 'Thought Emperor', description: 'Reach Level 35: Thought Emperor.', iconName: 'Package', cashReward: 40000, criteria: (p) => p.level >= 35, category: 'Progression' },
+  { id: 'levelFiftyOracle', name: 'The Oracle', description: 'Reach Level 40: The Oracle.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 40, category: 'Progression' }, // Adjusted to L40
 
   // Collection
-  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 1, category: 'Collection' },
-  { id: 'wardrobeBeginner', name: 'Wardrobe Beginner', description: 'Own 3 different paid skins.', iconName: 'Palette', cashReward: 1500, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 3, category: 'Collection' },
-  { id: 'fashionista', name: 'Fashionista', description: 'Own 5 different paid skins.', iconName: 'Sparkles', cashReward: 4000, criteria: (p) => p.ownedSkinIds.filter(id => id !== 'classic' && id !== 'dark_mode' && id !== 'sepia_tone').length >= 5, category: 'Collection' },
+  { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => !['classic', 'dark_mode', 'sepia_tone'].includes(id)).length >= 1, category: 'Collection' },
+  { id: 'wardrobeBeginner', name: 'Wardrobe Beginner', description: 'Own 3 different paid skins.', iconName: 'Palette', cashReward: 1500, criteria: (p) => p.ownedSkinIds.filter(id => !['classic', 'dark_mode', 'sepia_tone'].includes(id)).length >= 3, category: 'Collection' },
+  { id: 'fashionista', name: 'Fashionista', description: 'Own 5 different paid skins.', iconName: 'Sparkles', cashReward: 4000, criteria: (p) => p.ownedSkinIds.filter(id => !['classic', 'dark_mode', 'sepia_tone'].includes(id)).length >= 5, category: 'Collection' },
   { id: 'skinCollector', name: 'Ultimate Skin Collector', description: 'Own all available skins.', iconName: 'Briefcase', cashReward: 25000, criteria: (p) => p.ownedSkinIds.length === PREDEFINED_SKINS.length, category: 'Collection' },
 
   // Streaks & Challenges
   { id: 'streakStarter', name: 'Streak Starter', description: 'Achieve a 3-day study streak.', iconName: 'Zap', cashReward: 1000, criteria: (p) => p.longestStreak >= 3, category: 'Streaks & Challenges' },
   { id: 'weekLongWarrior', name: 'Week-Long Warrior', description: 'Achieve a 7-day study streak.', iconName: 'CalendarCheck', cashReward: 2500, criteria: (p) => p.longestStreak >= 7, category: 'Streaks & Challenges' },
+  { id: 'fortnightFocus', name: 'Fortnight Focus', description: 'Achieve a 14-day study streak.', iconName: 'CalendarCheck', cashReward: 5000, criteria: (p) => p.longestStreak >= 14, category: 'Streaks & Challenges' },
   { id: 'unstoppableStreaker', name: 'Unstoppable Streaker', description: 'Achieve a 30-day study streak.', iconName: 'Flame', cashReward: 20000, criteria: (p) => p.longestStreak >= 30, category: 'Streaks & Challenges' },
   { id: 'challengeNewbie', name: 'Challenge Newbie', description: 'Complete 1 daily challenge.', iconName: 'TargetIcon', cashReward: 300, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 1, category: 'Streaks & Challenges' },
   { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 10 daily challenges in total.', iconName: 'Gift', cashReward: 2000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 10, category: 'Streaks & Challenges' },
   { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 25 daily challenges in total.', iconName: 'Edit', cashReward: 5000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 25, category: 'Streaks & Challenges' },
+  { id: 'challengeLegend', name: 'Challenge Legend', description: 'Complete 50 daily challenges in total.', iconName: 'Edit', cashReward: 10000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 50, category: 'Streaks & Challenges' },
 
   // Capitalist
   { id: 'capitalistInitiate', name: 'Capitalist Initiate', description: 'Make your first investment.', iconName: 'TrendingUp', cashReward: 1000, criteria: (p,s,c,inv) => inv.firstInvestmentMade, category: 'Capitalist' },
+  { id: 'profitPioneer', name: 'Profit Pioneer', description: 'Earn a total of $10,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 1500, criteria: (p,s,c,inv) => inv.totalProfit >= 10000, category: 'Capitalist' },
   { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000, category: 'Capitalist' },
-  { id: 'studyTycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash in total.', iconName: 'TrendingDown', cashReward: 50000, criteria: (p) => p.cash >= 1000000, category: 'Capitalist' }, // Note: 'TrendingDown' is an odd icon choice here, consider changing
+  { id: 'marketMagnate', name: 'Market Magnate', description: 'Earn a total of $250,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 20000, criteria: (p,s,c,inv) => inv.totalProfit >= 250000, category: 'Capitalist' },
+  { id: 'cashCollector', name: 'Cash Collector', description: 'Accumulate $50,000 cash in total.', iconName: 'TrendingDown', cashReward: 2500, criteria: (p) => p.cash >= 50000, category: 'Capitalist' },
+  { id: 'wealthyScholar', name: 'Wealthy Scholar', description: 'Accumulate $250,000 cash in total.', iconName: 'TrendingDown', cashReward: 10000, criteria: (p) => p.cash >= 250000, category: 'Capitalist' },
+  { id: 'studyTycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash in total.', iconName: 'TrendingDown', cashReward: 50000, criteria: (p) => p.cash >= 1000000, category: 'Capitalist' },
   
   // Notepad & Revision
-  { id: 'diligentRevisionist', name: 'Diligent Revisionist', description: 'Add 5 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 1000, criteria: (p) => (p.revisionConcepts?.length || 0) >= 5, category: 'Notepad & Revision' },
-  { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle (stage 4+).', iconName: 'AlignLeft', cashReward: 3000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 3).length || 0) >= 10, category: 'Notepad & Revision' }, 
-  { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'Link2', cashReward: 10000, criteria: (p) => (p.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20, category: 'Notepad & Revision' },
-  { id: 'taskScheduler', name: 'Task Scheduler', description: 'Complete 20 tasks from your checklist.', iconName: 'CheckSquare', cashReward: 1500, criteria: (p,s,c,inv) => (p.notepadData?.tasks.filter(t => t.completed).length || 0) >= 20, category: 'Notepad & Revision' },
+  { id: 'diligentRevisionist', name: 'Diligent Revisionist', description: 'Add 5 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 1000, criteria: (p) => (p.notepadData?.revisionConcepts?.length || 0) >= 5, category: 'Notepad & Revision' },
+  { id: 'revisionRegular', name: 'Revision Regular', description: 'Add 15 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 2500, criteria: (p) => (p.notepadData?.revisionConcepts?.length || 0) >= 15, category: 'Notepad & Revision' },
+  { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle (stage 3+).', iconName: 'AlignLeft', cashReward: 3000, criteria: (p) => (p.notepadData?.revisionConcepts?.filter(rc => rc.revisionStage >= 3).length || 0) >= 10, category: 'Notepad & Revision' }, 
+  { id: 'recallChampion', name: 'Recall Champion', description: 'Successfully revise 25 concepts (stage 3+).', iconName: 'AlignLeft', cashReward: 6000, criteria: (p) => (p.notepadData?.revisionConcepts?.filter(rc => rc.revisionStage >= 3).length || 0) >= 25, category: 'Notepad & Revision' }, 
+  { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'Link2', cashReward: 10000, criteria: (p) => (p.notepadData?.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20, category: 'Notepad & Revision' },
+  { id: 'taskScheduler', name: 'Task Scheduler', description: 'Complete 20 tasks from your checklist.', iconName: 'CheckSquare', cashReward: 1500, criteria: (p) => (p.notepadData?.tasks.filter(t => t.completed).length || 0) >= 20, category: 'Notepad & Revision' },
+  { id: 'goalGetter', name: 'Goal Getter', description: 'Complete 10 goals from your goals list.', iconName: 'TargetIcon', cashReward: 2000, criteria: (p) => (p.notepadData?.goals.filter(g => g.completed).length || 0) >= 10, category: 'Notepad & Revision' },
+  
+  // Habits
+  { id: 'habitFormer', name: 'Habit Former', description: 'Create your first habit.', iconName: 'HabitIcon', cashReward: 500, criteria: (p) => (p.notepadData?.habits?.length || 0) >= 1, category: 'Habits' },
+  { id: 'dailyDiscipliner', name: 'Daily Discipliner', description: 'Maintain a 7-day streak on any daily habit.', iconName: 'Repeat', cashReward: 1500, criteria: (p) => !!p.notepadData?.habits?.some(h => h.frequency === 'daily' && h.currentStreak >= 7), category: 'Habits' },
+  { id: 'weeklyWarrior', name: 'Weekly Warrior', description: 'Maintain a 4-week streak on any weekly habit.', iconName: 'Repeat', cashReward: 2000, criteria: (p) => !!p.notepadData?.habits?.some(h => h.frequency === 'weekly' && h.currentStreak >= 4), category: 'Habits' },
+  { id: 'habitualAchiever', name: 'Habitual Achiever', description: 'Complete 50 habit instances in total.', iconName: 'ListChecks', cashReward: 3000, criteria: (p) => (p.notepadData?.habits?.reduce((sum, hab) => sum + Object.values(hab.log).filter(l => l.completed).length, 0) || 0) >= 50, category: 'Habits'},
+
 
   // General (Meta)
   { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s,c,inv) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1, category: 'General' },
@@ -156,14 +189,26 @@ interface SessionContextType {
   userProfile: UserProfile;
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
   updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
-  notepadData: NotepadData;
-  updateNotepadData: (newData: Partial<NotepadData>) => void;
+  
+  // Notepad specific data and functions are now directly under userProfile.notepadData
+  // Thus, direct notepadData state here is removed.
+  // The functions below will operate on userProfile.notepadData
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
   deleteNotepadNote: (noteId: string) => void;
   addRevisionConcept: (name: string, learnedDate: Date) => void;
   markConceptRevised: (conceptId: string) => void;
   deleteRevisionConcept: (conceptId: string) => void;
+
+  // Habit functions
+  addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'log' | 'currentStreak' | 'longestStreak'>) => void;
+  updateHabit: (habit: Habit) => void;
+  deleteHabit: (habitId: string) => void;
+  logHabitCompletion: (habitId: string, date: Date, completed?: boolean, countIncrement?: number) => void;
+  getHabitCompletionForDate: (habit: Habit, date: Date) => HabitLogEntry | undefined;
+  getHabitCompletionsForWeek: (habit: Habit, date: Date) => number;
+
+
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
@@ -174,10 +219,10 @@ interface SessionContextType {
   lastOfferGenerationTime: number | null;
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
-  updateTaskChallengeProgress: (completedTasksCount: number) => void;
+  updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void; // Added absoluteValue
   getUnlockedAchievements: () => Achievement[];
   checkAndUnlockAchievements: (investmentPayload?: Partial<AchievementCriteriaInvestmentPayload>) => void;
-  isLoaded: boolean; // Expose isLoaded
+  isLoaded: boolean; 
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -185,10 +230,11 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
-  const [notepadData, setNotepadData] = useState<NotepadData>(DEFAULT_NOTEPAD_DATA);
+  // NotepadData is now part of userProfile.
+  // const [notepadData, setNotepadData] = useState<NotepadData>(DEFAULT_NOTEPAD_DATA); // Removed
   const [capitalistOffers, setCapitalistOffers] = useState<CapitalistOffer[]>([]);
   const [lastOfferGenerationTime, setLastOfferGenerationTime] = useState<number | null>(null);
-  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>(INITIAL_DAILY_CHALLENGES);
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]); // Initialize as empty, will be set by loadData
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
@@ -198,7 +244,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const applyThemePreference = useCallback((themeClass?: 'dark' | 'sepia' | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    root.classList.remove('dark', 'sepia'); // Remove all theme classes first
+    root.classList.remove('dark', 'sepia'); 
     if (themeClass) {
       root.classList.add(themeClass);
     }
@@ -213,44 +259,33 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       let parsedProfile = DEFAULT_USER_PROFILE;
       if (storedProfile) {
         const tempProfile = JSON.parse(storedProfile) as UserProfile;
-        // Ensure all fields from DEFAULT_USER_PROFILE are present, especially new ones or arrays
+        
+        // Ensure notepadData exists and has all its arrays
+        const ensuredNotepadData: NotepadData = {
+            ...DEFAULT_NOTEPAD_DATA,
+            ...(tempProfile.notepadData || {}), // Use existing or default
+            tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : [],
+            notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : [],
+            goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : [],
+            links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : [],
+            revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : [],
+            habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : [],
+        };
+
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
             ...tempProfile,
-            xp: tempProfile.xp || DEFAULT_USER_PROFILE.xp,
-            cash: tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' ? DEFAULT_USER_PROFILE.cash : tempProfile.cash, // Handle potential undefined cash from old storage
-            level: tempProfile.level || DEFAULT_USER_PROFILE.level,
+            cash: tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' ? DEFAULT_USER_PROFILE.cash : tempProfile.cash,
             ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
-            equippedSkinId: tempProfile.equippedSkinId || DEFAULT_USER_PROFILE.equippedSkinId,
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
             unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
-            revisionConcepts: Array.isArray(tempProfile.revisionConcepts) ? tempProfile.revisionConcepts : [],
-            wakeUpTime: tempProfile.wakeUpTime || DEFAULT_USER_PROFILE.wakeUpTime,
-            sleepTime: tempProfile.sleepTime || DEFAULT_USER_PROFILE.sleepTime,
-            lastLoginDate: tempProfile.lastLoginDate || null,
-            dailyLoginStreak: tempProfile.dailyLoginStreak || 0,
-            lastStudyDate: tempProfile.lastStudyDate || null,
-            currentStreak: tempProfile.currentStreak || 0,
-            longestStreak: tempProfile.longestStreak || 0,
+            notepadData: ensuredNotepadData, // Assign the ensured notepad data
         };
       }
       setUserProfile(parsedProfile);
       
-      const storedNotepad = localStorage.getItem('notepadData');
-      let parsedNotepad = DEFAULT_NOTEPAD_DATA;
-      if (storedNotepad) {
-        const tempNotepad = JSON.parse(storedNotepad) as NotepadData;
-        parsedNotepad = {
-            ...DEFAULT_NOTEPAD_DATA,
-            ...tempNotepad,
-            tasks: Array.isArray(tempNotepad.tasks) ? tempNotepad.tasks : [],
-            notes: Array.isArray(tempNotepad.notes) ? tempNotepad.notes : [],
-            goals: Array.isArray(tempNotepad.goals) ? tempNotepad.goals : [],
-            links: Array.isArray(tempNotepad.links) ? tempNotepad.links : [],
-            revisionConcepts: Array.isArray(tempNotepad.revisionConcepts) ? tempNotepad.revisionConcepts : [],
-        };
-      }
-      setNotepadData(parsedNotepad);
+      // Notepad data is now part of userProfile, so no separate loading for notepadData state
+      // const storedNotepad = localStorage.getItem('notepadData'); // Removed
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
@@ -263,8 +298,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         applyThemePreference(equippedSkinFromProfile.themeClass);
         localStorage.setItem('themePreference', equippedSkinFromProfile.themeClass);
       } else {
-         applyThemePreference(null); // Default theme
-         localStorage.setItem('themePreference', 'classic'); // or 'light'
+         applyThemePreference(null); 
+         localStorage.setItem('themePreference', 'classic'); 
       }
       
       const storedChallenges = localStorage.getItem('dailyChallenges');
@@ -275,8 +310,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setDailyChallenges(JSON.parse(storedChallenges));
         setLastChallengeResetDate(todayDateString); 
       } else {
-        // Shuffle and pick 6 challenges
-        const shuffledChallenges = [...INITIAL_DAILY_CHALLENGES].sort(() => 0.5 - Math.random());
+        const shuffledChallenges = [...INITIAL_DAILY_CHALLENGES_POOL].sort(() => 0.5 - Math.random());
         const freshChallenges = shuffledChallenges.slice(0, Math.min(6, shuffledChallenges.length)).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
         setDailyChallenges(freshChallenges);
         setLastChallengeResetDate(todayDateString);
@@ -289,57 +323,52 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
-      // Fallback to defaults to ensure app stability
       setUserProfile(DEFAULT_USER_PROFILE); 
-      setNotepadData(DEFAULT_NOTEPAD_DATA);
-      applyThemePreference(null); // Default theme
-      const freshChallenges = INITIAL_DAILY_CHALLENGES.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+      applyThemePreference(null); 
+      const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
       setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
       localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
       localStorage.setItem('lastChallengeResetDate', format(new Date(), 'yyyy-MM-dd'));
     } finally {
-        setIsLoaded(true); // Crucial: ensure isLoaded is set to true
+        setIsLoaded(true); 
     }
   }, [applyThemePreference]);
 
 
  
   useEffect(() => {
-    if(isLoaded) { // Only run after initial load
+    if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) { 
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         let currentLoginStreak = userProfile.dailyLoginStreak || 0;
         let newCash = userProfile.cash;
         let loginBonusAwarded = 0;
 
-        if (userProfile.lastLoginDate !== todayStr) {
-            if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) { 
-                currentLoginStreak++;
-            } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) { 
-                currentLoginStreak = 1; 
-            } else if (!userProfile.lastLoginDate) { 
-                currentLoginStreak = 1;
-            }
-            
-            const streakBonus = Math.min( (currentLoginStreak -1) * DAILY_LOGIN_STREAK_CASH_BONUS, DAILY_LOGIN_MAX_STREAK_BONUS_CASH);
-            loginBonusAwarded = DAILY_LOGIN_BASE_CASH + streakBonus;
-            newCash += loginBonusAwarded;
-
-            setUserProfile(prev => ({ // This will trigger another save due to userProfile dependency if not careful
-                ...prev,
-                cash: newCash,
-                lastLoginDate: todayStr,
-                dailyLoginStreak: currentLoginStreak
-            }));
-            
-            toast({
-                title: "Daily Login Bonus!",
-                description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).`
-            });
+        if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) { 
+            currentLoginStreak++;
+        } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) { 
+            currentLoginStreak = 1; 
+        } else if (!userProfile.lastLoginDate) { 
+            currentLoginStreak = 1;
         }
+        
+        const streakBonus = Math.min( (currentLoginStreak -1) * DAILY_LOGIN_STREAK_CASH_BONUS, DAILY_LOGIN_MAX_STREAK_BONUS_CASH);
+        loginBonusAwarded = DAILY_LOGIN_BASE_CASH + streakBonus;
+        newCash += loginBonusAwarded;
+
+        setUserProfile(prev => ({ 
+            ...prev,
+            cash: newCash,
+            lastLoginDate: todayStr,
+            dailyLoginStreak: currentLoginStreak
+        }));
+        
+        toast({
+            title: "Daily Login Bonus!",
+            description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).`
+        });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, toast]); // Removed userProfile to avoid re-triggering on its own update
+  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast]); 
 
 
   useEffect(() => {
@@ -347,7 +376,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.setItem('studySessions', JSON.stringify(sessions));
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        localStorage.setItem('notepadData', JSON.stringify(notepadData));
+        // No separate notepadData item as it's part of userProfile
         localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
         if (lastOfferGenerationTime) {
           localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
@@ -369,7 +398,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to save data to localStorage:", error);
       }
     }
-  }, [sessions, userProfile, notepadData, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
+  }, [sessions, userProfile, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
   
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
@@ -380,11 +409,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
   }, [toast]);
 
-  const checkAndUnlockAchievements = useCallback(() => { // Removed parameters, will use current state
+  const checkAndUnlockAchievements = useCallback(() => { 
     setUserProfile(prevUserProfile => {
-        const currentInvestmentStats = capitalistStatsForAchievements; // Use state directly
-        const currentSessions = sessions; // Use state directly
-        const currentDailyChallenges = dailyChallenges; // Use state directly
+        const currentInvestmentStats = capitalistStatsForAchievements; 
+        const currentSessions = sessions; 
+        const currentDailyChallenges = dailyChallenges; 
 
         const newlyUnlocked: string[] = [];
         let totalCashRewardFromAchievements = 0;
@@ -416,8 +445,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (isLoaded) { 
         checkAndUnlockAchievements();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.revisionConcepts.length]);
+  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements]);
 
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
@@ -440,7 +468,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { newLevel, newTitle, leveledUp };
   }, [toast]);
 
-  const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => { // Pass current profile
+  const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => { 
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
     let currentStudyStreak = currentProfile.currentStreak;
@@ -474,11 +502,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
 
-  const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number) => {
+  const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
     setDailyChallenges(prevChallenges => 
         prevChallenges.map(challenge => {
             if (challenge.type === type && !challenge.isCompleted && !challenge.rewardClaimed) {
-                const newCurrentValue = Math.min((challenge.currentValue || 0) + value, challenge.targetValue);
+                const newCurrentValue = absoluteValue ? value : Math.min((challenge.currentValue || 0) + value, challenge.targetValue);
                 const isNowCompleted = newCurrentValue >= challenge.targetValue;
                 if (isNowCompleted && !challenge.isCompleted) { 
                      toast({ title: "Challenge Goal Met!", description: `You've met the goal for '${challenge.title}'! Claim your reward.` });
@@ -490,22 +518,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [toast]);
 
-  const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
-      setDailyChallenges(prevChallenges => 
-        prevChallenges.map(challenge => {
-            if (challenge.type === 'tasksCompleted' && !challenge.rewardClaimed) {
-                // Here, completedTasksCount is the new total, not an increment.
-                const newCurrentValue = Math.min(completedTasksCount, challenge.targetValue);
-                const isNowCompleted = newCurrentValue >= challenge.targetValue;
-                 if (isNowCompleted && !challenge.isCompleted) { 
-                     toast({ title: "Challenge Update!", description: `You've met the goal for '${challenge.title}'!` });
-                }
-                return { ...challenge, currentValue: newCurrentValue, isCompleted: isNowCompleted, lastProgressUpdate: Date.now() };
-            }
-            return challenge;
-        })
-    );
-  }, [toast]);
 
   const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => {
     if (sessionDetails.durationInSeconds <= 0) {
@@ -523,7 +535,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
 
-    setUserProfile(prevProfile => { // Update profile based on its previous state
+    setUserProfile(prevProfile => { 
         const { streakBonusMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
         
         let awardedXp = 0;
@@ -613,7 +625,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       ownedSkinIds: [...prev.ownedSkinIds, skinId],
     }));
     toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${skin.price.toLocaleString()}.` });
-    // checkAndUnlockAchievements(); // This call is handled by useEffect dependency on ownedSkinIds.length
     return true;
   }, [userProfile, getSkinById, isSkinOwned, toast]);
 
@@ -638,8 +649,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.` });
   }, [isSkinOwned, getSkinById, toast, applyThemePreference]);
 
-  const updateNotepadData = useCallback((newData: Partial<NotepadData>) => {
-    setNotepadData(prev => ({ ...prev, ...newData }));
+
+  const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
+      setUserProfile(prev => ({
+          ...prev,
+          notepadData: {
+              ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
+              [field]: data,
+          }
+      }));
   }, []);
 
   const addNotepadNote = useCallback((note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => {
@@ -649,31 +667,27 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       createdAt: Date.now(),
       lastModified: Date.now(),
     };
-    setNotepadData(prev => ({ ...prev, notes: [newNote, ...(prev.notes || [])] }));
+    updateNotepadField('notes', [newNote, ...(userProfile.notepadData?.notes || [])]);
     updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Note Added", description: `"${note.title}" has been saved.` });
-  }, [toast, updateChallengeProgress]);
+  }, [toast, updateChallengeProgress, userProfile.notepadData?.notes, updateNotepadField]);
 
   const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
-    setNotepadData(prev => ({
-      ...prev,
-      notes: (prev.notes || []).map(note =>
+    const newNotes = (userProfile.notepadData?.notes || []).map(note =>
         note.id === updatedNote.id ? { ...updatedNote, lastModified: Date.now() } : note
-      ),
-    }));
+      );
+    updateNotepadField('notes', newNotes);
     toast({ title: "Note Updated", description: `"${updatedNote.title}" has been saved.` });
-  }, [toast]);
+  }, [toast, userProfile.notepadData?.notes, updateNotepadField]);
 
   const deleteNotepadNote = useCallback((noteId: string) => {
-    const noteToDelete = notepadData.notes.find(n => n.id === noteId);
-    setNotepadData(prev => ({
-      ...prev,
-      notes: (prev.notes || []).filter(note => note.id !== noteId),
-    }));
+    const noteToDelete = userProfile.notepadData?.notes.find(n => n.id === noteId);
+    const newNotes = (userProfile.notepadData?.notes || []).filter(note => note.id !== noteId);
+    updateNotepadField('notes', newNotes);
     if (noteToDelete) {
         toast({ title: "Note Deleted", description: `"${noteToDelete.title}" has been removed.` });
     }
-  }, [notepadData.notes, toast]);
+  }, [toast, userProfile.notepadData?.notes, updateNotepadField]);
 
   const calculateNextRevisionDate = (learnedDateStr: string, stage: number): string => {
     const interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1]; 
@@ -690,13 +704,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       nextRevisionDate: calculateNextRevisionDate(learnedDateStr, 0),
       revisionStage: 0,
     };
-    setNotepadData(prev => ({ ...prev, revisionConcepts: [...(prev.revisionConcepts || []), newConcept] }));
+    updateNotepadField('revisionConcepts', [...(userProfile.notepadData?.revisionConcepts || []), newConcept]);
+    updateChallengeProgress('notepadEntry', 1); // Or a specific revision challenge type
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
-  }, [toast]);
+  }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField, updateChallengeProgress]);
 
   const markConceptRevised = useCallback((conceptId: string) => {
-    setNotepadData(prev => {
-      const concepts = (prev.revisionConcepts || []).map(c => {
+    const concepts = (userProfile.notepadData?.revisionConcepts || []).map(c => {
         if (c.id === conceptId) {
           const todayStr = format(new Date(), 'yyyy-MM-dd');
           const newStage = c.revisionStage + 1;
@@ -709,21 +723,153 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         return c;
       });
-      return { ...prev, revisionConcepts: concepts };
-    });
+    updateNotepadField('revisionConcepts', concepts);
     toast({ title: "Concept Revised!", description: "Revision schedule updated."});
-  }, [toast]);
+  }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField]);
 
   const deleteRevisionConcept = useCallback((conceptId: string) => {
-    const conceptToDelete = notepadData.revisionConcepts?.find(c => c.id === conceptId);
-     setNotepadData(prev => ({
-      ...prev,
-      revisionConcepts: (prev.revisionConcepts || []).filter(c => c.id !== conceptId),
-    }));
+    const conceptToDelete = userProfile.notepadData?.revisionConcepts?.find(c => c.id === conceptId);
+    const newConcepts = (userProfile.notepadData?.revisionConcepts || []).filter(c => c.id !== conceptId);
+    updateNotepadField('revisionConcepts', newConcepts);
     if (conceptToDelete) {
         toast({ title: "Concept Removed", description: `"${conceptToDelete.name}" removed from revision.` });
     }
-  }, [notepadData.revisionConcepts, toast]);
+  }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField]);
+
+  const addHabit = useCallback((habitData: Omit<Habit, 'id' | 'createdAt' | 'log' | 'currentStreak' | 'longestStreak'>) => {
+    const newHabit: Habit = {
+      ...habitData,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      log: {},
+      currentStreak: 0,
+      longestStreak: 0,
+    };
+    updateNotepadField('habits', [...(userProfile.notepadData?.habits || []), newHabit]);
+    toast({ title: "Habit Added", description: `"${newHabit.name}" has been created.` });
+  }, [toast, userProfile.notepadData?.habits, updateNotepadField]);
+
+  const updateHabit = useCallback((updatedHabit: Habit) => {
+    const newHabits = (userProfile.notepadData?.habits || []).map(h => h.id === updatedHabit.id ? updatedHabit : h);
+    updateNotepadField('habits', newHabits);
+    toast({ title: "Habit Updated", description: `"${updatedHabit.name}" has been saved.`});
+  }, [toast, userProfile.notepadData?.habits, updateNotepadField]);
+
+  const deleteHabit = useCallback((habitId: string) => {
+    const habitToDelete = userProfile.notepadData?.habits.find(h => h.id === habitId);
+    const newHabits = (userProfile.notepadData?.habits || []).filter(h => h.id !== habitId);
+    updateNotepadField('habits', newHabits);
+    if (habitToDelete) {
+        toast({ title: "Habit Deleted", description: `"${habitToDelete.name}" has been removed.`});
+    }
+  }, [toast, userProfile.notepadData?.habits, updateNotepadField]);
+
+ const getHabitLogKey = (habit: Habit, date: Date): string => {
+    return habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : `${format(date, 'yyyy')}-W${String(getWeek(date, { weekStartsOn: 1 })).padStart(2, '0')}`;
+ };
+
+  const getHabitCompletionForDate = useCallback((habit: Habit, date: Date): HabitLogEntry | undefined => {
+    const key = getHabitLogKey(habit, date);
+    return habit.log[key];
+  }, []);
+  
+  const getHabitCompletionsForWeek = useCallback((habit: Habit, date: Date): number => {
+    if (habit.frequency !== 'weekly' || !habit.targetCompletions) return 0;
+    
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    let completions = 0;
+    for (let i = 0; i < 7; i++) {
+      const dayInWeek = addDays(weekStart, i);
+      const dayKey = format(dayInWeek, 'yyyy-MM-dd'); // Assuming weekly habits are logged daily towards a weekly goal
+      const logEntry = habit.log[dayKey];
+      if (logEntry && logEntry.completed) {
+        completions += (logEntry.count || 1); // Use count if present, else assume 1
+      }
+    }
+    return completions;
+  }, []);
+
+
+  const logHabitCompletion = useCallback((habitId: string, date: Date, completed: boolean = true, countIncrement?: number) => {
+      setUserProfile(prevProfile => {
+          if (!prevProfile.notepadData) return prevProfile;
+          
+          let habitCompletedForChallenge = false;
+
+          const updatedHabits = (prevProfile.notepadData.habits || []).map(habit => {
+              if (habit.id === habitId) {
+                  const logKey = getHabitLogKey(habit, date);
+                  const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
+                  
+                  let newCompletedStatus = completed;
+                  let newCount = oldLogEntry.count || 0;
+
+                  if (habit.frequency === 'weekly' && habit.targetCompletions) {
+                      if (completed) { // If marking weekly as "done for the day contributing to weekly"
+                         newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
+                      } else { // If un-marking
+                         newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
+                      }
+                      newCompletedStatus = newCount >= habit.targetCompletions;
+                  } else { // Daily habit
+                      newCount = completed ? 1 : 0;
+                  }
+                  
+                  const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCompletedStatus, count: newCount };
+                  const newLog = { ...habit.log, [logKey]: newLogEntry };
+
+                  // Streak calculation (simplified for daily, needs more complex logic for weekly based on full week completion)
+                  let currentStreak = habit.currentStreak;
+                  let longestStreak = habit.longestStreak;
+
+                  if (habit.frequency === 'daily') {
+                      if (newCompletedStatus) {
+                          const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
+                          if (habit.log[yesterdayKey]?.completed) {
+                              currentStreak++;
+                          } else {
+                              currentStreak = 1;
+                          }
+                          if (currentStreak > longestStreak) {
+                              longestStreak = currentStreak;
+                          }
+                          habitCompletedForChallenge = true;
+                      } else {
+                          // If unchecking today, check if yesterday was completed to maintain streak if today was the only break
+                          const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
+                          const twoDaysAgoKey = format(subDays(date, 2), 'yyyy-MM-dd');
+                          if(habit.log[yesterdayKey]?.completed && habit.log[twoDaysAgoKey]?.completed) {
+                            // This logic is tricky, simple reset for now on uncheck if it breaks streak
+                             //currentStreak = habit.log[yesterdayKey]?.completed ? calculate streak from past : 0; 
+                          } else if (!habit.log[yesterdayKey]?.completed) {
+                             currentStreak = 0;
+                          }
+                      }
+                  }
+                  // Weekly streak would need to check if the *entire previous week* was completed
+                  // This requires iterating through all days of the previous week if targetCompletions was met.
+                  // For simplicity now, weekly streak is not as granularly updated here.
+
+                  return { ...habit, log: newLog, currentStreak, longestStreak };
+              }
+              return habit;
+          });
+          
+          if(habitCompletedForChallenge){
+             updateChallengeProgress('habitCompletions', 1);
+          }
+
+          return {
+              ...prevProfile,
+              notepadData: {
+                  ...prevProfile.notepadData,
+                  habits: updatedHabits,
+              }
+          };
+      });
+      toast({ title: "Habit Updated", description: "Your progress has been logged." });
+  }, [toast, updateChallengeProgress]);
+
 
 
   const generateOffers = (): CapitalistOffer[] => {
@@ -785,7 +931,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
     toast({ title: "Investment Result", description: message });
-    // checkAndUnlockAchievements(); // Handled by useEffect
     return { success: true, message, profit: finalCashChange };
 
   }, [capitalistOffers, userProfile.cash, toast]);
@@ -810,7 +955,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                         completedChallengeIds: updatedCompletedIds,
                     };
                 });
-                // checkAndUnlockAchievements(); // Handled by useEffect
                 return { ...challenge, rewardClaimed: true };
             }
             return challenge;
@@ -837,11 +981,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     <SessionContext.Provider value={{ 
       sessions, addSession, clearSessions, updateSessionDescription,
       userProfile, updateUserProfile, updateSleepWakeTimes,
-      notepadData, updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
+      addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
+      addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
-      dailyChallenges, claimChallengeReward, updateTaskChallengeProgress,
+      dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, checkAndUnlockAchievements,
       isLoaded
     }}>
@@ -859,4 +1004,3 @@ export const useSessions = () => {
 };
 
     
-```

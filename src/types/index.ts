@@ -27,9 +27,10 @@ export interface UserProfile {
   wakeUpTime: { hour: number; period: 'AM' | 'PM' };
   sleepTime: { hour: number; period: 'AM' | 'PM' };
   unlockedAchievementIds: string[];
-  revisionConcepts: RevisionConcept[];
+  // revisionConcepts: RevisionConcept[]; // This was part of NotepadData, keep it there
   lastLoginDate: string | null; // YYYY-MM-DD format for daily login bonus
   dailyLoginStreak: number; // For daily login bonus
+  notepadData?: NotepadData; // Keep notepad data nested here if that was the intention or separate if loaded differently
 }
 
 export interface Skin {
@@ -40,8 +41,8 @@ export interface Skin {
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
-  isTheme?: boolean; // Indicates if this skin primarily changes CSS theme variables
-  themeClass?: 'dark' | 'sepia'; // Optional class to apply to <html> if isTheme is true
+  isTheme?: boolean; 
+  themeClass?: 'dark' | 'sepia'; 
 }
 
 export interface CapitalistOffer {
@@ -102,12 +103,34 @@ export interface RevisionConcept {
   tags?: string[];
 }
 
+export type HabitFrequency = 'daily' | 'weekly';
+export interface HabitLogEntry {
+  date: string; // YYYY-MM-DD for daily, or YYYY-WW (week number) for weekly
+  completed: boolean;
+  count?: number; // For weekly habits that might have a target count
+}
+
+export interface Habit {
+  id: string;
+  name: string;
+  description?: string;
+  frequency: HabitFrequency;
+  targetCompletions?: number; // e.g., "exercise 3 times a week"
+  color?: string; // Optional: for UI theming
+  createdAt: number;
+  log: Record<string, HabitLogEntry>; // Key is date string (YYYY-MM-DD or YYYY-WW)
+  currentStreak: number;
+  longestStreak: number;
+}
+
+
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
   goals: NotepadGoal[];
   links: NotepadLink[];
   revisionConcepts: RevisionConcept[];
+  habits: Habit[]; // Added habits here
 }
 
 
@@ -121,12 +144,11 @@ export interface DailyChallenge {
   currentValue: number;
   isCompleted: boolean; 
   rewardClaimed: boolean; 
-  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry';
+  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions';
   resetsDaily: boolean; 
   lastProgressUpdate?: number; 
 }
 
-// Payload for achievement criteria related to capitalist feature
 export interface AchievementCriteriaInvestmentPayload {
   firstInvestmentMade: boolean;
   totalProfit: number;
@@ -144,10 +166,9 @@ export interface Achievement {
     challenges: DailyChallenge[],
     investmentStats: AchievementCriteriaInvestmentPayload 
   ) => boolean;
-  category?: 'General' | 'Study Time' | 'Pomodoro' | 'Progression' | 'Collection' | 'Streaks & Challenges' | 'Capitalist' | 'Notepad & Revision';
+  category?: 'General' | 'Study Time' | 'Pomodoro' | 'Progression' | 'Collection' | 'Streaks & Challenges' | 'Capitalist' | 'Notepad & Revision' | 'Habits';
 }
 
-// For Ambiance Mixer
 export interface AmbientSound {
   id: string;
   name: string;
@@ -156,4 +177,3 @@ export interface AmbientSound {
 }
 
     
-```

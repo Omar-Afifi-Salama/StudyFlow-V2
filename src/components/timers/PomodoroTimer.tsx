@@ -122,7 +122,7 @@ export default function PomodoroTimer() {
 
 
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
-  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
+  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp; 
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp; // XP needed to reach the target of the next level from current total XP
   
@@ -265,6 +265,3 @@ export default function PomodoroTimer() {
     </Card>
   );
 }
-
-    
-```

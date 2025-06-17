@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -6,9 +7,11 @@ import OfferCard from './OfferCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, RefreshCw, DollarSign } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 export default function CapitalistPage() {
   const { userProfile, capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime } = useSessions();
+  const { toast } = useToast(); // Get toast function
 
   useEffect(() => {
     ensureCapitalistOffers();
@@ -16,6 +19,17 @@ export default function CapitalistPage() {
 
   const handleRefreshOffers = () => {
     ensureCapitalistOffers(); 
+  };
+
+  const handleInvestment = async (offerId: string, investmentAmount: number) => {
+    // investInOffer now returns a promise that resolves with the result for toast
+    const result = await investInOffer(offerId, investmentAmount);
+    toast({
+        title: result.success ? "Investment Result" : "Investment Failed",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    // No need to return anything specific here for OfferCard if toast is handled here
   };
 
   const nextRefreshTime = lastOfferGenerationTime ? new Date(lastOfferGenerationTime + 24 * 60 * 60 * 1000) : null;
@@ -59,7 +73,7 @@ export default function CapitalistPage() {
                   key={offer.id}
                   offer={offer}
                   userCash={userProfile.cash}
-                  onInvest={(investmentAmount) => investInOffer(offer.id, investmentAmount)}
+                  onInvest={(investmentAmount) => handleInvestment(offer.id, investmentAmount)} // Pass updated handler
                 />
               ))}
             </div>
@@ -69,3 +83,5 @@ export default function CapitalistPage() {
     </div>
   );
 }
+
+    
