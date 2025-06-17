@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useEffect } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
 import OfferCard from './OfferCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, RefreshCw, Coins } from 'lucide-react';
+import { TrendingUp, RefreshCw, DollarSign } from 'lucide-react';
 import { Button } from '../ui/button';
 
 export default function CapitalistPage() {
@@ -16,9 +15,6 @@ export default function CapitalistPage() {
   }, [ensureCapitalistOffers]);
 
   const handleRefreshOffers = () => {
-    // This could be made more restrictive (e.g., allow manual refresh once a day or for a cost)
-    // For now, it will just re-trigger the check which might re-generate if conditions met.
-    // To force regeneration for demo, you might need to clear lastOfferGenerationTime in context (not implemented here)
     ensureCapitalistOffers(); 
   };
 
@@ -43,7 +39,7 @@ export default function CapitalistPage() {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6 p-4 bg-secondary/30 rounded-lg">
-            <p className="text-lg">Your Cash: <span className="font-semibold text-yellow-500 flex items-center"><Coins className="h-5 w-5 mr-1"/>{userProfile.cash}</span></p>
+            <p className="text-lg">Your Cash: <span className="font-semibold text-green-500 flex items-center"><DollarSign className="h-5 w-5 mr-1"/>{userProfile.cash.toLocaleString()}</span></p>
             {nextRefreshTime && (
               <p className="text-sm text-muted-foreground">
                 Next offer refresh: {nextRefreshTime.toLocaleTimeString()}
@@ -63,7 +59,7 @@ export default function CapitalistPage() {
                   key={offer.id}
                   offer={offer}
                   userCash={userProfile.cash}
-                  onInvest={() => investInOffer(offer.id, offer.investmentAmount)}
+                  onInvest={(investmentAmount) => investInOffer(offer.id, investmentAmount)}
                 />
               ))}
             </div>

@@ -1,12 +1,11 @@
-
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, Coins, UserCircle, ShieldCheck, CheckSquare, CalendarCheck } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, MessageCircle, DollarSign, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, LEVEL_THRESHOLDS, TITLES } from '@/contexts/SessionContext'; // Import LEVEL_THRESHOLDS and TITLES
+import { useSessions, LEVEL_THRESHOLDS, TITLES } from '@/contexts/SessionContext'; 
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -22,11 +21,11 @@ export default function Header() {
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" /> },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" /> },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" /> },
+    { href: '/ai-chat', label: 'AI Chat', icon: <MessageCircle className="h-5 w-5 mr-2" /> },
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" /> },
   ];
 
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
-  // Ensure nextLevelXpTarget doesn't go out of bounds for max level
   const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length 
                              ? LEVEL_THRESHOLDS[userProfile.level] 
                              : userProfile.xp; 
@@ -45,25 +44,25 @@ export default function Header() {
           </svg>
           <span className="font-bold text-xl font-headline">StudyFlow</span>
         </Link>
-        <nav className="flex flex-1 items-center space-x-1">
+        <nav className="flex flex-1 items-center space-x-1 overflow-x-auto">
           {navItems.map((item) => (
             <Button
               key={item.href}
               variant="ghost"
               asChild
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
+                "text-sm font-medium transition-colors hover:text-primary shrink-0",
                 pathname === item.href ? "text-primary" : "text-foreground/60"
               )}
             >
-              <Link href={item.href}>
+              <Link href={item.href} className="flex items-center">
                 {item.icon}
-                {item.label}
+                <span className="hidden sm:inline-block">{item.label}</span>
               </Link>
             </Button>
           ))}
         </nav>
-        <div className="flex items-center space-x-4 ml-auto">
+        <div className="flex items-center space-x-3 md:space-x-4 ml-auto pl-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -87,10 +86,27 @@ export default function Header() {
             </Tooltip>
           </TooltipProvider>
 
+           <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-1 text-sm cursor-default">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                  <span>{userProfile.currentStreak}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Current Streak: {userProfile.currentStreak} days</p>
+                <p>Longest Streak: {userProfile.longestStreak} days</p>
+                {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * 1, 20)).toFixed(0)}% XP/Cash</p>}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <div className="flex items-center space-x-1 text-sm">
-            <Coins className="h-5 w-5 text-yellow-500" />
-            <span>{userProfile.cash}</span>
+            <DollarSign className="h-5 w-5 text-green-500" />
+            <span>{userProfile.cash.toLocaleString()}</span>
           </div>
+
            {userTitle && (
              <TooltipProvider>
                 <Tooltip>

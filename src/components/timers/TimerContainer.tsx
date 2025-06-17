@@ -10,10 +10,10 @@ export default function TimerContainer() {
     <div className="w-full max-w-2xl mx-auto">
       <Tabs defaultValue="pomodoro" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="pomodoro" className="py-3 text-base">
+          <TabsTrigger value="pomodoro" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
             <Clock4 className="mr-2 h-5 w-5" /> Pomodoro
           </TabsTrigger>
-          <TabsTrigger value="stopwatch" className="py-3 text-base">
+          <TabsTrigger value="stopwatch" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
             <Timer className="mr-2 h-5 w-5" /> Stopwatch
           </TabsTrigger>
         </TabsList>

@@ -1,8 +1,7 @@
-
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, ListPlus, HelpCircle } from 'lucide-react';
+import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
 import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS } from '@/contexts/SessionContext';
 import { useStopwatch } from '@/hooks/use-stopwatch';
@@ -30,6 +29,7 @@ export default function Stopwatch() {
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevel = nextLevelXpTarget - currentLevelXpStart;
   const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
+  const streakBonusPercent = (Math.min(userProfile.currentStreak * 0.01, 0.20) * 100).toFixed(0);
 
   return (
     <Card className="shadow-lg">
@@ -44,7 +44,8 @@ export default function Stopwatch() {
                             <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Stopwatch: +{XP_PER_MINUTE_FOCUS} XP/min, +{CASH_PER_5_MINUTES_FOCUS} Cash/5min</p>
+                             <p>Stopwatch: +{XP_PER_MINUTE_FOCUS} XP/min, +${CASH_PER_5_MINUTES_FOCUS}/5min</p>
+                            {userProfile.currentStreak > 0 && <p className="text-green-500">Current Streak Bonus: +{streakBonusPercent}% XP/Cash</p>}
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>

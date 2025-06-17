@@ -1,11 +1,10 @@
-
 "use client";
 
 import type { DailyChallenge } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Gift, XCircle, Zap, Coins } from 'lucide-react';
+import { CheckCircle, Gift, XCircle, Zap, DollarSign } from 'lucide-react';
 
 interface ChallengeCardProps {
   challenge: DailyChallenge;
@@ -31,13 +30,13 @@ export default function ChallengeCard({ challenge, onClaimReward }: ChallengeCar
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span>Progress:</span>
-            <span>{challenge.currentValue} / {challenge.targetValue}</span>
+            <span>{challenge.currentValue} / {challenge.targetValue} {challenge.type === 'studyDurationMinutes' ? 'min' : ''}</span>
           </div>
           <Progress value={progressPercent} aria-label={`${challenge.title} progress ${progressPercent}%`} />
         </div>
         <div className="text-sm space-y-1">
             <p className="flex items-center"><Zap className="h-4 w-4 mr-2 text-yellow-400" /> XP Reward: <span className="font-medium ml-1">{challenge.xpReward}</span></p>
-            <p className="flex items-center"><Coins className="h-4 w-4 mr-2 text-yellow-500" /> Cash Reward: <span className="font-medium ml-1">{challenge.cashReward}</span></p>
+            <p className="flex items-center"><DollarSign className="h-4 w-4 mr-2 text-green-500" /> Cash Reward: <span className="font-medium ml-1">${challenge.cashReward.toLocaleString()}</span></p>
         </div>
       </CardContent>
       <CardFooter className="p-4 border-t">

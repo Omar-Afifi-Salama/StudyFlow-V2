@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useSessions, PREDEFINED_SKINS } from '@/contexts/SessionContext';
 import SkinCard from './SkinCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gem } from 'lucide-react';
+import { Gem, DollarSign } from 'lucide-react';
 
 export default function ShopPage() {
   const { userProfile, getSkinById, buySkin, equipSkin, isSkinOwned } = useSessions();
@@ -22,7 +21,7 @@ export default function ShopPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="mb-2">Your Cash: <span className="font-semibold text-yellow-500">{userProfile.cash}</span></p>
+          <p className="mb-2">Your Cash: <span className="font-semibold text-green-500 flex items-center"><DollarSign className="h-4 w-4 mr-1"/>{userProfile.cash.toLocaleString()}</span></p>
           <p className="mb-6">Your Level: <span className="font-semibold text-primary">{userProfile.level} ({userProfile.title})</span></p>
           
           {PREDEFINED_SKINS.length === 0 ? (

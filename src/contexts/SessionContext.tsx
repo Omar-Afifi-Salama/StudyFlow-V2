@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge } from '@/types';
@@ -6,50 +5,55 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useToast } from '@/hooks/use-toast';
 
 export const XP_PER_MINUTE_FOCUS = 10;
-export const CASH_PER_5_MINUTES_FOCUS = 1;
+export const CASH_PER_5_MINUTES_FOCUS = 100; // Scaled up: $100 per 5 minutes
+const STREAK_BONUS_PER_DAY = 0.01; // 1% bonus per day of streak
+const MAX_STREAK_BONUS = 0.20; // Max 20% bonus
 
-export const LEVEL_THRESHOLDS = [ // Must match Header.tsx
-  0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, 4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300, // Levels 1-20
-  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, // Levels 21-30
-  43900, 47100, 50400, 53800, 57300, 60900, 64600, 68400, 72300, 76300, // Levels 31-40
-  80400, 84600, 88900, 93300, 97800, 102400, 107100, 111900, 116800, 121800, // Levels 41-50
+export const LEVEL_THRESHOLDS = [ 
+  0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, 4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300, 
+  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, 
+  43900, 47100, 50400, 53800, 57300, 60900, 64600, 68400, 72300, 76300, 
+  80400, 84600, 88900, 93300, 97800, 102400, 107100, 111900, 116800, 121800, 
 ];
 
 export const TITLES = [
-  "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", // 1-10
-  "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", // 11-15
-  "Enlightened Savant", "Venerable Sage", "Zenith Guru", "Ascendant Master", "Study God", // 16-20
-  "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", // 21-25
-  "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", // 26-30
-  "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", // 31-35
-  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", "The Oracle" // 36-40
-  // Add more up to level 50 if needed. Current max title for level 40.
+  "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", 
+  "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", 
+  "Enlightened Savant", "Venerable Sage", "Zenith Guru", "Ascendant Master", "Study God", 
+  "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", 
+  "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", 
+  "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", 
+  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", "The Oracle" 
 ];
 
 
 export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/6FB5F0/FFFFFF.png', dataAiHint: 'blue gradient' },
   { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/1A202C/A0AEC0.png', dataAiHint: 'dark theme', isTheme: true },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 100, levelRequirement: 3, imageUrl: 'https://placehold.co/300x200/2F4F4F/90EE90.png', dataAiHint: 'forest pattern' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 150, levelRequirement: 5, imageUrl: 'https://placehold.co/300x200/FF8C00/FFD700.png', dataAiHint: 'sunset gradient' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 300, levelRequirement: 7, imageUrl: 'https://placehold.co/300x200/483D8B/E6E6FA.png', dataAiHint: 'galaxy stars' },
-  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 200, levelRequirement: 8, imageUrl: 'https://placehold.co/300x200/333333/F5F5F5.png', dataAiHint: 'grayscale pattern' },
-  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 250, levelRequirement: 10, imageUrl: 'https://placehold.co/300x200/20B2AA/AFEEEE.png', dataAiHint: 'ocean waves' },
-  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 400, levelRequirement: 12, imageUrl: 'https://placehold.co/300x200/FF00FF/00FFFF.png', dataAiHint: 'neon grid' },
-  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 350, levelRequirement: 15, imageUrl: 'https://placehold.co/300x200/FFB6C1/ADD8E6.png', dataAiHint: 'pastel colors' },
-  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 1000, levelRequirement: 18, imageUrl: 'https://placehold.co/300x200/FFD700/B8860B.png', dataAiHint: 'gold texture' },
-  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 2000, levelRequirement: 20, imageUrl: 'https://placehold.co/300x200/1A237E/C5CAE9.png', dataAiHint: 'dark blue elegant' },
+  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/300x200/2F4F4F/90EE90.png', dataAiHint: 'forest pattern' },
+  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/300x200/FF8C00/FFD700.png', dataAiHint: 'sunset gradient' },
+  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/300x200/483D8B/E6E6FA.png', dataAiHint: 'galaxy stars' },
+  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/300x200/333333/F5F5F5.png', dataAiHint: 'grayscale pattern' },
+  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/300x200/20B2AA/AFEEEE.png', dataAiHint: 'ocean waves' },
+  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/300x200/FF00FF/00FFFF.png', dataAiHint: 'neon grid' },
+  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/300x200/FFB6C1/ADD8E6.png', dataAiHint: 'pastel colors' },
+  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/300x200/FFD700/B8860B.png', dataAiHint: 'gold texture' },
+  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/300x200/1A237E/C5CAE9.png', dataAiHint: 'dark blue elegant' },
 ];
 
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0,
-  cash: 50, 
+  cash: 50000, // Scaled up
   level: 1,
   title: TITLES[0],
-  ownedSkinIds: ['classic', 'dark_mode'], // Dark mode owned by default
+  ownedSkinIds: ['classic', 'dark_mode'], 
   equippedSkinId: 'classic',
   completedChallengeIds: [],
+  currentStreak: 0,
+  longestStreak: 0,
+  lastStudyDate: null,
+  geminiApiKey: null,
 };
 
 const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -60,9 +64,10 @@ const DEFAULT_NOTEPAD_DATA: NotepadData = {
 };
 
 const INITIAL_DAILY_CHALLENGES: DailyChallenge[] = [
-    { id: 'study60', title: 'Focused Learner', description: 'Study for a total of 60 minutes today.', xpReward: 100, cashReward: 10, targetValue: 60, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
-    { id: 'pomodoro2', title: 'Pomodoro Power', description: 'Complete 2 Pomodoro focus cycles.', xpReward: 75, cashReward: 5, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
-    { id: 'tasks3', title: 'Task Master', description: 'Complete 3 tasks from your checklist.', xpReward: 50, cashReward: 5, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
+    { id: 'study60', title: 'Focused Learner', description: 'Study for a total of 60 minutes today.', xpReward: 100, cashReward: 1000, targetValue: 60, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
+    { id: 'pomodoro2', title: 'Pomodoro Power', description: 'Complete 2 Pomodoro focus cycles.', xpReward: 75, cashReward: 500, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
+    { id: 'tasks3', title: 'Task Master', description: 'Complete 3 tasks from your checklist.', xpReward: 50, cashReward: 500, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
+    { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
 ];
 
 interface SessionContextType {
@@ -71,6 +76,7 @@ interface SessionContextType {
   clearSessions: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   userProfile: UserProfile;
+  updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
   notepadData: NotepadData;
   updateNotepadData: (newData: Partial<NotepadData>) => void;
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
@@ -87,6 +93,7 @@ interface SessionContextType {
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
   updateTaskChallengeProgress: (completedTasksCount: number) => void;
+  setGeminiApiKey: (apiKey: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -118,12 +125,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
       const storedProfile = localStorage.getItem('userProfile');
       if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-         // Ensure completedChallengeIds is initialized
-        if (!parsedProfile.completedChallengeIds) {
-          parsedProfile.completedChallengeIds = [];
-        }
-        setUserProfile(parsedProfile);
+        const parsedProfile = JSON.parse(storedProfile) as UserProfile;
+        if (!parsedProfile.completedChallengeIds) parsedProfile.completedChallengeIds = [];
+        if (typeof parsedProfile.currentStreak !== 'number') parsedProfile.currentStreak = 0;
+        if (typeof parsedProfile.longestStreak !== 'number') parsedProfile.longestStreak = 0;
+        if (!parsedProfile.lastStudyDate) parsedProfile.lastStudyDate = null;
+        if (parsedProfile.geminiApiKey === undefined) parsedProfile.geminiApiKey = null;
+        setUserProfile(prev => ({...DEFAULT_USER_PROFILE, ...parsedProfile})); // Merge with defaults to ensure all fields
       } else {
         setUserProfile(DEFAULT_USER_PROFILE);
       }
@@ -148,13 +156,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (storedChallenges && storedResetDate === todayDateString) {
         setDailyChallenges(JSON.parse(storedChallenges));
       } else {
-        // Reset challenges if it's a new day or no stored challenges
         const freshChallenges = INITIAL_DAILY_CHALLENGES.map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
         setDailyChallenges(freshChallenges);
         setLastChallengeResetDate(todayDateString);
       }
-
-
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       setUserProfile(DEFAULT_USER_PROFILE); 
@@ -191,12 +196,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (lastChallengeResetDate) {
             localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
         }
-
       } catch (error) {
         console.error("Failed to save data to localStorage:", error);
       }
     }
   }, [sessions, userProfile, notepadData, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded]);
+  
+  const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
+    setUserProfile(prev => ({...prev, ...updatedProfileData}));
+  }, []);
+
+  const setGeminiApiKey = useCallback((apiKey: string | null) => {
+    setUserProfile(prev => ({ ...prev, geminiApiKey: apiKey }));
+  }, []);
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -218,6 +230,44 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { newLevel, newTitle, leveledUp };
   }, [toast]);
 
+  const updateStreakAndGetBonus = useCallback(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    let currentStreak = userProfile.currentStreak;
+    let longestStreak = userProfile.longestStreak;
+    let lastStudyDate = userProfile.lastStudyDate;
+
+    if (lastStudyDate) {
+      const lastDate = new Date(lastStudyDate);
+      const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) { // Studied yesterday
+        currentStreak++;
+      } else if (diffDays > 1) { // Missed a day or more
+        currentStreak = 1; // Reset streak but count today
+      }
+      // If diffDays === 0, already studied today, streak doesn't change yet from this specific call
+    } else { // First study session
+      currentStreak = 1;
+    }
+    
+    if (lastStudyDate !== todayStr) { // Only update if it's a new study day
+        if (currentStreak > longestStreak) {
+            longestStreak = currentStreak;
+        }
+        updateChallengeProgress('studyStreak', 1); // Increment studyStreak challenge
+        lastStudyDate = todayStr; // Update last study date
+    }
+
+
+    const streakBonus = Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+    
+    // This update happens after addSession processes rewards.
+    // The userProfile update will be batched in addSession.
+    return { streakBonus, updatedCurrentStreak: currentStreak, updatedLongestStreak: longestStreak, updatedLastStudyDate: lastStudyDate };
+  }, [userProfile.currentStreak, userProfile.longestStreak, userProfile.lastStudyDate]);
+
+
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number) => {
     setDailyChallenges(prevChallenges => 
         prevChallenges.map(challenge => {
@@ -225,7 +275,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 const newCurrentValue = Math.min(challenge.currentValue + value, challenge.targetValue);
                 const isNowCompleted = newCurrentValue >= challenge.targetValue;
                 if (isNowCompleted && !challenge.isCompleted) {
-                     toast({ title: "Challenge Progress!", description: `You completed a part of '${challenge.title}'!` });
+                     toast({ title: "Challenge Goal Met!", description: `You've met the goal for '${challenge.title}'! Claim your reward.` });
                 }
                 return { ...challenge, currentValue: newCurrentValue, isCompleted: isNowCompleted, lastProgressUpdate: Date.now() };
             }
@@ -235,9 +285,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
-      // This function is called when a task's completion status changes.
-      // The 'tasksCompleted' challenge should reflect the total number of *currently* completed tasks.
-      // So, we directly set its currentValue to completedTasksCount.
       setDailyChallenges(prevChallenges => 
         prevChallenges.map(challenge => {
             if (challenge.type === 'tasksCompleted' && !challenge.rewardClaimed) {
@@ -251,9 +298,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             return challenge;
         })
     );
-
   }, [toast]);
-
 
   const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number }) => {
     if (sessionDetails.durationInSeconds <= 0) {
@@ -269,31 +314,33 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
 
+    const { streakBonus, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus();
+    
     let awardedXp = 0;
     let awardedCash = 0;
     const minutesStudied = sessionDetails.durationInSeconds / 60;
 
     if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
-      awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS);
-      awardedCash = Math.floor(minutesStudied / 5 * CASH_PER_5_MINUTES_FOCUS);
+      awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * (1 + streakBonus));
+      awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * (1 + streakBonus));
       updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
     }
     if (sessionDetails.type === 'Pomodoro Focus') {
         updateChallengeProgress('pomodoroCycles', 1);
     }
 
-
     if (awardedXp > 0 || awardedCash > 0) {
       setUserProfile(prevProfile => {
         const newXp = prevProfile.xp + awardedXp;
         const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
         
-        if(awardedXp > 0 && awardedCash > 0) {
-            toast({ title: "Session Rewards", description: `+${awardedXp} XP, +${awardedCash} Cash` });
-        } else if (awardedXp > 0) {
-            toast({ title: "Session Rewards", description: `+${awardedXp} XP` });
-        } else if (awardedCash > 0) {
-            toast({ title: "Session Rewards", description: `+${awardedCash} Cash` });
+        let rewardMessages = [];
+        if (awardedXp > 0) rewardMessages.push(`+$${awardedXp} XP`);
+        if (awardedCash > 0) rewardMessages.push(`+$${awardedCash}`);
+        if (streakBonus > 0) rewardMessages.push(`(${(streakBonus * 100).toFixed(0)}% streak bonus!)`);
+        
+        if (rewardMessages.length > 0) {
+            toast({ title: "Session Rewards", description: rewardMessages.join(', ') });
         }
 
         return {
@@ -302,10 +349,20 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           cash: prevProfile.cash + awardedCash,
           level: newLevel,
           title: newTitle,
+          currentStreak: updatedCurrentStreak,
+          longestStreak: updatedLongestStreak,
+          lastStudyDate: updatedLastStudyDate,
         };
       });
+    } else { // Still update streak info even if no direct XP/cash (e.g. break session)
+         setUserProfile(prevProfile => ({
+          ...prevProfile,
+          currentStreak: updatedCurrentStreak,
+          longestStreak: updatedLongestStreak,
+          lastStudyDate: updatedLastStudyDate,
+        }));
     }
-  }, [checkForLevelUp, toast, updateChallengeProgress]);
+  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus]);
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -338,7 +395,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
     if (userProfile.cash < skin.price) {
-      toast({ title: "Not Enough Cash", description: `You need ${skin.price} cash. You have ${userProfile.cash}.`, variant: "destructive" });
+      toast({ title: "Not Enough Cash", description: `You need $${skin.price}. You have $${userProfile.cash}.`, variant: "destructive" });
       return false;
     }
     if (userProfile.level < skin.levelRequirement) {
@@ -351,7 +408,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       cash: prev.cash - skin.price,
       ownedSkinIds: [...prev.ownedSkinIds, skinId],
     }));
-    toast({ title: "Purchase Successful!", description: `You bought ${skin.name}.` });
+    toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${skin.price}.` });
     return true;
   }, [userProfile, getSkinById, isSkinOwned, toast]);
 
@@ -369,7 +426,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       applyThemePreference('dark');
       localStorage.setItem('themePreference', 'dark');
     } else {
-      applyThemePreference('light'); // Or apply specific skin theme if more complex theming is added
+      applyThemePreference('light'); 
       localStorage.setItem('themePreference', 'light');
     }
 
@@ -412,17 +469,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [notepadData.notes, toast]);
 
-
   const generateOffers = (): CapitalistOffer[] => {
-    const baseOffers: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
-      { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", investmentAmount: 50, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24 },
-      { name: "Crypto Gamble", description: "High risk, high reward digital currency.", investmentAmount: 100, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
-      { name: "Real Estate Flip", description: "Moderate risk, steady gains.", investmentAmount: 200, minRoiPercent: -10, maxRoiPercent: 50, volatilityFactor: 0.4, durationHours: 24 },
-      { name: "Meme Stock Madness", description: "To the moon or bust!", investmentAmount: 75, minRoiPercent: -95, maxRoiPercent: 500, volatilityFactor: 0.95, durationHours: 24 },
-      { name: "Blue Chip Bonds", description: "Slow and steady wins the race.", investmentAmount: 300, minRoiPercent: 1, maxRoiPercent: 10, volatilityFactor: 0.1, durationHours: 24 },
-      { name: "Emerging Market Fund", description: "Potential for growth, with some uncertainty.", investmentAmount: 150, minRoiPercent: -30, maxRoiPercent: 70, volatilityFactor: 0.6, durationHours: 24 },
+    const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
+        { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24 },
+        { name: "Crypto Gamble", description: "High risk, high reward digital currency.", minInvestmentAmount: 10000, maxInvestmentAmount: 50000, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
+        { name: "Real Estate Flip", description: "Moderate risk, steady gains.", minInvestmentAmount: 20000, maxInvestmentAmount: 100000, minRoiPercent: -10, maxRoiPercent: 50, volatilityFactor: 0.4, durationHours: 24 },
+        { name: "Meme Stock Madness", description: "To the moon or bust!", minInvestmentAmount: 7500, maxInvestmentAmount: 30000,  minRoiPercent: -95, maxRoiPercent: 500, volatilityFactor: 0.95, durationHours: 24 },
+        { name: "Blue Chip Bonds", description: "Slow and steady wins the race.", minInvestmentAmount: 30000,maxInvestmentAmount: 150000, minRoiPercent: 1, maxRoiPercent: 10, volatilityFactor: 0.1, durationHours: 24 },
+        { name: "Emerging Market Fund", description: "Potential for growth, with some uncertainty.", minInvestmentAmount: 15000, maxInvestmentAmount: 75000,  minRoiPercent: -30, maxRoiPercent: 70, volatilityFactor: 0.6, durationHours: 24 },
     ];
-    const shuffled = [...baseOffers].sort(() => 0.5 - Math.random());
+    const shuffled = [...baseOffersData].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 3).map(offer => ({
       ...offer,
       id: crypto.randomUUID(),
@@ -443,7 +499,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const offer = capitalistOffers.find(o => o.id === offerId);
     if (!offer) return { success: false, message: "Offer not found." };
     if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
-    if (investmentAmount !== offer.investmentAmount) return {success: false, message: `Investment must be exactly ${offer.investmentAmount} cash.`};
+    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount}.` };
+    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount}.`};
+
 
     const randomFactor = Math.random(); 
     let actualRoiPercent: number;
@@ -455,11 +513,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     const profit = Math.round(investmentAmount * (actualRoiPercent / 100));
     
-    setUserProfile(prev => ({ ...prev, cash: prev.cash + profit })); // User cash is updated by the profit/loss
+    setUserProfile(prev => ({ ...prev, cash: prev.cash + profit })); 
     
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
-    const message = profit >= 0 ? `Investment successful! You gained ${profit} cash.` : `Investment risky... You lost ${Math.abs(profit)} cash.`;
+    const message = profit >= 0 ? `Investment successful! You gained $${profit}.` : `Investment risky... You lost $${Math.abs(profit)}.`;
     toast({ title: "Investment Result", description: message });
     return { success: true, message, profit };
 
@@ -472,7 +530,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 setUserProfile(prevProfile => {
                     const newXp = prevProfile.xp + challenge.xpReward;
                     const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
-                    toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +${challenge.cashReward} Cash for '${challenge.title}'`});
+                    toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward} for '${challenge.title}'`});
                     return {
                         ...prevProfile,
                         xp: newXp,
@@ -498,11 +556,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SessionContext.Provider value={{ 
       sessions, addSession, clearSessions, updateSessionDescription,
-      userProfile, 
+      userProfile, updateUserProfile, 
       notepadData, updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
-      dailyChallenges, claimChallengeReward, updateTaskChallengeProgress
+      dailyChallenges, claimChallengeReward, updateTaskChallengeProgress,
+      setGeminiApiKey
     }}>
       {children}
     </SessionContext.Provider>
@@ -516,4 +575,3 @@ export const useSessions = () => {
   }
   return context;
 };
-

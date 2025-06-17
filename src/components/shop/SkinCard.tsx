@@ -1,11 +1,10 @@
-
 "use client";
 
 import type { Skin } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CheckCircle, Coins, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
 
 interface SkinCardProps {
   skin: Skin;
@@ -44,7 +43,7 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
         <CardTitle className="text-xl font-semibold mb-1">{skin.name}</CardTitle>
         <CardDescription className="text-sm text-muted-foreground mb-2">{skin.description}</CardDescription>
         <div className="flex items-center text-sm mb-1">
-          <Coins className="h-4 w-4 mr-1 text-yellow-500" /> Price: {skin.price}
+          <DollarSign className="h-4 w-4 mr-1 text-green-500" /> Price: {skin.price > 0 ? `$${skin.price.toLocaleString()}` : 'Free'}
         </div>
         <div className="flex items-center text-sm">
           <Lock className="h-4 w-4 mr-1 text-gray-500" /> Requires Level: {skin.levelRequirement}
@@ -65,7 +64,7 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
           <Button onClick={onBuy} disabled={!canBuy} className="w-full">
             <ShoppingCart className="mr-2 h-4 w-4" /> Buy Skin
             {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
-            {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(Need {skin.price - userCash} more)</span>}
+            {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(Need ${(skin.price - userCash).toLocaleString()} more)</span>}
           </Button>
         )}
       </CardFooter>

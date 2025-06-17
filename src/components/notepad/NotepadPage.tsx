@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,16 +23,16 @@ export default function NotepadPage() {
       <CardContent>
         <Tabs defaultValue="checklist" className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
-            <TabsTrigger value="checklist" className="py-3 text-base">
+            <TabsTrigger value="checklist" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
               <CheckSquare className="mr-2 h-5 w-5" /> Checklist
             </TabsTrigger>
-            <TabsTrigger value="notes" className="py-3 text-base">
+            <TabsTrigger value="notes" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
               <StickyNote className="mr-2 h-5 w-5" /> Notes
             </TabsTrigger>
-            <TabsTrigger value="goals" className="py-3 text-base">
+            <TabsTrigger value="goals" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
               <Target className="mr-2 h-5 w-5" /> Goals
             </TabsTrigger>
-            <TabsTrigger value="links" className="py-3 text-base">
+            <TabsTrigger value="links" className="py-2 text-base md:py-3"> {/* Adjusted padding */}
               <LinkIcon className="mr-2 h-5 w-5" /> Links
             </TabsTrigger>
           </TabsList>

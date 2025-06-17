@@ -12,35 +12,40 @@ export type TimerMode = 'stopwatch' | 'pomodoro';
 
 export interface UserProfile {
   xp: number;
-  cash: number;
+  cash: number; // Changed from coins to a general number, displayed as $
   level: number;
   title: string;
   ownedSkinIds: string[];
   equippedSkinId: string | null;
-  completedChallengeIds?: string[]; // Tracks IDs of challenges for which reward was claimed
+  completedChallengeIds?: string[];
+  currentStreak: number;
+  longestStreak: number;
+  lastStudyDate: string | null; // YYYY-MM-DD format
+  geminiApiKey?: string | null; // For AI Chat
 }
 
 export interface Skin {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Will be scaled up for dollars
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
-  isTheme?: boolean; // Indicates if this skin primarily applies a theme (like dark mode)
+  isTheme?: boolean;
 }
 
 export interface CapitalistOffer {
   id: string;
   name: string;
   description: string;
-  investmentAmount: number;
-  minRoiPercent: number; // e.g., -50 for a 50% loss potential
-  maxRoiPercent: number; // e.g., 100 for a 100% gain potential
-  volatilityFactor: number; // 0 to 1, higher means more chance of hitting extremes
-  durationHours: number; // How long the offer is available or valid
-  expiresAt?: number; // Timestamp for when this offer instance disappears
+  minInvestmentAmount: number; // Minimum required to invest
+  maxInvestmentAmount?: number; // Optional: Max they can invest in this offer
+  minRoiPercent: number; 
+  maxRoiPercent: number; 
+  volatilityFactor: number; 
+  durationHours: number; 
+  expiresAt?: number; 
 }
 
 export interface NotepadTask {
@@ -85,12 +90,19 @@ export interface DailyChallenge {
   title: string;
   description: string;
   xpReward: number;
-  cashReward: number;
-  targetValue: number; // e.g., 60 (minutes), 2 (cycles)
+  cashReward: number; // Will be scaled up for dollars
+  targetValue: number; 
   currentValue: number;
-  isCompleted: boolean; // True if targetValue reached
-  rewardClaimed: boolean; // True if user clicked "Claim Reward"
-  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted';
-  resetsDaily: boolean; // If true, progress resets daily
-  lastProgressUpdate?: number; // Timestamp of last progress
+  isCompleted: boolean; 
+  rewardClaimed: boolean; 
+  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak';
+  resetsDaily: boolean; 
+  lastProgressUpdate?: number; 
+}
+
+export interface AIChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  content: string;
+  timestamp: number;
 }
