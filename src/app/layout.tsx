@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from '@/contexts/SessionContext';
 import AppLayout from '@/components/layout/AppLayout';
+import Footer from '@/components/layout/Footer'; // Added Footer
 
 export const metadata: Metadata = {
   title: 'StudyFlow',
@@ -26,6 +28,7 @@ export default function RootLayout({
           <AppLayout>
             {children}
           </AppLayout>
+          <Footer /> 
           <Toaster />
         </SessionProvider>
       </body>

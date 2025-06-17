@@ -1,15 +1,18 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, ListPlus } from 'lucide-react';
+import { Play, Pause, RotateCcw, ListPlus, HelpCircle } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
-import { useSessions } from '@/contexts/SessionContext';
+import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS } from '@/contexts/SessionContext';
 import { useStopwatch } from '@/hooks/use-stopwatch';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function Stopwatch() {
   const { timeElapsed, isRunning, start, stop, reset } = useStopwatch();
-  const { addSession } = useSessions();
+  const { addSession, userProfile } = useSessions();
 
   const handleLogSession = () => {
     if (timeElapsed > 0) {
@@ -22,10 +25,33 @@ export default function Stopwatch() {
     }
   };
 
+  const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
+  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
+  const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
+  const xpForNextLevel = nextLevelXpTarget - currentLevelXpStart;
+  const xpProgressPercent = xpForNextLevel > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevel) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
+
   return (
     <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center">Stopwatch</CardTitle>
+      <CardHeader className="text-center">
+        <div className="flex justify-between items-center mb-2">
+            <div className="w-1/4"> {/* Placeholder for balance */} </div>
+            <CardTitle className="text-2xl font-headline">Stopwatch</CardTitle>
+            <div className="w-1/4 flex justify-end">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Stopwatch: +{XP_PER_MINUTE_FOCUS} XP/min, +{CASH_PER_5_MINUTES_FOCUS} Cash/5min</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
+        </div>
+        <CardDescription className="text-lg text-primary">Level {userProfile.level} ({xpProgressPercent}%)</CardDescription>
+        <Progress value={xpProgressPercent} className="w-3/4 mx-auto h-2 mt-1" />
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-8 py-8">
         <TimerDisplay seconds={timeElapsed} forceHours={timeElapsed >= 3600} />

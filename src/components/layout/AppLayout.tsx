@@ -12,9 +12,9 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  // Only show session log on the main timer page and stats page.
-  const showSessionLogOnPages = ['/', '/stats'];
-  const showSessionLog = showSessionLogOnPages.includes(pathname);
+  // Only show sidebar session log on stats page now. Timer page has it inline.
+  const showSidebarSessionLogOnPages = ['/stats']; 
+  const showSidebarLog = showSidebarSessionLogOnPages.includes(pathname);
 
   return (
     <>
@@ -23,8 +23,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1">
           {children}
         </main>
-        {showSessionLog && (
-          <aside className="w-80 ml-6 hidden lg:block sticky top-20 h-[calc(100vh-8rem)]">
+        {showSidebarLog && (
+          <aside className="w-80 ml-6 hidden lg:block sticky top-20 h-[calc(100vh-10rem)]"> {/* Adjusted height for footer */}
             <SessionLog />
           </aside>
         )}

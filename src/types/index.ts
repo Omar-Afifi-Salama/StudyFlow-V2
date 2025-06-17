@@ -1,9 +1,11 @@
+
 export interface StudySession {
   id: string;
   type: 'Stopwatch' | 'Pomodoro Focus' | 'Pomodoro Break';
   startTime: number; // Unix timestamp in milliseconds
   endTime: number;   // Unix timestamp in milliseconds
   duration: number;  // in seconds
+  description?: string; // User-added description
 }
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
@@ -15,6 +17,7 @@ export interface UserProfile {
   title: string;
   ownedSkinIds: string[];
   equippedSkinId: string | null;
+  completedChallengeIds?: string[]; // Tracks IDs of challenges for which reward was claimed
 }
 
 export interface Skin {
@@ -25,6 +28,7 @@ export interface Skin {
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
+  isTheme?: boolean; // Indicates if this skin primarily applies a theme (like dark mode)
 }
 
 export interface CapitalistOffer {
@@ -47,9 +51,11 @@ export interface NotepadTask {
 }
 
 export interface NotepadNote {
-  id: string; // Could be a single ID like 'main_note' if only one note is supported
+  id: string;
+  title: string;
   content: string;
   lastModified: number;
+  createdAt: number;
 }
 
 export interface NotepadGoal {
@@ -69,7 +75,22 @@ export interface NotepadLink {
 
 export interface NotepadData {
   tasks: NotepadTask[];
-  notes: NotepadNote[]; // Or a single NotepadNote if only one is supported
+  notes: NotepadNote[];
   goals: NotepadGoal[];
   links: NotepadLink[];
+}
+
+export interface DailyChallenge {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+  cashReward: number;
+  targetValue: number; // e.g., 60 (minutes), 2 (cycles)
+  currentValue: number;
+  isCompleted: boolean; // True if targetValue reached
+  rewardClaimed: boolean; // True if user clicked "Claim Reward"
+  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted';
+  resetsDaily: boolean; // If true, progress resets daily
+  lastProgressUpdate?: number; // Timestamp of last progress
 }

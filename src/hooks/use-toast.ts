@@ -9,8 +9,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 3 // Increased from 1
-const TOAST_REMOVE_DELAY = 5000 // Reduced delay for quicker auto-dismiss if needed, or keep 1000000 for manual dismiss focus
+const TOAST_LIMIT = 5 // Increased from 3
+const TOAST_REMOVE_DELAY = 5000 
 
 type ToasterToast = ToastProps & {
   id: string
@@ -61,7 +61,7 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId)); // Clear existing timeout if any
   }
 
   const timeout = setTimeout(() => {
@@ -94,6 +94,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // If toastId is provided, dismiss that specific toast.
+      // If not, dismiss all toasts.
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -108,7 +110,7 @@ export const reducer = (state: State, action: Action): State => {
           t.id === toastId || toastId === undefined
             ? {
                 ...t,
-                open: false,
+                open: false, // Trigger exit animation
               }
             : t
         ),
@@ -162,6 +164,10 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Automatically dismiss after a delay
+  addToRemoveQueue(id);
+
 
   return {
     id: id,
