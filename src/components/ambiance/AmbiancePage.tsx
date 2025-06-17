@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, SunMedium, Moon } from 'lucide-react'; // Moon for white noise (calm night)
 
-// Placeholder sounds - user needs to add these to public/sounds/
+// Example sounds from archive.org. Replace with your own reliable sources.
 const AVAILABLE_SOUNDS: AmbientSound[] = [
-  { id: 'rain', name: 'Gentle Rain', filePath: '/sounds/rain.mp3', icon: CloudRain },
-  { id: 'cafe', name: 'Busy Cafe', filePath: '/sounds/cafe.mp3', icon: CoffeeIcon },
-  { id: 'waves', name: 'Ocean Waves', filePath: '/sounds/waves.mp3', icon: Waves },
-  { id: 'wind', name: 'Soft Wind', filePath: '/sounds/wind.mp3', icon: Wind },
-  { id: 'whitenoise', name: 'White Noise', filePath: '/sounds/white_noise.mp3', icon: Moon },
+  { id: 'rain', name: 'Gentle Rain', filePath: 'https://archive.org/download/RainyMood/RainyMood.mp3', icon: CloudRain },
+  { id: 'cafe', name: 'Busy Cafe', filePath: 'https://archive.org/download/RestaurantAmbiance/Restaurant%20Ambiance.mp3', icon: CoffeeIcon },
+  { id: 'waves', name: 'Ocean Waves', filePath: 'https://archive.org/download/Sounds_of_Sea_Waves/Sounds_of_Sea_Waves.mp3', icon: Waves },
+  { id: 'wind', name: 'Soft Wind', filePath: 'https://archive.org/download/LightWindSound/Light%20Wind%20Sound.mp3', icon: Wind },
+  { id: 'whitenoise', name: 'White Noise', filePath: 'https://archive.org/download/WhiteNoiseSound/White%20Noise%20Sound.mp3', icon: Moon },
 ];
 
 interface AudioPlayerState {
@@ -58,7 +58,7 @@ export default function AmbiancePage() {
     if (audio) {
       audio.volume = isMasterMuted ? 0 : masterVolume * state.volume;
       if (state.isPlaying && audio.paused) {
-        audio.play().catch(e => console.error("Error playing audio:", e));
+        audio.play().catch(e => console.error("Error playing audio for " + soundId + ":", e));
       } else if (!state.isPlaying && !audio.paused) {
         audio.pause();
       }
@@ -168,7 +168,8 @@ export default function AmbiancePage() {
           })}
         </div>
          <p className="text-xs text-muted-foreground text-center">
-            Note: You need to place audio files (e.g., rain.mp3, cafe.mp3) in your <code className="bg-muted px-1 rounded-sm">public/sounds/</code> directory for playback.
+            Note: Sounds are linked from external URLs (e.g., archive.org). Playback depends on their availability and CORS settings.
+            You can replace these URLs with your own hosted files in <code className="bg-muted px-1 rounded-sm">public/sounds/</code> or other reliable external links.
         </p>
       </CardContent>
     </Card>
