@@ -20,13 +20,15 @@ export interface UserProfile {
   ownedSkinIds: string[];
   equippedSkinId: string | null;
   completedChallengeIds?: string[];
-  currentStreak: number;
-  longestStreak: number;
-  lastStudyDate: string | null; // YYYY-MM-DD format
+  currentStreak: number; // Study streak
+  longestStreak: number; // Study streak
+  lastStudyDate: string | null; // YYYY-MM-DD format for study streak
   wakeUpTime?: { hour: number; period: 'AM' | 'PM' };
   sleepTime?: { hour: number; period: 'AM' | 'PM' };
   unlockedAchievementIds?: string[];
   revisionConcepts?: RevisionConcept[];
+  lastLoginDate?: string | null; // YYYY-MM-DD format for daily login bonus
+  dailyLoginStreak?: number; // For daily login bonus
 }
 
 export interface Skin {
@@ -51,6 +53,7 @@ export interface CapitalistOffer {
   volatilityFactor: number; 
   durationHours: number; 
   expiresAt?: number; 
+  completionBonusCash?: number; // New: Bonus cash on successful completion
 }
 
 export interface NotepadTask {
@@ -102,7 +105,7 @@ export interface NotepadData {
   notes: NotepadNote[];
   goals: NotepadGoal[];
   links: NotepadLink[];
-  revisionConcepts: RevisionConcept[]; // Added
+  revisionConcepts: RevisionConcept[];
 }
 
 
@@ -126,6 +129,7 @@ export interface Achievement {
   name: string;
   description: string;
   iconName?: string; 
+  cashReward: number; // New: Cash reward for unlocking
   criteria: (profile: UserProfile, sessions: StudySession[], challenges: DailyChallenge[]) => boolean;
 }
 

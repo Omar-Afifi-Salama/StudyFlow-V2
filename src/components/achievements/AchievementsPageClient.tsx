@@ -3,7 +3,7 @@
 
 import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, CheckCircle, Lock } from 'lucide-react';
+import { Award, CheckCircle, Lock, DollarSign } from 'lucide-react';
 import * as LucideIcons from 'lucide-react'; // Import all icons
 
 type IconName = keyof typeof LucideIcons;
@@ -52,7 +52,10 @@ export default function AchievementsPageClient() {
                     {IconComponent ? <IconComponent className="h-10 w-10" /> : <Award className="h-10 w-10" />}
                   </div>
                   <h3 className={`text-xl font-semibold mb-1 ${isUnlocked ? 'text-primary' : 'text-foreground'}`}>{achievement.name}</h3>
-                  <p className={`text-sm mb-3 ${isUnlocked ? 'text-muted-foreground' : 'text-foreground/70'}`}>{achievement.description}</p>
+                  <p className={`text-sm mb-2 ${isUnlocked ? 'text-muted-foreground' : 'text-foreground/70'}`}>{achievement.description}</p>
+                  <p className={`text-xs font-medium flex items-center mb-3 ${isUnlocked ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    <DollarSign className="h-3 w-3 mr-1" /> Reward: {achievement.cashReward.toLocaleString()}
+                  </p>
                   {isUnlocked ? (
                     <div className="flex items-center text-green-500">
                       <CheckCircle className="h-5 w-5 mr-1" /> Unlocked

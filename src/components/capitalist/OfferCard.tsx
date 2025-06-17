@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import type { CapitalistOffer } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowDownRight, ArrowUpRight, BarChart, DollarSign, Percent } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, BarChart, DollarSign, Percent, Gift } from 'lucide-react';
 
 interface OfferCardProps {
   offer: CapitalistOffer;
@@ -60,6 +61,12 @@ export default function OfferCard({ offer, userCash, onInvest }: OfferCardProps)
           <BarChart className="h-4 w-4 mr-2 text-blue-500" /> 
           Volatility: <span className="font-medium ml-1">{(offer.volatilityFactor * 100).toFixed(0)}%</span>
         </div>
+         {offer.completionBonusCash && offer.completionBonusCash > 0 && (
+          <div className="flex items-center text-sm text-yellow-600">
+            <Gift className="h-4 w-4 mr-2" />
+            Completion Bonus: <span className="font-medium ml-1">${offer.completionBonusCash.toLocaleString()}</span>
+          </div>
+        )}
         <div className="space-y-1">
             <label htmlFor={`invest-amount-${offer.id}`} className="text-sm font-medium">Your Investment:</label>
             <Input
