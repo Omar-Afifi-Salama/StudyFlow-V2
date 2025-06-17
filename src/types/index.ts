@@ -1,4 +1,5 @@
 
+
 export interface StudySession {
   id: string;
   type: 'Stopwatch' | 'Pomodoro Focus' | 'Pomodoro Break';
@@ -53,7 +54,7 @@ export interface CapitalistOffer {
   volatilityFactor: number; 
   durationHours: number; 
   expiresAt?: number; 
-  completionBonusCash?: number; // New: Bonus cash on successful completion
+  completionBonusCash?: number; 
 }
 
 export interface NotepadTask {
@@ -124,19 +125,30 @@ export interface DailyChallenge {
   lastProgressUpdate?: number; 
 }
 
+// Payload for achievement criteria related to capitalist feature
+export interface AchievementCriteriaInvestmentPayload {
+  firstInvestmentMade: boolean;
+  totalProfit: number;
+}
+
 export interface Achievement {
   id: string;
   name: string;
   description: string;
   iconName?: string; 
-  cashReward: number; // New: Cash reward for unlocking
-  criteria: (profile: UserProfile, sessions: StudySession[], challenges: DailyChallenge[]) => boolean;
+  cashReward: number;
+  criteria: (
+    profile: UserProfile, 
+    sessions: StudySession[], 
+    challenges: DailyChallenge[],
+    investmentStats: AchievementCriteriaInvestmentPayload // Added investmentStats
+  ) => boolean;
 }
 
 // For Ambiance Mixer
 export interface AmbientSound {
   id: string;
   name: string;
-  filePath: string; // e.g., /sounds/rain.mp3
+  filePath: string; 
   icon: React.ComponentType<{ className?: string }>;
 }

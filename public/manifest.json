@@ -2,24 +2,21 @@
 {
   "name": "StudyFlow",
   "short_name": "StudyFlow",
-  "description": "Track your study sessions and boost productivity with StudyFlow.",
+  "description": "Track your study sessions and boost productivity.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E5F1FC",
+  "theme_color": "#6FB5F0",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
-  ],
-  "theme_color": "#E5F1FC",
-  "background_color": "#E5F1FC",
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
