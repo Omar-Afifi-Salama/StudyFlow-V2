@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -11,7 +12,9 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  const showSessionLog = pathname === '/'; // Only show session log on the main timer page
+  // Only show session log on the main timer page and stats page.
+  const showSessionLogOnPages = ['/', '/stats'];
+  const showSessionLog = showSessionLogOnPages.includes(pathname);
 
   return (
     <>

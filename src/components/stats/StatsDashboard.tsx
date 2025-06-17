@@ -1,16 +1,18 @@
+
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatTime } from '@/lib/utils';
 import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { StudySession } from '@/types';
 import { useEffect, useState } from 'react';
 
 interface DailyStat {
-  date: string;
+  date: string; // Formatted for display e.g., "Jul 20"
+  originalDate: string; // YYYY-MM-DD for sorting
   totalTime: number; // in seconds
   pomodoros: number;
 }
@@ -21,33 +23,42 @@ export default function StatsDashboard() {
 
   useEffect(() => {
     const calculateDailyData = () => {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Include today + 6 past days
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-
-      const filteredSessions = sessions.filter(s => s.startTime >= sevenDaysAgo.getTime());
+      const today = new Date();
+      today.setHours(0,0,0,0);
 
       const statsByDay: { [key: string]: { totalTime: number; pomodoros: number } } = {};
 
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(sevenDaysAgo);
-        d.setDate(d.getDate() + i);
-        const dateString = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        statsByDay[dateString] = { totalTime: 0, pomodoros: 0 };
+      // Initialize stats for the last 7 days including today
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateKey = d.toISOString().split('T')[0]; // YYYY-MM-DD
+        statsByDay[dateKey] = { totalTime: 0, pomodoros: 0 };
       }
       
-      filteredSessions.forEach(session => {
+      sessions.forEach(session => {
         const sessionDate = new Date(session.startTime);
-        const dateString = sessionDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        if (statsByDay[dateString]) {
-          statsByDay[dateString].totalTime += session.duration;
+        sessionDate.setHours(0,0,0,0);
+        const dateKey = sessionDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        if (statsByDay[dateKey]) {
+          statsByDay[dateKey].totalTime += session.duration;
           if (session.type === 'Pomodoro Focus') {
-            statsByDay[dateString].pomodoros += 1;
+            statsByDay[dateKey].pomodoros += 1;
           }
         }
       });
+      
+      const formattedData = Object.entries(statsByDay).map(([dateKey, data]) => {
+        const dateObj = new Date(dateKey + 'T00:00:00'); // Ensure correct date object from YYYY-MM-DD
+         return {
+          originalDate: dateKey,
+          date: dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          ...data,
+        };
+      }).sort((a,b) => a.originalDate.localeCompare(b.originalDate)); // Sort by YYYY-MM-DD
 
-      setDailyData(Object.entries(statsByDay).map(([date, data]) => ({ date, ...data })));
+      setDailyData(formattedData);
     };
     calculateDailyData();
   }, [sessions]);
@@ -62,9 +73,9 @@ export default function StatsDashboard() {
 
 
   const chartConfig = {
-    totalTime: { label: "Study Time", color: "hsl(var(--primary))" },
+    totalTime: { label: "Study Time (min)", color: "hsl(var(--primary))" },
     pomodoros: { label: "Pomodoros", color: "hsl(var(--accent))" },
-  };
+  } satisfies Record<string, { label: string; color: string }>;
 
   const StatCard = ({ title, value, icon, description }: { title: string, value: string, icon: React.ReactNode, description?: string }) => (
     <Card className="shadow-md hover:shadow-lg transition-shadow">
@@ -110,27 +121,33 @@ export default function StatsDashboard() {
               <CardDescription>Total study time and Pomodoros completed daily.</CardDescription>
             </CardHeader>
             <CardContent>
-              {dailyData.length > 0 ? (
+              {dailyData.filter(d => d.totalTime > 0 || d.pomodoros > 0).length > 0 ? (
                 <ChartContainer config={chartConfig} className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dailyData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} />
-                       <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" unit="p" tickFormatter={(value) => Math.round(value).toString()} fontSize={12} />
+                       <YAxis yAxisId="left" orientation="left" stroke={chartConfig.totalTime.color} unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} domain={[0, 'dataMax + 10']} />
+                       <YAxis yAxisId="right" orientation="right" stroke={chartConfig.pomodoros.color} tickFormatter={(value) => Math.round(value).toString()} fontSize={12} domain={[0, 'dataMax + 1']} />
                        <ChartTooltip 
                         cursor={false}
                         content={<ChartTooltipContent 
-                                  formatter={(value, name) => (name === 'totalTime' ? `${formatTime(value as number)}` : `${value} sessions`)} 
+                                  formatter={(value, name, props) => {
+                                    if (name === 'Study Time (min)') return `${formatTime(props.payload.totalTime)} study`;
+                                    if (name === 'Pomodoros') return `${props.payload.pomodoros} sessions`;
+                                    return `${value}`;
+                                  }}
+                                  labelFormatter={(label) => `Date: ${label}`}
                                   indicator="dot" 
                                 />} 
                         />
-                      <Bar yAxisId="left" dataKey="totalTime" fill="var(--color-totalTime)" radius={4} name="Study Time" />
-                      <Bar yAxisId="right" dataKey="pomodoros" fill="var(--color-pomodoros)" radius={4} name="Pomodoros"/>
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="totalTime" fill={`var(--color-totalTime)`} radius={4} name="Study Time (min)" />
+                      <Bar yAxisId="right" dataKey="pomodoros" fill={`var(--color-pomodoros)`} radius={4} name="Pomodoros"/>
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               ) : (
-                <p className="text-muted-foreground text-center py-8">Not enough data for the chart yet.</p>
+                <p className="text-muted-foreground text-center py-8">Not enough data for the chart yet. Log some sessions!</p>
               )}
             </CardContent>
           </Card>
