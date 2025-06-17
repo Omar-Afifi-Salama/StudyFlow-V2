@@ -21,7 +21,6 @@ export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
   lastStudyDate: string | null; // YYYY-MM-DD format
-  geminiApiKey?: string | null; // For AI Chat
 }
 
 export interface Skin {
@@ -98,11 +97,4 @@ export interface DailyChallenge {
   type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak';
   resetsDaily: boolean; 
   lastProgressUpdate?: number; 
-}
-
-export interface AIChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  content: string;
-  timestamp: number;
 }

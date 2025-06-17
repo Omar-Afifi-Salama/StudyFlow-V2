@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, MessageCircle, DollarSign, Flame } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, Gem, UserCircle, ShieldCheck, CheckSquare, CalendarCheck, DollarSign, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -21,7 +22,6 @@ export default function Header() {
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5 mr-2" /> },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5 mr-2" /> },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5 mr-2" /> },
-    { href: '/ai-chat', label: 'AI Chat', icon: <MessageCircle className="h-5 w-5 mr-2" /> },
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5 mr-2" /> },
   ];
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge } from '@/types';
@@ -53,7 +54,6 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   currentStreak: 0,
   longestStreak: 0,
   lastStudyDate: null,
-  geminiApiKey: null,
 };
 
 const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -93,7 +93,6 @@ interface SessionContextType {
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
   updateTaskChallengeProgress: (completedTasksCount: number) => void;
-  setGeminiApiKey: (apiKey: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -130,7 +129,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (typeof parsedProfile.currentStreak !== 'number') parsedProfile.currentStreak = 0;
         if (typeof parsedProfile.longestStreak !== 'number') parsedProfile.longestStreak = 0;
         if (!parsedProfile.lastStudyDate) parsedProfile.lastStudyDate = null;
-        if (parsedProfile.geminiApiKey === undefined) parsedProfile.geminiApiKey = null;
         setUserProfile(prev => ({...DEFAULT_USER_PROFILE, ...parsedProfile})); // Merge with defaults to ensure all fields
       } else {
         setUserProfile(DEFAULT_USER_PROFILE);
@@ -204,10 +202,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
-  }, []);
-
-  const setGeminiApiKey = useCallback((apiKey: string | null) => {
-    setUserProfile(prev => ({ ...prev, geminiApiKey: apiKey }));
   }, []);
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
@@ -560,8 +554,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       notepadData, updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
-      dailyChallenges, claimChallengeReward, updateTaskChallengeProgress,
-      setGeminiApiKey
+      dailyChallenges, claimChallengeReward, updateTaskChallengeProgress
     }}>
       {children}
     </SessionContext.Provider>
