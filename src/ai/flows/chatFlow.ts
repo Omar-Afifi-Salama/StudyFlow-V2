@@ -10,7 +10,7 @@
 
 import { genkit, Ai } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { z } from 'genkit'; // Corrected import
+import { z } from 'genkit'; // Corrected import for Zod
 
 // Use the globally configured `ai` instance from genkit.ts for defining schemas, etc.
 // but the actual model call will use a dynamically configured instance if an API key is provided.
@@ -19,8 +19,8 @@ import { ai as globalAi } from '@/ai/genkit';
 
 export const ChatInputSchema = z.object({
   message: z.string().describe('The user\'s message to the AI.'),
-  apiKey: z.string().optional().describe('Optional Gemini API Key. If not provided, will use globally configured key.'),
-  // history: z.array(z.object({role: z.enum(["user", "model"]), content: z.string()})).optional().describe("Chat history") 
+  apiKey: z.string().optional().describe('User-provided Gemini API Key. This is required to use the AI Chat.'),
+  // history: z.array(z.object({role: z.enum(["user", "model"]), content: z.string()})).optional().describe("Chat history")
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -43,21 +43,21 @@ const chatFlow = globalAi.defineFlow(
     outputSchema: z.string(), // Direct string output
   },
   async (input) => {
-    let currentAi: Ai = globalAi; // Use global by default
     const modelName = 'googleai/gemini-2.0-flash'; // Define model name once
 
-    if (input.apiKey) {
-      // Dynamically configure a new Genkit instance with the provided API key for this call
-      currentAi = genkit({
-        plugins: [googleAI({ apiKey: input.apiKey })],
-        model: modelName, 
-      });
+    if (!input.apiKey) {
+      return "A Gemini API Key is required to use the AI Chat. Please go to the AI Chat page and provide your key in the settings section at the bottom.";
     }
+
+    // Dynamically configure a new Genkit instance with the provided API key for this call
+    const userAi = genkit({
+      plugins: [googleAI({ apiKey: input.apiKey })],
+    });
     
     // Simple prompt, no explicit history management for this basic version.
     // For conversational history, you'd add a history field to inputSchema
     // and construct a more complex prompt or use model's history capabilities.
-    const { output } = await currentAi.generate({
+    const { output } = await userAi.generate({
         model: modelName, // Explicitly specify the model for the generate call
         prompt: `You are a helpful study assistant. Keep your responses concise and informative.
         User: ${input.message}
@@ -77,3 +77,4 @@ const chatFlow = globalAi.defineFlow(
     return output?.text || "Sorry, I couldn't generate a response.";
   }
 );
+
