@@ -3,7 +3,7 @@
 import { useSessions } from '@/contexts/SessionContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatTime } from '@/lib/utils';
-import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma } from 'lucide-react';
+import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { StudySession } from '@/types';
