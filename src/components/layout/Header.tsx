@@ -100,11 +100,17 @@ export default function Header() {
                   <TooltipContent>
                     <p>
                       {item.label}
-                      {item && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
-                        <span className="text-xs p-1 bg-muted rounded-sm ml-1">
-                          {item.hotkey.toUpperCase()}
-                        </span>
-                      )}
+                      {(() => {
+                        const hotkeyVal = item?.hotkey;
+                        if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
+                          return (
+                            <span className="text-xs p-1 bg-muted rounded-sm ml-1">
+                              {hotkeyVal.toUpperCase()}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -133,11 +139,17 @@ export default function Header() {
                     <Link href={item.href} className="flex items-center w-full">
                       {item.icon}
                       <span className="ml-2">{item.label}</span>
-                      {item && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
-                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
-                          {item.hotkey.toUpperCase()}
-                        </span>
-                      )}
+                      {(() => {
+                          const hotkeyVal = item?.hotkey;
+                          if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
+                            return (
+                              <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
+                                {hotkeyVal.toUpperCase()}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -224,14 +236,14 @@ export default function Header() {
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0">
-                    <ScrollArea className="h-[250px] p-2">
+                    <ScrollArea className="h-[250px] p-2 bg-popover">
                         <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
                         {TITLES.map((title, index) => {
                             const levelReq = index + 1;
                             const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
-                            const totalHoursForLevel = XP_PER_MINUTE_FOCUS > 0 ? (xpReq / XP_PER_MINUTE_FOCUS / 60).toFixed(1) : 'N/A';
+                            const totalHoursForLevel = XP_PER_MINUTE_FOCUS > 0 && xpReq > 0 ? (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1) : '0.0';
                             return (
-                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'bg-muted/50'}`}>
+                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'bg-muted/50 text-foreground'}`}>
                                     <p>{title}</p>
                                     <p className="text-muted-foreground text-[0.7rem]">
                                       Requires: Level {levelReq} 
@@ -248,3 +260,4 @@ export default function Header() {
     </header>
   );
 }
+

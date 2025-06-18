@@ -16,12 +16,61 @@ export const DAILY_LOGIN_BASE_CASH = 200;
 export const DAILY_LOGIN_STREAK_CASH_BONUS = 50;
 export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max cash from streak portion
 
+// Scaled for ~1000 hours to reach Level 50 (600,000 XP)
+// Original max was 121,800 XP. Scaling factor approx 4.926
 export const LEVEL_THRESHOLDS = [
-  0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, 4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300,
-  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, // Levels 20-30
-  43900, 47100, 50400, 53800, 57300, 60900, 64600, 68400, 72300, 76300, // Levels 31-40
-  80400, 84600, 88900, 93300, 97800, 102400, 107100, 111900, 116800, 121800, // Levels 41-50
+  0,        // Level 1
+  493,      // Level 2 (Prev: 100)
+  1232,     // Level 3 (Prev: 250)
+  2463,     // Level 4 (Prev: 500)
+  3941,     // Level 5 (Prev: 800)
+  6000,     // Level 6 (Prev: 1200 * 4.926 = 5911 -> rounded)
+  8374,     // Level 7 (Prev: 1700)
+  11330,    // Level 8 (Prev: 2300)
+  14778,    // Level 9 (Prev: 3000)
+  18719,    // Level 10 (Prev: 3800)
+  23146,    // Level 11 (Prev: 4700)
+  28066,    // Level 12 (Prev: 5700)
+  33477,    // Level 13 (Prev: 6800)
+  39300,    // Level 14 (Prev: 8000 * 4.926 = 39408 -> rounded)
+  45758,    // Level 15 (Prev: 9300)
+  52648,    // Level 16 (Prev: 10700)
+  60037,    // Level 17 (Prev: 12200)
+  67907,    // Level 18 (Prev: 13800)
+  76278,    // Level 19 (Prev: 15500)
+  85144,    // Level 20 (Prev: 17300)
+  94507,    // Level 21 (Prev: 19200)
+  104363,   // Level 22 (Prev: 21200)
+  114712,   // Level 23 (Prev: 23300)
+  125553,   // Level 24 (Prev: 25500)
+  136800,   // Level 25 (Prev: 27800 * 4.926 = 136962 -> rounded)
+  148627,   // Level 26 (Prev: 30200)
+  160945,   // Level 27 (Prev: 32700)
+  173756,   // Level 28 (Prev: 35300)
+  187068,   // Level 29 (Prev: 38000)
+  200873,   // Level 30 (Prev: 40800)
+  216000,   // Level 31 (Prev: 43900 * 4.926 = 216251 -> rounded)
+  231780,   // Level 32 (Prev: 47100)
+  248000,   // Level 33 (Prev: 50400 * 4.926 = 248270 -> rounded)
+  264700,   // Level 34 (Prev: 53800 * 4.926 = 265018 -> rounded)
+  281800,   // Level 35 (Prev: 57300 * 4.926 = 282339 -> rounded)
+  300000,   // Level 36 (Prev: 60900 * 4.926 = 299993 -> rounded)
+  317800,   // Level 37 (Prev: 64600 * 4.926 = 318219 -> rounded)
+  336500,   // Level 38 (Prev: 68400 * 4.926 = 336926 -> rounded)
+  355700,   // Level 39 (Prev: 72300 * 4.926 = 356149 -> rounded)
+  375944,   // Level 40 (Prev: 76300)
+  395600,   // Level 41 (Prev: 80400 * 4.926 = 395942 -> rounded)
+  416300,   // Level 42 (Prev: 84600 * 4.926 = 416739 -> rounded)
+  437300,   // Level 43 (Prev: 88900 * 4.926 = 437921 -> rounded)
+  458900,   // Level 44 (Prev: 93300 * 4.926 = 459565 -> rounded)
+  481200,   // Level 45 (Prev: 97800 * 4.926 = 481662 -> rounded)
+  504000,   // Level 46 (Prev: 102400 * 4.926 = 504422 -> rounded)
+  527000,   // Level 47 (Prev: 107100 * 4.926 = 527374 -> rounded)
+  550500,   // Level 48 (Prev: 111900 * 4.926 = 551019 -> rounded)
+  574600,   // Level 49 (Prev: 116800 * 4.926 = 575356 -> rounded)
+  600000    // Level 50 (Prev: 121800 * 4.926 = 599998 -> rounded to 600k)
 ];
+
 
 export const TITLES = [
   "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", // 1-10
@@ -252,6 +301,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       root.classList.add(themeClass);
     }
   }, []);
+
+  // Moved updateChallengeProgress earlier to ensure it's initialized before other callbacks use it.
+  const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
+    setDailyChallenges(prevChallenges =>
+        prevChallenges.map(challenge => {
+            if (challenge.type === type && !challenge.isCompleted && !challenge.rewardClaimed) {
+                const newCurrentValue = absoluteValue ? value : Math.min((challenge.currentValue || 0) + value, challenge.targetValue);
+                const isNowCompleted = newCurrentValue >= challenge.targetValue;
+                if (isNowCompleted && !challenge.isCompleted) {
+                     toast({ title: "Challenge Goal Met!", description: `You've met the goal for '${challenge.title}'! Claim your reward.` });
+                }
+                return { ...challenge, currentValue: newCurrentValue, isCompleted: isNowCompleted, lastProgressUpdate: Date.now() };
+            }
+            return challenge;
+        })
+    );
+  }, [toast]);
 
   const loadData = useCallback(() => {
     try {
@@ -510,22 +576,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { streakBonusMultiplier, updatedCurrentStreak: currentStudyStreak, updatedLongestStreak: longestStudyStreak, updatedLastStudyDate: newLastStudyDate };
   }, []);
 
-  // Moved updateChallengeProgress earlier
-  const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
-    setDailyChallenges(prevChallenges =>
-        prevChallenges.map(challenge => {
-            if (challenge.type === type && !challenge.isCompleted && !challenge.rewardClaimed) {
-                const newCurrentValue = absoluteValue ? value : Math.min((challenge.currentValue || 0) + value, challenge.targetValue);
-                const isNowCompleted = newCurrentValue >= challenge.targetValue;
-                if (isNowCompleted && !challenge.isCompleted) {
-                     toast({ title: "Challenge Goal Met!", description: `You've met the goal for '${challenge.title}'! Claim your reward.` });
-                }
-                return { ...challenge, currentValue: newCurrentValue, isCompleted: isNowCompleted, lastProgressUpdate: Date.now() };
-            }
-            return challenge;
-        })
-    );
-  }, [toast]);
 
   const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
     updateChallengeProgress('tasksCompleted', completedTasksCount, true);
