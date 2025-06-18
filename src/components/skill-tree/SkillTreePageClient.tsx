@@ -8,7 +8,7 @@ import * as LucideIcons from 'lucide-react';
 import type { Skill } from '@/types';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Network, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Target as TargetIcon, Edit, Repeat, ListChecks, CalendarClock, Grid, CheckSquare2, StickyNote, Link as LinkLucide, Brain, Sparkles, XCircle, CheckCircle, Percent, RepeatIcon, Briefcase, Timer, UserCircle, Info, Lock, Gem } from 'lucide-react';
+import { Network, Gem, Lock, CheckCircle } from 'lucide-react';
 
 
 type IconName = keyof typeof LucideIcons;
@@ -48,25 +48,25 @@ export default function SkillTreePageClient() {
     return (
       <Card
         className={cn(
-          "shadow-md hover:shadow-lg transition-shadow card-animated",
+          "shadow-md hover:shadow-lg transition-shadow card-animated flex flex-col", 
           isUnlocked && "border-primary bg-primary/10",
           !isUnlocked && !can && "opacity-60 bg-muted/50"
         )}
       >
         <CardHeader>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 mb-1">
             {Icon && <Icon className={cn("h-7 w-7", isUnlocked ? "text-primary" : "text-muted-foreground")} />}
             <CardTitle className="text-xl">{skill.name}</CardTitle>
           </div>
-          <CardDescription>{skill.description}</CardDescription>
+          <CardDescription className="text-sm h-12 overflow-y-auto">{skill.description}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          <p>Cost: <span className="font-semibold">{skill.cost}</span> <Gem className="inline h-3 w-3 mb-0.5 text-yellow-400" /> Skill Point(s)</p>
+        <CardContent className="space-y-1 text-sm flex-grow">
+          <p className="flex items-center">Cost: <span className="font-semibold ml-1">{skill.cost}</span> <Gem className="inline h-3.5 w-3.5 ml-1 text-yellow-400" /></p>
           {skill.prerequisiteLevel && <p>Requires Level: <span className="font-semibold">{skill.prerequisiteLevel}</span></p>}
           {skill.prerequisiteSkillIds && skill.prerequisiteSkillIds.length > 0 && (
             <div>
               Requires Skills:
-              <ul className="list-disc list-inside ml-4">
+              <ul className="list-disc list-inside ml-4 text-xs">
                 {skill.prerequisiteSkillIds.map(id => {
                   const prereq = allSkills.find(s => s.id === id);
                   return <li key={id} className={cn(isSkillUnlocked(id) ? "text-green-600" : "text-destructive")}>{prereq?.name || id}</li>;
@@ -120,27 +120,24 @@ export default function SkillTreePageClient() {
       </CardHeader>
       <CardContent className="space-y-8">
         {categoryOrder.map(categoryName => {
-          const skills = skillsByCategory[categoryName];
-          if (!skills || skills.length === 0) return null;
-          // Filter out always unlocked skills from display, unless it's the 'Core Feature' category for initial items
-          const displaySkills = categoryName === 'Core Feature' 
-            ? skills.filter(skill => skill.cost === 0 || !isSkillUnlocked(skill.id) || canUnlockSkill(skill.id).can) // Show always unlocked OR unlockable/not yet unlocked core
-            : skills.filter(skill => skill.cost > 0); // For other categories, only show skills with a cost
+          const skillsInCategory = skillsByCategory[categoryName];
+          if (!skillsInCategory || skillsInCategory.length === 0) return null;
           
-          if (displaySkills.length === 0 && categoryName !== 'Core Feature') return null;
-
+          const displaySkills = skillsInCategory.sort((a,b) => (a.prerequisiteLevel || 0) - (b.prerequisiteLevel || 0) || a.cost - b.cost);
+          
+          if (displaySkills.length === 0) return null;
 
           return (
             <div key={categoryName}>
               <h2 className="text-2xl font-semibold mb-4 text-primary border-b pb-2">{categoryName}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {displaySkills.map(skill => <SkillCardDisplay key={skill.id} skill={skill} />)}
               </div>
             </div>
           );
         })}
         <p className="text-center text-muted-foreground text-sm pt-4">
-          A visual, branching skill tree is planned for a future update!
+          Note: Skills unlock features and provide bonuses. A visual, branching skill tree UI with connecting lines is planned for a future update!
         </p>
       </CardContent>
     </Card>

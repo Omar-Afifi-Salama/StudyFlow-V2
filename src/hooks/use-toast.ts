@@ -5,7 +5,7 @@ import * as React from "react"
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 5000 // Changed to 5 seconds
+const TOAST_REMOVE_DELAY = 5000 // Adjusted to 5 seconds
 const TOAST_STAGGER_DELAY = 250; 
 
 type ToasterToast = ToastProps & {

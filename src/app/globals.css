@@ -55,34 +55,25 @@ body {
   }
 
   .dark {
-    --background: 220 13% 10%; /* Darker, less saturated blue-gray */
-    --foreground: 210 30% 90%; /* Lighter, muted blue-gray for text */
-
+    --background: 220 13% 10%; 
+    --foreground: 210 30% 90%; 
     --card: 220 13% 15%;
     --card-foreground: 210 30% 90%;
-
     --popover: 220 13% 12%;
     --popover-foreground: 210 30% 90%;
-
-    --primary: 207 70% 55%; /* Slightly desaturated primary blue for dark mode */
-    --primary-foreground: 210 30% 95%; /* Very light text on primary */
-
-    --secondary: 262 15% 45%; /* Darker, desaturated purple */
+    --primary: 207 70% 55%; 
+    --primary-foreground: 210 30% 95%; 
+    --secondary: 262 15% 45%; 
     --secondary-foreground: 210 30% 90%;
-
     --muted: 220 13% 20%;
     --muted-foreground: 210 25% 70%;
-
-    --accent: 262 25% 65%; /* Muted purple, slightly brighter for dark mode accents */
+    --accent: 262 25% 65%; 
     --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 70% 50%; /* Slightly less intense red */
+    --destructive: 0 70% 50%; 
     --destructive-foreground: 0 0% 98%;
-
     --border: 220 13% 25%;
     --input: 220 13% 22%;
     --ring: 207 70% 55%;
-
     --sidebar-background: 220 13% 12%;
     --sidebar-foreground: 210 30% 90%;
     --sidebar-primary: 207 70% 55%;
@@ -91,7 +82,6 @@ body {
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 13% 25%;
     --sidebar-ring: 207 70% 55%;
-
     --chart-1: 207 70% 55%;
     --chart-2: 262 25% 65%;
     --chart-3: 197 30% 40%;
@@ -100,34 +90,25 @@ body {
   }
 
   .sepia {
-    --background: 40 30% 90%; /* Warmer off-white, like aged paper */
-    --foreground: 35 40% 20%; /* Dark, warm brown for text */
-
-    --card: 40 30% 94%; /* Slightly lighter paper for cards */
+    --background: 40 30% 90%; 
+    --foreground: 35 40% 20%; 
+    --card: 40 30% 94%; 
     --card-foreground: 35 40% 20%;
-
     --popover: 40 30% 94%;
     --popover-foreground: 35 40% 20%;
-
-    --primary: 30 50% 45%;  /* Muted terracotta/rust, less vibrant */
-    --primary-foreground: 40 30% 95%; /* Creamy text on primary */
-
-    --secondary: 40 20% 70%; /* Lighter, desaturated warm brown/beige */
+    --primary: 30 50% 45%;  
+    --primary-foreground: 40 30% 95%; 
+    --secondary: 40 20% 70%; 
     --secondary-foreground: 35 40% 20%;
-
-    --muted: 40 25% 85%; /* Muted beige */
-    --muted-foreground: 35 35% 45%; /* Softer brown for muted text */
-
-    --accent: 25 40% 50%; /* Desaturated warm ochre/brown, less vibrant */
-    --accent-foreground: 40 30% 95%; /* Creamy text on accent */
-
-    --destructive: 0 35% 35%; /* Muted, darker red-brown */
+    --muted: 40 25% 85%; 
+    --muted-foreground: 35 35% 45%; 
+    --accent: 25 40% 50%; 
+    --accent-foreground: 40 30% 95%; 
+    --destructive: 0 35% 35%; 
     --destructive-foreground: 40 30% 95%;
-
-    --border: 40 25% 75%; /* Softer brown border */
-    --input: 40 25% 82%; /* Light beige input background */
+    --border: 40 25% 75%; 
+    --input: 40 25% 82%; 
     --ring: 30 50% 45%;
-
     --sidebar-background: 40 30% 88%;
     --sidebar-foreground: 35 40% 20%;
     --sidebar-primary: 30 50% 45%;
@@ -136,7 +117,6 @@ body {
     --sidebar-accent-foreground: 40 30% 95%;
     --sidebar-border: 40 25% 75%;
     --sidebar-ring: 30 50% 45%;
-
     --chart-1: 30 50% 45%;
     --chart-2: 25 40% 50%;
     --chart-3: 35 35% 35%;
@@ -145,84 +125,84 @@ body {
   }
 
   .theme-forest {
-    --background: 120 25% 92%; /* Light, slightly desaturated green (like misty forest floor) */
-    --foreground: 120 60% 10%; /* Very dark, saturated green (deep forest shadow) */
-    --card: 120 25% 95%; /* Lighter version of background */
+    --background: 120 25% 92%; 
+    --foreground: 120 60% 10%; 
+    --card: 120 25% 95%; 
     --card-foreground: 120 60% 10%;
     --popover: 120 25% 95%;
     --popover-foreground: 120 60% 10%;
-    --primary: 130 45% 45%; /* Leafy green, balanced saturation */
-    --primary-foreground: 90 50% 95%; /* Very light, slightly warm green (sunlight on leaves) */
-    --secondary: 100 20% 65%; /* Desaturated, lighter green (mossy) */
+    --primary: 130 45% 45%; 
+    --primary-foreground: 90 50% 95%; 
+    --secondary: 100 20% 65%; 
     --secondary-foreground: 120 60% 10%;
-    --muted: 110 25% 88%; /* Pale green-gray */
-    --muted-foreground: 110 30% 45%; /* Medium dark green-gray */
-    --accent: 90 40% 55%;  /* Earthy yellow-green (sunlit moss/bark) */
+    --muted: 110 25% 88%; 
+    --muted-foreground: 110 30% 45%; 
+    --accent: 90 40% 55%;  
     --accent-foreground: 120 60% 10%;
-    --destructive: 30 60% 50%; /* Muted orange/rust (autumn leaf) */
-    --destructive-foreground: 30 30% 95%; /* Light cream */
-    --border: 120 30% 70%; /* Medium green, desaturated */
-    --input: 120 30% 80%; /* Light green, desaturated */
-    --ring: 130 45% 45%; /* Same as primary */
+    --destructive: 30 60% 50%; 
+    --destructive-foreground: 30 30% 95%; 
+    --border: 120 30% 70%; 
+    --input: 120 30% 80%; 
+    --ring: 130 45% 45%; 
     --chart-1: 130 45% 45%;
     --chart-2: 90 40% 55%;
-    --chart-3: 120 30% 30%; /* Darker shade for charts */
-    --chart-4: 40 30% 50%; /* Brownish-yellow */
-    --chart-5: 150 25% 60%; /* Bluish-green */
+    --chart-3: 120 30% 30%; 
+    --chart-4: 40 30% 50%; 
+    --chart-5: 150 25% 60%; 
   }
 
   .theme-sunset {
-    --background: 30 100% 94%; /* Pale warm yellow (sky before sunset) */
-    --foreground: 20 80% 20%;  /* Deep warm brown (earth at dusk) */
-    --card: 30 100% 96%; /* Lighter version of background */
+    --background: 30 100% 94%; 
+    --foreground: 20 80% 20%;  
+    --card: 30 100% 96%; 
     --card-foreground: 20 80% 20%;
     --popover: 30 100% 96%;
     --popover-foreground: 20 80% 20%;
-    --primary: 15 90% 55%;  /* Fiery orange (setting sun) */
-    --primary-foreground: 30 100% 98%; /* Very light yellow/cream */
-    --secondary: 40 70% 75%; /* Soft orange/peach */
+    --primary: 15 90% 55%;  
+    --primary-foreground: 30 100% 98%; 
+    --secondary: 40 70% 75%; 
     --secondary-foreground: 20 80% 20%;
-    --muted: 35 90% 90%; /* Very light warm yellow */
-    --muted-foreground: 25 60% 45%; /* Medium warm brown */
-    --accent: 330 80% 65%; /* Deep magenta/purple (sunset clouds) */
-    --accent-foreground: 30 100% 98%; /* Very light yellow/cream */
-    --destructive: 0 70% 55%;  /* Strong red */
+    --muted: 35 90% 90%; 
+    --muted-foreground: 25 60% 45%; 
+    --accent: 330 80% 65%; 
+    --accent-foreground: 30 100% 98%; 
+    --destructive: 0 70% 55%;  
     --destructive-foreground: 30 100% 98%;
-    --border: 25 80% 75%; /* Warm orange-brown */
-    --input: 25 80% 85%;  /* Light warm orange-brown */
-    --ring: 15 90% 55%; /* Same as primary */
+    --border: 25 80% 75%; 
+    --input: 25 80% 85%;  
+    --ring: 15 90% 55%; 
     --chart-1: 15 90% 55%;
     --chart-2: 330 80% 65%;
     --chart-3: 40 70% 75%;
-    --chart-4: 5 80% 50%;  /* Darker red-orange */
-    --chart-5: 350 75% 60%;/* Deep pink */
+    --chart-4: 5 80% 50%;  
+    --chart-5: 350 75% 60%;
   }
 
   .theme-galaxy {
-    --background: 240 50% 10%; /* Very dark deep blue (space) */
-    --foreground: 220 60% 90%; /* Light, almost white with blue tint (starlight) */
-    --card: 240 50% 15%; /* Slightly lighter dark blue */
+    --background: 240 50% 10%; 
+    --foreground: 220 60% 90%; 
+    --card: 240 50% 15%; 
     --card-foreground: 220 60% 90%;
-    --popover: 240 50% 12%; /* Even darker blue for popovers */
+    --popover: 240 50% 12%; 
     --popover-foreground: 220 60% 90%;
-    --primary: 270 80% 65%; /* Bright, vibrant purple (nebula) */
-    --primary-foreground: 0 0% 100%; /* Pure white */
-    --secondary: 220 40% 40%; /* Muted, medium dark blue (distant galaxy) */
+    --primary: 270 80% 65%; 
+    --primary-foreground: 0 0% 100%; 
+    --secondary: 220 40% 40%; 
     --secondary-foreground: 220 60% 90%;
-    --muted: 240 40% 20%; /* Dark blue-gray */
-    --muted-foreground: 220 50% 70%; /* Lighter blue-gray */
-    --accent: 300 70% 70%; /* Bright magenta/pink (starburst) */
-    --accent-foreground: 0 0% 100%; /* Pure white */
-    --destructive: 0 60% 55%; /* Cosmic red (warning) */
+    --muted: 240 40% 20%; 
+    --muted-foreground: 220 50% 70%; 
+    --accent: 300 70% 70%; 
+    --accent-foreground: 0 0% 100%; 
+    --destructive: 0 60% 55%; 
     --destructive-foreground: 0 0% 100%;
-    --border: 240 40% 25%; /* Dark blue border */
-    --input: 240 40% 22%; /* Dark blue input */
-    --ring: 270 80% 65%; /* Same as primary */
+    --border: 240 40% 25%; 
+    --input: 240 40% 22%; 
+    --ring: 270 80% 65%; 
     --chart-1: 270 80% 65%;
     --chart-2: 300 70% 70%;
-    --chart-3: 200 70% 50%; /* Bright cyan */
-    --chart-4: 180 60% 45%; /* Teal */
-    --chart-5: 250 65% 60%; /* Indigo */
+    --chart-3: 200 70% 50%; 
+    --chart-4: 180 60% 45%; 
+    --chart-5: 250 65% 60%; 
   }
 
   .theme-mono {
@@ -253,138 +233,138 @@ body {
   }
 
   .theme-ocean {
-    --background: 200 60% 90%; /* Light cyan-blue (shallow water) */
-    --foreground: 210 70% 15%; /* Deep navy blue (ocean depths) */
-    --card: 200 60% 95%; /* Even lighter cyan-blue */
+    --background: 200 60% 90%; 
+    --foreground: 210 70% 15%; 
+    --card: 200 60% 95%; 
     --card-foreground: 210 70% 15%;
     --popover: 200 60% 95%;
     --popover-foreground: 210 70% 15%;
-    --primary: 190 70% 50%; /* Bright teal (tropical water) */
-    --primary-foreground: 0 0% 100%; /* White (foam) */
-    --secondary: 220 50% 70%; /* Soft sky blue */
+    --primary: 190 70% 50%; 
+    --primary-foreground: 0 0% 100%; 
+    --secondary: 220 50% 70%; 
     --secondary-foreground: 210 70% 15%;
-    --muted: 205 55% 85%; /* Pale cyan */
-    --muted-foreground: 210 50% 40%; /* Medium navy */
-    --accent: 170 60% 45%; /* Sea green (kelp) */
+    --muted: 205 55% 85%; 
+    --muted-foreground: 210 50% 40%; 
+    --accent: 170 60% 45%; 
     --accent-foreground: 210 70% 15%;
-    --destructive: 0 50% 50%; /* Coral red (warning) */
+    --destructive: 0 50% 50%; 
     --destructive-foreground: 0 0% 100%;
-    --border: 195 50% 75%; /* Light teal border */
-    --input: 195 50% 85%; /* Very light teal input */
-    --ring: 190 70% 50%; /* Same as primary */
+    --border: 195 50% 75%; 
+    --input: 195 50% 85%; 
+    --ring: 190 70% 50%; 
     --chart-1: 190 70% 50%;
     --chart-2: 170 60% 45%;
     --chart-3: 220 50% 70%;
-    --chart-4: 180 40% 60%; /* Aqua */
-    --chart-5: 200 30% 40%; /* Darker cyan */
+    --chart-4: 180 40% 60%; 
+    --chart-5: 200 30% 40%; 
   }
 
   .theme-neon {
-    --background: 270 50% 8%; /* Very dark purple/black (neon background) */
-    --foreground: 300 100% 85%; /* Bright magenta (primary neon text) */
-    --card: 270 50% 12%; /* Slightly lighter dark purple */
+    --background: 270 50% 8%; 
+    --foreground: 300 100% 85%; 
+    --card: 270 50% 12%; 
     --card-foreground: 300 100% 85%;
     --popover: 270 50% 10%;
     --popover-foreground: 300 100% 85%;
-    --primary: 180 100% 50%; /* Electric cyan (main interactive elements) */
-    --primary-foreground: 270 50% 5%; /* Almost black for contrast */
-    --secondary: 220 100% 60%; /* Bright electric blue */
+    --primary: 180 100% 50%; 
+    --primary-foreground: 270 50% 5%; 
+    --secondary: 220 100% 60%; 
     --secondary-foreground: 270 50% 5%;
-    --muted: 270 40% 15%; /* Dark purple for muted elements */
-    --muted-foreground: 270 70% 70%; /* Lighter purple for muted text */
-    --accent: 60 100% 50%; /* Bright lime green/yellow (accent neon) */
+    --muted: 270 40% 15%; 
+    --muted-foreground: 270 70% 70%; 
+    --accent: 60 100% 50%; 
     --accent-foreground: 270 50% 5%;
-    --destructive: 0 100% 50%; /* Bright neon red */
+    --destructive: 0 100% 50%; 
     --destructive-foreground: 270 50% 5%;
-    --border: 270 60% 30%; /* Dark purple border with a hint of neon */
+    --border: 270 60% 30%; 
     --input: 270 60% 25%;
-    --ring: 180 100% 50%; /* Cyan ring */
-    --chart-1: 180 100% 50%; /* Cyan */
-    --chart-2: 60 100% 50%;  /* Lime */
-    --chart-3: 300 100% 85%; /* Magenta */
-    --chart-4: 220 100% 60%; /* Electric Blue */
-    --chart-5: 120 100% 50%; /* Pure Green */
+    --ring: 180 100% 50%; 
+    --chart-1: 180 100% 50%; 
+    --chart-2: 60 100% 50%;  
+    --chart-3: 300 100% 85%; 
+    --chart-4: 220 100% 60%; 
+    --chart-5: 120 100% 50%; 
   }
 
   .theme-pastel {
-    --background: 300 100% 96%; /* Very light lavender */
-    --foreground: 240 30% 30%; /* Muted dark blue/purple */
-    --card: 0 0% 100%; /* White cards for contrast */
+    --background: 300 100% 96%; 
+    --foreground: 240 30% 30%; 
+    --card: 0 0% 100%; 
     --card-foreground: 240 30% 30%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 30% 30%;
-    --primary: 200 100% 80%; /* Soft pastel blue */
-    --primary-foreground: 200 50% 25%; /* Darker muted blue for text */
-    --secondary: 30 100% 85%; /* Soft pastel orange/peach */
-    --secondary-foreground: 30 50% 30%; /* Darker muted orange */
-    --muted: 210 80% 92%; /* Very light pastel blue-gray */
-    --muted-foreground: 210 40% 50%; /* Medium muted blue-gray */
-    --accent: 120 70% 80%; /* Soft pastel green */
-    --accent-foreground: 120 40% 25%; /* Darker muted green */
-    --destructive: 0 80% 80%; /* Soft pastel red/pink */
-    --destructive-foreground: 0 50% 25%; /* Darker muted red */
-    --border: 240 60% 90%; /* Very light lavender-gray border */
+    --primary: 200 100% 80%; 
+    --primary-foreground: 200 50% 25%; 
+    --secondary: 30 100% 85%; 
+    --secondary-foreground: 30 50% 30%; 
+    --muted: 210 80% 92%; 
+    --muted-foreground: 210 40% 50%; 
+    --accent: 120 70% 80%; 
+    --accent-foreground: 120 40% 25%; 
+    --destructive: 0 80% 80%; 
+    --destructive-foreground: 0 50% 25%; 
+    --border: 240 60% 90%; 
     --input: 240 60% 94%;
-    --ring: 200 100% 80%; /* Pastel blue ring */
-    --chart-1: 200 100% 80%; /* Pastel Blue */
-    --chart-2: 120 70% 80%;  /* Pastel Green */
-    --chart-3: 30 100% 85%;  /* Pastel Orange */
-    --chart-4: 330 100% 88%; /* Pastel Pink */
-    --chart-5: 60 100% 85%;  /* Pastel Yellow */
+    --ring: 200 100% 80%; 
+    --chart-1: 200 100% 80%; 
+    --chart-2: 120 70% 80%;  
+    --chart-3: 30 100% 85%;  
+    --chart-4: 330 100% 88%; 
+    --chart-5: 60 100% 85%;  
   }
 
   .theme-gold {
-    --background: 45 100% 92%; /* Pale gold/cream */
-    --foreground: 35 80% 15%;  /* Dark rich brown */
-    --card: 45 80% 95%; /* Lighter cream */
+    --background: 45 100% 92%; 
+    --foreground: 35 80% 15%;  
+    --card: 45 80% 95%; 
     --card-foreground: 35 80% 15%;
     --popover: 45 80% 95%;
     --popover-foreground: 35 80% 15%;
-    --primary: 40 90% 50%;  /* Rich gold */
-    --primary-foreground: 35 60% 10%; /* Very dark brown */
-    --secondary: 35 50% 70%; /* Lighter, desaturated gold/beige */
+    --primary: 40 90% 50%;  
+    --primary-foreground: 35 60% 10%; 
+    --secondary: 35 50% 70%; 
     --secondary-foreground: 35 80% 15%;
-    --muted: 40 70% 88%; /* Very light gold/beige */
-    --muted-foreground: 35 50% 40%; /* Medium brown */
-    --accent: 30 70% 60%;  /* Burnished orange/copper */
+    --muted: 40 70% 88%; 
+    --muted-foreground: 35 50% 40%; 
+    --accent: 30 70% 60%;  
     --accent-foreground: 35 60% 10%;
-    --destructive: 0 50% 45%; /* Deep muted red */
-    --destructive-foreground: 45 100% 95%; /* Very light cream */
-    --border: 38 60% 75%; /* Gold-tinted brown */
-    --input: 38 60% 85%;  /* Light gold-tinted input */
-    --ring: 40 90% 50%; /* Gold ring */
-    --chart-1: 40 90% 50%; /* Gold */
-    --chart-2: 30 70% 60%;  /* Copper */
-    --chart-3: 35 50% 70%;  /* Beige */
-    --chart-4: 25 40% 50%; /* Brown */
-    --chart-5: 50 30% 65%; /* Light Yellow */
+    --destructive: 0 50% 45%; 
+    --destructive-foreground: 45 100% 95%; 
+    --border: 38 60% 75%; 
+    --input: 38 60% 85%;  
+    --ring: 40 90% 50%; 
+    --chart-1: 40 90% 50%; 
+    --chart-2: 30 70% 60%;  
+    --chart-3: 35 50% 70%;  
+    --chart-4: 25 40% 50%; 
+    --chart-5: 50 30% 65%; 
   }
 
   .theme-elite {
-    --background: 220 20% 12%; /* Very dark, desaturated blue (almost black) */
-    --foreground: 210 50% 92%; /* Light, cool gray (almost white) */
-    --card: 220 20% 18%; /* Slightly lighter dark blue */
+    --background: 220 20% 12%; 
+    --foreground: 210 50% 92%; 
+    --card: 220 20% 18%; 
     --card-foreground: 210 50% 92%;
     --popover: 220 20% 15%;
     --popover-foreground: 210 50% 92%;
-    --primary: 210 80% 60%; /* Strong, professional blue */
-    --primary-foreground: 0 0% 100%; /* White */
-    --secondary: 0 0% 40%;  /* Neutral gray */
+    --primary: 210 80% 60%; 
+    --primary-foreground: 0 0% 100%; 
+    --secondary: 0 0% 40%;  
     --secondary-foreground: 210 50% 92%;
-    --muted: 220 15% 25%; /* Dark gray */
-    --muted-foreground: 210 40% 70%; /* Medium-light gray */
-    --accent: 50 80% 60%;  /* Gold/amber accent */
-    --accent-foreground: 220 20% 5%; /* Very dark blue for contrast on accent */
-    --destructive: 0 70% 50%; /* Deep red */
+    --muted: 220 15% 25%; 
+    --muted-foreground: 210 40% 70%; 
+    --accent: 50 80% 60%;  
+    --accent-foreground: 220 20% 5%; 
+    --destructive: 0 70% 50%; 
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 30%; /* Dark gray border */
-    --input: 220 15% 28%;  /* Dark gray input */
-    --ring: 210 80% 60%; /* Primary blue ring */
-    --chart-1: 210 80% 60%; /* Blue */
-    --chart-2: 50 80% 60%;  /* Gold */
-    --chart-3: 0 0% 55%;    /* Medium Gray */
-    --chart-4: 200 30% 50%; /* Teal/Blue-Green */
-    --chart-5: 180 40% 45%; /* Desaturated Cyan */
+    --border: 220 15% 30%; 
+    --input: 220 15% 28%;  
+    --ring: 210 80% 60%; 
+    --chart-1: 210 80% 60%; 
+    --chart-2: 50 80% 60%;  
+    --chart-3: 0 0% 55%;    
+    --chart-4: 200 30% 50%; 
+    --chart-5: 180 40% 45%; 
   }
 }
 
@@ -419,16 +399,15 @@ body {
 
 /* Floating gain animation */
 .floating-gain {
-  position: fixed;
-  top: 70px; /* Adjust based on header height */
-  right: 20px;
+  position: relative; /* Changed from fixed to relative for stacking in the parent */
   padding: 0.3rem 0.6rem;
   border-radius: 0.375rem; /* rounded-md */
   font-size: 0.875rem; /* text-sm */
   font-weight: 600; /* font-semibold */
-  z-index: 1000;
+  z-index: 1000; /* Ensure it's above other elements if needed, but parent controls overall Z */
   pointer-events: none;
   animation: float-up-fade-out 2.5s ease-out forwards;
+  /* No top/right needed here as parent container in FloatingGainIndicator handles positioning */
 }
 
 .floating-gain-xp {
@@ -438,10 +417,10 @@ body {
 }
 
 .floating-gain-cash {
-  background-color: transparent;
-  color: hsl(120 60% 50% / 0.9); /* Vibrant green for cash text */
-  border: 1px solid hsl(120 60% 40% / 0.7); /* Optional: subtle darker green border */
-  text-shadow: 0 0 8px hsl(var(--background) / 0.8), 0 0 4px hsl(120 70% 60% / 0.5); /* Glow effect */
+  background-color: transparent; /* Cleaner look */
+  color: hsl(140 65% 45%); /* Vibrant green for cash text */
+  border: 1px solid hsl(140 60% 35% / 0.7); /* Optional: subtle darker green border */
+  text-shadow: 0 0 6px hsl(var(--background) / 0.7), 0 0 3px hsl(140 70% 55% / 0.5); /* Softer Glow effect */
 }
 
 

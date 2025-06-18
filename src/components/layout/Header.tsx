@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Star, DollarSign, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, Grid as GridLucide, ChevronDown } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Star, DollarSign, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, Grid as GridLucide, ChevronDown, Gem } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -28,7 +28,7 @@ interface NavItem {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, isFeatureUnlocked, getAllSkills, isSkillUnlocked } = useSessions();
+  const { userProfile, isFeatureUnlocked, getAllSkills, isSkillUnlocked, getAppliedBoost } = useSessions();
 
   const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
@@ -70,7 +70,9 @@ export default function Header() {
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
 
   const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp;
-  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS)); 
+  const baseStreakBonus = Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+  const skillXpBoost = getAppliedBoost('xp');
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + baseStreakBonus + skillXpBoost); 
   const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
 
   return (
@@ -158,12 +160,13 @@ export default function Header() {
           </nav>
         </div>
 
+        {/* User Stats Block - aligned to the far right */}
         <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
                  <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                    <Star className="h-4 w-4 text-yellow-400" /> 
+                    <Gem className="h-4 w-4 text-yellow-400" /> 
                     <span>{userProfile.skillPoints || 0}</span>
                   </div>
               </TooltipTrigger>
@@ -173,7 +176,7 @@ export default function Header() {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-1.5 text-xs text-accent font-medium px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/20">
+              <Button variant="ghost" className="flex items-center space-x-1.5 text-xs text-accent font-medium px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/10">
                 <ShieldCheck className="h-4 w-4 text-accent" />
                 <span>{userTitle}</span>
                 <ChevronDown className="h-3 w-3" />
@@ -184,17 +187,19 @@ export default function Header() {
                     <p className="text-sm font-semibold">Level {userProfile.level}: {userTitle}</p>
                     <Progress value={xpProgressPercent} className="h-1.5" />
                     <p className="text-xs text-muted-foreground">
-                        {xpIntoCurrentLevel.toLocaleString()} / {xpForNextLevelSegment > 0 ? xpForNextLevelSegment.toLocaleString() : userProfile.xp.toLocaleString()} XP
+                        {xpIntoCurrentLevel.toLocaleString()} / {(xpForNextLevelSegment > 0 ? xpForNextLevelSegment : userProfile.xp).toLocaleString()} XP
                     </p>
-                    {userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length && xpForNextLevelSegment > 0 && timeToLevelUpSeconds > 0 && (
+                    {userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length && xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
                         <p className="text-xs text-primary">
                             Approx. {formatTime(timeToLevelUpSeconds, true)} focus to next level
                         </p>
                     )}
+                     {userProfile.level >= ACTUAL_LEVEL_THRESHOLDS.length && (
+                        <p className="text-xs text-primary">Max Level Reached!</p>
+                    )}
                 </div>
             </PopoverContent>
           </Popover>
-
 
            <TooltipProvider delayDuration={100}>
             <Tooltip>
