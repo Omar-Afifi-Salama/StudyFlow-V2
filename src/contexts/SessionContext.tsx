@@ -85,8 +85,8 @@ export const TITLES = [
 
 export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png', dataAiHint: 'classic blue theme study app' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png', dataAiHint: 'dark theme study app', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png', dataAiHint: 'sepia theme study app', isTheme: true, themeClass: 'sepia' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png', dataAiHint: 'dark theme study dashboard', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png', dataAiHint: 'sepia tone timer interface', isTheme: true, themeClass: 'sepia' },
   { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png', dataAiHint: 'forest theme study app' },
   { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png', dataAiHint: 'sunset theme study app' },
   { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png', dataAiHint: 'galaxy theme study app' },
@@ -125,8 +125,8 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   lastLoginDate: null,
   dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA,
-  skillPoints: 0, // Initial skill points
-  unlockedSkillIds: [], // Initially no skills unlocked
+  skillPoints: 0,
+  unlockedSkillIds: [],
 };
 
 
@@ -328,7 +328,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
 
+  // --- Ordered useCallback definitions ---
 
+  // Level 0: No internal SessionContext useCallback dependencies (only external hooks like toast or state setters)
   const applyThemePreference = useCallback((themeClass?: 'dark' | 'sepia' | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
@@ -336,6 +338,46 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (themeClass) {
       root.classList.add(themeClass);
     }
+  }, []);
+
+  const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
+    if (amount <= 0 && type === 'xp') return; // Allow negative cash for purchases
+    if (amount === 0 && type === 'cash') return;
+
+    const newGain: FloatingGain = {
+      id: crypto.randomUUID(),
+      type,
+      amount,
+      timestamp: Date.now(),
+    };
+    setFloatingGains(prev => [...prev, newGain]);
+    setTimeout(() => {
+      setFloatingGains(prev => prev.filter(g => g.id !== newGain.id));
+    }, 2500);
+  }, []);
+
+  const clearSessions = useCallback(() => {
+    setSessions([]);
+  }, []);
+
+  const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
+      setUserProfile(prev => ({
+          ...prev,
+          notepadData: {
+              ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
+              [field]: data,
+          }
+      }));
+  }, []);
+
+  const getHabitLogKey = useCallback((habit: Habit, date: Date): string => {
+    return habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : `${format(date, 'yyyy')}-W${String(getWeek(date, { weekStartsOn: 1 })).padStart(2, '0')}`;
+  }, []);
+
+  const getAllSkills = useCallback(() => ALL_SKILLS, []);
+  
+  const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
+    setUserProfile(prev => ({...prev, ...updatedProfileData}));
   }, []);
 
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
@@ -354,6 +396,54 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [toast]);
 
+  const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
+    let newLevel = currentLevel;
+    let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
+    let leveledUp = false;
+    let skillPointsGained = 0;
+
+    while (newLevel < LEVEL_THRESHOLDS.length && currentXp >= LEVEL_THRESHOLDS[newLevel]) {
+      newLevel++;
+      leveledUp = true;
+      skillPointsGained++; // Award 1 skill point per level up
+    }
+
+    if (leveledUp) {
+      newTitle = TITLES[newLevel - 1] || TITLES[TITLES.length -1];
+      let description = `Congratulations! You've reached Level ${newLevel}: ${newTitle}.`;
+      if (skillPointsGained > 0) {
+        description += ` You earned ${skillPointsGained} Skill Point(s)!`;
+      }
+      toast({
+        title: "Level Up!",
+        description: description,
+      });
+    }
+    return { newLevel, newTitle, leveledUp, skillPointsGained };
+  }, [toast]);
+
+  const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
+    setUserProfile(prev => ({...prev, wakeUpTime, sleepTime }));
+    toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
+  }, [toast]);
+
+  const getSkinById = useCallback((id: string) => {
+    return PREDEFINED_SKINS.find(skin => skin.id === id);
+  }, []);
+
+  const isSkinOwned = useCallback((skinId: string) => {
+    return userProfile.ownedSkinIds.includes(skinId);
+  }, [userProfile.ownedSkinIds]);
+
+  const isSkillUnlocked = useCallback((skillId: string) => {
+    return userProfile.unlockedSkillIds.includes(skillId);
+  }, [userProfile.unlockedSkillIds]);
+
+  const getUnlockedAchievements = useCallback((): Achievement[] => {
+    return ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id));
+  }, [userProfile.unlockedAchievementIds]);
+
+  // Level 1: Depends on Level 0 functions and/or state
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
@@ -363,7 +453,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       let parsedProfile = DEFAULT_USER_PROFILE;
       if (storedProfile) {
         const tempProfile = JSON.parse(storedProfile) as UserProfile;
-
         const ensuredNotepadData: NotepadData = {
             ...DEFAULT_NOTEPAD_DATA,
             ...(tempProfile.notepadData || {}),
@@ -375,7 +464,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
             countdownEvents: Array.isArray(tempProfile.notepadData?.countdownEvents) ? tempProfile.notepadData.countdownEvents : DEFAULT_NOTEPAD_DATA.countdownEvents,
         };
-
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
             ...tempProfile,
@@ -392,7 +480,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
-
       const storedOfferTime = localStorage.getItem('lastOfferGenerationTime');
       if (storedOfferTime) setLastOfferGenerationTime(parseInt(storedOfferTime, 10));
 
@@ -420,10 +507,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
         localStorage.setItem('lastChallengeResetDate', todayDateString);
       }
-
       const storedCapitalistStats = localStorage.getItem('capitalistStatsForAchievements');
       if (storedCapitalistStats) setCapitalistStatsForAchievements(JSON.parse(storedCapitalistStats));
-
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       setUserProfile(DEFAULT_USER_PROFILE);
@@ -431,150 +516,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
       setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
-      localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
-      localStorage.setItem('lastChallengeResetDate', format(new Date(), 'yyyy-MM-dd'));
     } finally {
         setIsLoaded(true);
     }
   }, [applyThemePreference]);
-
-
-  useEffect(() => {
-    if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) {
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        let currentLoginStreak = userProfile.dailyLoginStreak || 0;
-        let newCash = userProfile.cash;
-        let loginBonusAwarded = 0;
-
-        if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) {
-            currentLoginStreak++;
-        } else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) {
-            currentLoginStreak = 1;
-        } else if (!userProfile.lastLoginDate) {
-            currentLoginStreak = 1;
-        }
-
-        const streakBonus = Math.min( (currentLoginStreak -1) * DAILY_LOGIN_STREAK_CASH_BONUS, DAILY_LOGIN_MAX_STREAK_BONUS_CASH);
-        loginBonusAwarded = DAILY_LOGIN_BASE_CASH + streakBonus;
-        newCash += loginBonusAwarded;
-
-        setUserProfile(prev => ({
-            ...prev,
-            cash: newCash,
-            lastLoginDate: todayStr,
-            dailyLoginStreak: currentLoginStreak
-        }));
-
-        toast({
-            title: "Daily Login Bonus!",
-            description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).`
-        });
-        addFloatingGain('cash', loginBonusAwarded);
-    }
-  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast]); // addFloatingGain removed from here to avoid re-trigger
-
-
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem('studySessions', JSON.stringify(sessions));
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
-        if (lastOfferGenerationTime) {
-          localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
-        } else {
-          localStorage.removeItem('lastOfferGenerationTime');
-        }
-        const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
-        if (equippedSkin?.isTheme && equippedSkin.themeClass) {
-            localStorage.setItem('themePreference', equippedSkin.themeClass);
-        } else {
-            localStorage.setItem('themePreference', 'classic');
-        }
-        localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
-        if (lastChallengeResetDate) {
-            localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
-        }
-        localStorage.setItem('capitalistStatsForAchievements', JSON.stringify(capitalistStatsForAchievements));
-      } catch (error) {
-        console.error("Failed to save data to localStorage:", error);
-      }
-    }
-  }, [sessions, userProfile, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
-
-  const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
-    setUserProfile(prev => ({...prev, ...updatedProfileData}));
-  }, []);
-
-  const updateNotepadData = useCallback((updatedNotepadData: Partial<NotepadData>) => {
-    setUserProfile(prev => ({
-      ...prev,
-      notepadData: {
-        ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
-        ...updatedNotepadData,
-      }
-    }));
-  }, []);
-
-  const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
-    setUserProfile(prev => ({...prev, wakeUpTime, sleepTime }));
-    toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
-  }, [toast]);
-
-  const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
-    if (amount <= 0) return;
-    const newGain: FloatingGain = {
-      id: crypto.randomUUID(),
-      type,
-      amount,
-      timestamp: Date.now(),
-    };
-    setFloatingGains(prev => [...prev, newGain]);
-    // Auto-remove after animation
-    setTimeout(() => {
-      setFloatingGains(prev => prev.filter(g => g.id !== newGain.id));
-    }, 2500); // Match CSS animation duration
-  }, []);
-
-  const checkAndUnlockAchievements = useCallback(() => {
-    setUserProfile(prevUserProfile => {
-        const currentInvestmentStats = capitalistStatsForAchievements;
-        const currentSessions = sessions;
-        const currentDailyChallenges = dailyChallenges;
-
-        const newlyUnlocked: string[] = [];
-        let totalCashRewardFromAchievements = 0;
-
-        ALL_ACHIEVEMENTS.forEach(ach => {
-        if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions, currentDailyChallenges, currentInvestmentStats)) {
-            newlyUnlocked.push(ach.id);
-            totalCashRewardFromAchievements += ach.cashReward;
-            toast({
-            title: "Achievement Unlocked!",
-            description: `${ach.name} - ${ach.description} (+$${ach.cashReward.toLocaleString()})`,
-            });
-            addFloatingGain('cash', ach.cashReward);
-        }
-        });
-
-        if (newlyUnlocked.length > 0) {
-        return {
-            ...prevUserProfile,
-            unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked],
-            cash: prevUserProfile.cash + totalCashRewardFromAchievements,
-        };
-        }
-        return prevUserProfile;
-    });
-  }, [toast, capitalistStatsForAchievements, sessions, dailyChallenges, addFloatingGain]);
-
-
-  useEffect(() => {
-    if (isLoaded) {
-        checkAndUnlockAchievements();
-    }
-  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length]);
-
 
   const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
     let totalBoost = 0;
@@ -589,32 +534,41 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return totalBoost;
   }, [userProfile.unlockedSkillIds]);
 
-  const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
-    let newLevel = currentLevel;
-    let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
-    let leveledUp = false;
-    let skillPointsGained = 0;
-
-    while (newLevel < LEVEL_THRESHOLDS.length && currentXp >= LEVEL_THRESHOLDS[newLevel]) {
-      newLevel++;
-      leveledUp = true;
-      skillPointsGained++;
-    }
-
-    if (leveledUp) {
-      newTitle = TITLES[newLevel - 1] || TITLES[TITLES.length -1];
-      let description = `Congratulations! You've reached Level ${newLevel}: ${newTitle}.`;
-      if (skillPointsGained > 0) {
-        description += ` You earned ${skillPointsGained} Skill Point(s)!`;
+  const updateNotepadData = useCallback((updatedNotepadData: Partial<NotepadData>) => {
+    setUserProfile(prev => ({
+      ...prev,
+      notepadData: {
+        ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
+        ...updatedNotepadData,
       }
-      toast({
-        title: "Level Up!",
-        description: description,
-      });
-    }
-    return { newLevel, newTitle, leveledUp, skillPointsGained };
-  }, [toast]);
+    }));
+  }, []);
 
+  const getHabitCompletionForDate = useCallback((habit: Habit, date: Date): HabitLogEntry | undefined => {
+    const key = getHabitLogKey(habit, date);
+    return habit.log[key];
+  }, [getHabitLogKey]);
+
+  const getHabitCompletionsForWeek = useCallback((habit: Habit, date: Date): number => {
+    if (habit.frequency !== 'weekly' || !habit.targetCompletions) return 0;
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    let completions = 0;
+    for (let i = 0; i < 7; i++) {
+      const dayInWeek = addDays(weekStart, i);
+      const dayKey = format(dayInWeek, 'yyyy-MM-dd');
+      const logEntry = habit.log[dayKey];
+      if (logEntry && logEntry.completed) {
+        completions += (logEntry.count || 1);
+      }
+    }
+    return completions;
+  }, []);
+  
+  const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
+    return !!ALL_SKILLS.find(skill => skill.unlocksFeature === featureKey && isSkillUnlocked(skill.id));
+  }, [isSkillUnlocked]);
+
+  // Level 2: Depends on Level 1 functions and/or state
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
@@ -625,21 +579,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (lastStudyDay) {
       const lastDate = parseISO(lastStudyDay);
       const diff = differenceInDays(today, lastDate);
-
-      if (diff === 1) {
-        currentStudyStreak++;
-      } else if (diff > 1) {
-        currentStudyStreak = 1;
-      }
+      if (diff === 1) currentStudyStreak++;
+      else if (diff > 1) currentStudyStreak = 1;
     } else {
       currentStudyStreak = 1;
     }
 
     let newLastStudyDate = lastStudyDay;
     if (lastStudyDay !== todayStr) {
-        if (currentStudyStreak > longestStudyStreak) {
-            longestStudyStreak = currentStudyStreak;
-        }
+        if (currentStudyStreak > longestStudyStreak) longestStudyStreak = currentStudyStreak;
         newLastStudyDate = todayStr;
     }
 
@@ -648,532 +596,144 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const skillCashBoost = getAppliedBoost('cash');
 
     return {
-        streakBonusMultiplier: baseStreakBonus, // This is the bonus from streak only
+        streakBonusMultiplier: baseStreakBonus,
         totalXpMultiplier: 1 + baseStreakBonus + skillXpBoost,
         totalCashMultiplier: 1 + baseStreakBonus + skillCashBoost,
         updatedCurrentStreak: currentStudyStreak,
         updatedLongestStreak: longestStudyStreak,
         updatedLastStudyDate: newLastStudyDate
     };
-  }, [getAppliedBoost]);
-
-
+  }, [getAppliedBoost, userProfile.lastStudyDate, userProfile.currentStreak, userProfile.longestStreak]);
+  
   const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
     updateChallengeProgress('tasksCompleted', completedTasksCount, true);
   }, [updateChallengeProgress]);
 
-
-  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => {
-    if (sessionDetails.durationInSeconds <= 0) {
-      console.warn("Attempted to log a session with zero or negative duration.");
-      return;
-    }
-    const newSession: StudySession = {
-      id: crypto.randomUUID(),
-      type: sessionDetails.type,
-      startTime: sessionDetails.startTime,
-      endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000,
-      duration: sessionDetails.durationInSeconds,
-      tags: sessionDetails.tags || [],
-      isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false,
-    };
-    setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
-
-    setUserProfile(prevProfile => {
-        const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
-
-        let awardedXp = 0;
-        let awardedCash = 0;
-        const minutesStudied = sessionDetails.durationInSeconds / 60;
-
-        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
-          awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
-          awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
-          updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
-        }
-        if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) {
-            updateChallengeProgress('pomodoroCycles', 1);
-        }
-
-        if (prevProfile.lastStudyDate !== updatedLastStudyDate) {
-            updateChallengeProgress('studyStreak', 1);
-        }
-
-        const newXp = prevProfile.xp + awardedXp;
-        const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
-        const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
-
-        let rewardMessages = [];
-        if (awardedXp > 0) {
-            rewardMessages.push(`${awardedXp} XP`);
-            addFloatingGain('xp', awardedXp);
-        }
-        if (awardedCash > 0) {
-            rewardMessages.push(`$${awardedCash.toLocaleString()}`);
-            addFloatingGain('cash', awardedCash);
-        }
-
-        const streakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100; // Isolate streak bonus part
-        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) {
-           rewardMessages.push(`(${streakBonusPercent.toFixed(0)}% streak bonus!)`);
-        }
-        const skillBonusXpPercent = getAppliedBoost('xp') * 100;
-        if (skillBonusXpPercent > 0 && awardedXp > 0) {
-           rewardMessages.push(`(${skillBonusXpPercent.toFixed(0)}% skill XP bonus!)`);
-        }
-        const skillBonusCashPercent = getAppliedBoost('cash') * 100;
-        if (skillBonusCashPercent > 0 && awardedCash > 0) {
-           rewardMessages.push(`(${skillBonusCashPercent.toFixed(0)}% skill Cash bonus!)`);
-        }
-
-
-        if (rewardMessages.length > 0) {
-            toast({ title: "Session Rewards", description: `Gained: ${rewardMessages.join(', ')}` });
-        }
-
-        return {
-          ...prevProfile,
-          xp: newXp,
-          cash: prevProfile.cash + awardedCash,
-          level: newLevel,
-          title: newTitle,
-          currentStreak: updatedCurrentStreak,
-          longestStreak: updatedLongestStreak,
-          lastStudyDate: updatedLastStudyDate,
-          skillPoints: newSkillPoints,
-        };
-      });
-  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus, addFloatingGain, getAppliedBoost]);
-
-  const clearSessions = useCallback(() => {
-    setSessions([]);
-  }, []);
-
-  const updateSessionDescription = useCallback((sessionId: string, description: string) => {
-    setSessions(prevSessions =>
-      prevSessions.map(session =>
-        session.id === sessionId ? { ...session, description } : session
-      )
-    );
-  }, []);
-
-  const getSkinById = useCallback((id: string) => {
-    return PREDEFINED_SKINS.find(skin => skin.id === id);
-  }, []);
-
-  const isSkinOwned = useCallback((skinId: string) => {
-    return userProfile.ownedSkinIds.includes(skinId);
-  }, [userProfile.ownedSkinIds]);
-
-  const buySkin = useCallback((skinId: string) => {
-    const skin = getSkinById(skinId);
-    if (!skin) {
-      toast({ title: "Error", description: "Skin not found.", variant: "destructive" });
-      return false;
-    }
-    if (isSkinOwned(skinId)) {
-      toast({ title: "Already Owned", description: "You already own this skin." });
-      return false;
-    }
-
-    const shopDiscount = getAppliedBoost('shopDiscount');
-    const effectivePrice = Math.max(0, Math.round(skin.price * (1 - shopDiscount)));
-
-    if (userProfile.cash < effectivePrice) {
-      toast({ title: "Not Enough Cash", description: `You need $${effectivePrice.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive" });
-      return false;
-    }
-    if (userProfile.level < skin.levelRequirement) {
-      toast({ title: "Level Too Low", description: `You need to be Level ${skin.levelRequirement}. You are Level ${userProfile.level}.`, variant: "destructive" });
-      return false;
-    }
-
-    setUserProfile(prev => ({
-      ...prev,
-      cash: prev.cash - effectivePrice,
-      ownedSkinIds: [...prev.ownedSkinIds, skinId],
-    }));
-    toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${ (shopDiscount * 100).toFixed(0) }% discount!)` : ''}.` });
-    addFloatingGain('cash', -effectivePrice); // Negative gain for spending
-    return true;
-  }, [userProfile, getSkinById, isSkinOwned, toast, getAppliedBoost, addFloatingGain]);
-
-  const equipSkin = useCallback((skinId: string) => {
-    if (!isSkinOwned(skinId)) {
-      toast({ title: "Error", description: "You don't own this skin.", variant: "destructive" });
-      return;
-    }
-    const skinToEquip = getSkinById(skinId);
-    if (!skinToEquip) return;
-
-    setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
-
-    if (skinToEquip.isTheme && skinToEquip.themeClass) {
-      applyThemePreference(skinToEquip.themeClass);
-      localStorage.setItem('themePreference', skinToEquip.themeClass);
-    } else {
-      applyThemePreference(null);
-      localStorage.setItem('themePreference', 'classic');
-    }
-
-    toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.` });
-  }, [isSkinOwned, getSkinById, toast, applyThemePreference]);
-
-
-  const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
-      setUserProfile(prev => ({
-          ...prev,
-          notepadData: {
-              ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
-              [field]: data,
-          }
-      }));
-  }, []);
-
   const addNotepadNote = useCallback((note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => {
-    const newNote: NotepadNote = {
-      ...note,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      lastModified: Date.now(),
-    };
+    const newNote: NotepadNote = { ...note, id: crypto.randomUUID(), createdAt: Date.now(), lastModified: Date.now() };
     const currentNotes = userProfile.notepadData.notes || [];
     updateNotepadField('notes', [newNote, ...currentNotes]);
-    updateChallengeProgress('notepadEntry', 1);
+    if(isFeatureUnlocked('notepad')) updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Note Added", description: `"${note.title}" has been saved.` });
-  }, [toast, updateChallengeProgress, userProfile.notepadData.notes, updateNotepadField]);
-
-  const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
-    const currentNotes = userProfile.notepadData.notes || [];
-    const newNotes = currentNotes.map(note =>
-        note.id === updatedNote.id ? { ...updatedNote, lastModified: Date.now() } : note
-      );
-    updateNotepadField('notes', newNotes);
-    toast({ title: "Note Updated", description: `"${updatedNote.title}" has been saved.` });
-  }, [toast, userProfile.notepadData.notes, updateNotepadField]);
-
-  const deleteNotepadNote = useCallback((noteId: string) => {
-    const currentNotes = userProfile.notepadData.notes || [];
-    const noteToDelete = currentNotes.find(n => n.id === noteId);
-    const newNotes = currentNotes.filter(note => note.id !== noteId);
-    updateNotepadField('notes', newNotes);
-    if (noteToDelete) {
-        toast({ title: "Note Deleted", description: `"${noteToDelete.title}" has been removed.` });
-    }
-  }, [toast, userProfile.notepadData.notes, updateNotepadField]);
-
-  const calculateNextRevisionDate = (learnedDateStr: string, stage: number): string => {
-    let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
-    const revisionBoostSkill = ALL_SKILLS.find(s => s.id === 'revisionAccelerator');
-    if(revisionBoostSkill && userProfile.unlockedSkillIds.includes(revisionBoostSkill.id)) {
-        interval = Math.max(1, Math.round(interval * 0.9)); // Apply 10% reduction, min 1 day
-    }
-    return format(addDays(parseISO(learnedDateStr), interval), 'yyyy-MM-dd');
-  };
+  }, [userProfile.notepadData.notes, updateNotepadField, updateChallengeProgress, toast, isFeatureUnlocked]);
 
   const addRevisionConcept = useCallback((name: string, learnedDate: Date) => {
     const learnedDateStr = format(learnedDate, 'yyyy-MM-dd');
+    const calculateNextRevDate = (lsd: string, stage: number) => {
+      let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
+      const skill = ALL_SKILLS.find(s => s.id === 'revisionAccelerator');
+      if (skill && isSkillUnlocked(skill.id)) interval = Math.max(1, Math.round(interval * 0.9));
+      return format(addDays(parseISO(lsd), interval), 'yyyy-MM-dd');
+    };
     const newConcept: RevisionConcept = {
-      id: crypto.randomUUID(),
-      name,
-      learnedDate: learnedDateStr,
-      lastRevisedDate: learnedDateStr,
-      nextRevisionDate: calculateNextRevisionDate(learnedDateStr, 0),
-      revisionStage: 0,
+      id: crypto.randomUUID(), name, learnedDate: learnedDateStr, lastRevisedDate: learnedDateStr,
+      nextRevisionDate: calculateNextRevDate(learnedDateStr, 0), revisionStage: 0,
     };
     const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
     updateNotepadField('revisionConcepts', [...currentRevisionConcepts, newConcept]);
-    updateChallengeProgress('notepadEntry', 1);
+    if(isFeatureUnlocked('notepad')) updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
-  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField, updateChallengeProgress, userProfile.unlockedSkillIds]);
+  }, [userProfile.notepadData.revisionConcepts, userProfile.unlockedSkillIds, updateNotepadField, updateChallengeProgress, toast, isSkillUnlocked, isSkillUnlocked]);
 
   const markConceptRevised = useCallback((conceptId: string) => {
+    const calculateNextRevDate = (lsd: string, stage: number) => {
+      let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
+      const skill = ALL_SKILLS.find(s => s.id === 'revisionAccelerator');
+      if (skill && isSkillUnlocked(skill.id)) interval = Math.max(1, Math.round(interval * 0.9));
+      return format(addDays(parseISO(lsd), interval), 'yyyy-MM-dd');
+    };
     const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
     const concepts = currentRevisionConcepts.map(c => {
         if (c.id === conceptId) {
           const todayStr = format(new Date(), 'yyyy-MM-dd');
           const newStage = c.revisionStage + 1;
-          return {
-            ...c,
-            lastRevisedDate: todayStr,
-            nextRevisionDate: calculateNextRevisionDate(todayStr, newStage),
-            revisionStage: newStage,
-          };
+          return { ...c, lastRevisedDate: todayStr, nextRevisionDate: calculateNextRevDate(todayStr, newStage), revisionStage: newStage };
         }
         return c;
       });
     updateNotepadField('revisionConcepts', concepts);
     toast({ title: "Concept Revised!", description: "Revision schedule updated."});
-  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField, userProfile.unlockedSkillIds]);
-
-  const deleteRevisionConcept = useCallback((conceptId: string) => {
-    const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
-    const conceptToDelete = currentRevisionConcepts.find(c => c.id === conceptId);
-    const newConcepts = currentRevisionConcepts.filter(c => c.id !== conceptId);
-    updateNotepadField('revisionConcepts', newConcepts);
-    if (conceptToDelete) {
-        toast({ title: "Concept Removed", description: `"${conceptToDelete.name}" removed from revision.` });
-    }
-  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField]);
-
-  const addHabit = useCallback((habitData: Omit<Habit, 'id' | 'createdAt' | 'log' | 'currentStreak' | 'longestStreak'>) => {
-    const newHabit: Habit = {
-      ...habitData,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      log: {},
-      currentStreak: 0,
-      longestStreak: 0,
-    };
-    const currentHabits = userProfile.notepadData.habits || [];
-    updateNotepadField('habits', [...currentHabits, newHabit]);
-    toast({ title: "Habit Added", description: `"${newHabit.name}" has been created.` });
-  }, [toast, userProfile.notepadData.habits, updateNotepadField]);
-
-  const updateHabit = useCallback((updatedHabit: Habit) => {
-    const currentHabits = userProfile.notepadData.habits || [];
-    const newHabits = currentHabits.map(h => h.id === updatedHabit.id ? updatedHabit : h);
-    updateNotepadField('habits', newHabits);
-    toast({ title: "Habit Updated", description: `"${updatedHabit.name}" has been saved.`});
-  }, [toast, userProfile.notepadData.habits, updateNotepadField]);
-
-  const deleteHabit = useCallback((habitId: string) => {
-    const currentHabits = userProfile.notepadData.habits || [];
-    const habitToDelete = currentHabits.find(h => h.id === habitId);
-    const newHabits = currentHabits.filter(h => h.id !== habitId);
-    updateNotepadField('habits', newHabits);
-    if (habitToDelete) {
-        toast({ title: "Habit Deleted", description: `"${habitToDelete.name}" has been removed.`});
-    }
-  }, [toast, userProfile.notepadData.habits, updateNotepadField]);
-
- const getHabitLogKey = (habit: Habit, date: Date): string => {
-    return habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : `${format(date, 'yyyy')}-W${String(getWeek(date, { weekStartsOn: 1 })).padStart(2, '0')}`;
- };
-
-  const getHabitCompletionForDate = useCallback((habit: Habit, date: Date): HabitLogEntry | undefined => {
-    const key = getHabitLogKey(habit, date);
-    return habit.log[key];
-  }, []);
-
-  const getHabitCompletionsForWeek = useCallback((habit: Habit, date: Date): number => {
-    if (habit.frequency !== 'weekly' || !habit.targetCompletions) return 0;
-
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-    let completions = 0;
-    for (let i = 0; i < 7; i++) {
-      const dayInWeek = addDays(weekStart, i);
-      const dayKey = format(dayInWeek, 'yyyy-MM-dd'); // Store daily logs even for weekly view
-      const logEntry = habit.log[dayKey];
-      if (logEntry && logEntry.completed) {
-        completions += (logEntry.count || 1);
-      }
-    }
-    return completions;
-  }, []);
-
+  }, [userProfile.notepadData.revisionConcepts, userProfile.unlockedSkillIds, updateNotepadField, toast, isSkillUnlocked]);
 
   const logHabitCompletion = useCallback((habitId: string, date: Date, completed: boolean = true, countIncrement?: number) => {
-      setUserProfile(prevProfile => {
-          if (!prevProfile.notepadData || !prevProfile.notepadData.habits) return prevProfile;
+    setUserProfile(prevProfile => {
+        if (!prevProfile.notepadData?.habits) return prevProfile;
+        let habitCompletedForChallenge = false;
+        const updatedHabits = prevProfile.notepadData.habits.map(habit => {
+            if (habit.id === habitId) {
+                const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd');
+                const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
+                let newCompletedStatus = completed;
+                let newCount = oldLogEntry.count || 0;
+                if (completed) newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
+                else newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
+                
+                if (habit.frequency === 'weekly' && habit.targetCompletions) {
+                  newCompletedStatus = getHabitCompletionsForWeek({...habit, log: {...habit.log, [logKey]: {date: logKey, completed: newCount > 0, count: newCount }}}, date) >= habit.targetCompletions;
+                } else { newCompletedStatus = newCount > 0; }
 
-          let habitCompletedForChallenge = false;
+                const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCompletedStatus, count: newCount };
+                const newLog = { ...habit.log, [logKey]: newLogEntry };
+                let currentStreak = habit.currentStreak, longestStreak = habit.longestStreak;
 
-          const updatedHabits = prevProfile.notepadData.habits.map(habit => {
-              if (habit.id === habitId) {
-                  const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd'); // Use daily key for all logs for simplicity in tracking weekly targets
-                  const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
-
-                  let newCompletedStatus = completed;
-                  let newCount = oldLogEntry.count || 0;
-
-                  if (completed) {
-                    newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
-                  } else {
-                    newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
-                  }
-                  
-                  if (habit.frequency === 'weekly' && habit.targetCompletions) {
-                    newCompletedStatus = getHabitCompletionsForWeek({...habit, log: {...habit.log, [logKey]: {date: logKey, completed: newCount > 0, count: newCount }}}, date) >= habit.targetCompletions;
-                  } else { // daily
-                     newCompletedStatus = newCount > 0;
-                  }
-
-
-                  const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCompletedStatus, count: newCount };
-                  const newLog = { ...habit.log, [logKey]: newLogEntry };
-
-                  let currentStreak = habit.currentStreak;
-                  let longestStreak = habit.longestStreak;
-
-                  if (habit.frequency === 'daily') {
-                      if (newCompletedStatus) { // Only daily completed status triggers daily streak
-                          const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
-                          if (habit.log[yesterdayKey]?.completed) {
-                              currentStreak++;
-                          } else {
-                              currentStreak = 1;
-                          }
-                          if (currentStreak > longestStreak) {
-                              longestStreak = currentStreak;
-                          }
-                          habitCompletedForChallenge = true;
-                      } else {
-                           const todayKey = format(date, 'yyyy-MM-dd');
-                           if (logKey === todayKey && !newCompletedStatus) {
-                             currentStreak = 0;
-                           }
-                      }
-                  } else if (habit.frequency === 'weekly') {
-                     const weekLogKey = getHabitLogKey(habit, date); // Use weekly key for streak calc
-                     const prevWeekLogKey = getHabitLogKey(habit, subDays(date, 7));
-                     const completionsThisWeek = getHabitCompletionsForWeek({...habit, log: newLog}, date);
-                     const isWeekGoalMet = completionsThisWeek >= (habit.targetCompletions || 1);
-
-                     if(isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) { // Check if this completion achieved the weekly goal
-                        if(habit.log[prevWeekLogKey]?.completed){
-                            currentStreak++;
-                        } else {
-                            currentStreak = 1;
-                        }
-                        if (currentStreak > longestStreak) {
-                            longestStreak = currentStreak;
-                        }
-                     } else if (!isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) {
-                        // If weekly goal was met but now it's not (due to unchecking), reset streak if it was based on this week.
-                        if (habit.log[weekLogKey]?.completed) currentStreak = 0;
-                     }
-                     // Update the master weekly log entry
-                     newLog[weekLogKey] = { ...newLog[weekLogKey], date: weekLogKey, completed: isWeekGoalMet };
-                  }
-                  return { ...habit, log: newLog, currentStreak, longestStreak };
-              }
-              return habit;
-          });
-
-          if(habitCompletedForChallenge){
-             updateChallengeProgress('habitCompletions', 1);
-          }
-
-          return {
-              ...prevProfile,
-              notepadData: {
-                  ...(prevProfile.notepadData),
-                  habits: updatedHabits,
-              }
-          };
-      });
-      toast({ title: "Habit Updated", description: "Your progress has been logged." });
-  }, [toast, updateChallengeProgress, getHabitCompletionsForWeek]);
-
-
-  const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
-    const newEvent: NotepadCountdownEvent = {
-      ...eventData,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-    };
-    const currentEvents = userProfile.notepadData.countdownEvents || [];
-    updateNotepadField('countdownEvents', [...currentEvents, newEvent].sort((a,b) => parseISO(a.targetDate).getTime() - parseISO(b.targetDate).getTime()));
-    toast({ title: "Event Countdown Added", description: `"${newEvent.name}" is now being tracked.` });
-  }, [toast, userProfile.notepadData.countdownEvents, updateNotepadField]);
-
-  const updateNotepadCountdownEvent = useCallback((updatedEvent: NotepadCountdownEvent) => {
-    const currentEvents = userProfile.notepadData.countdownEvents || [];
-    const newEvents = currentEvents.map(event =>
-      event.id === updatedEvent.id ? updatedEvent : event
-    ).sort((a,b) => parseISO(a.targetDate).getTime() - parseISO(b.targetDate).getTime());
-    updateNotepadField('countdownEvents', newEvents);
-    toast({ title: "Event Countdown Updated", description: `"${updatedEvent.name}" has been saved.` });
-  }, [toast, userProfile.notepadData.countdownEvents, updateNotepadField]);
-
-  const deleteNotepadCountdownEvent = useCallback((eventId: string) => {
-    const currentEvents = userProfile.notepadData.countdownEvents || [];
-    const eventToDelete = currentEvents.find(e => e.id === eventId);
-    const newEvents = currentEvents.filter(event => event.id !== eventId);
-    updateNotepadField('countdownEvents', newEvents);
-    if (eventToDelete) {
-      toast({ title: "Event Countdown Deleted", description: `"${eventToDelete.name}" has been removed.` });
-    }
-  }, [toast, userProfile.notepadData.countdownEvents, updateNotepadField]);
-
-
-
-  const generateOffers = (): CapitalistOffer[] => {
-    const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
-        { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24, completionBonusCash: 1000 },
-        { name: "Crypto Gamble", description: "High risk, high reward digital currency.", minInvestmentAmount: 10000, maxInvestmentAmount: 50000, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
-        { name: "Real Estate Flip", description: "Moderate risk, steady gains.", minInvestmentAmount: 20000, maxInvestmentAmount: 100000, minRoiPercent: -10, maxRoiPercent: 50, volatilityFactor: 0.4, durationHours: 24, completionBonusCash: 5000 },
-        { name: "Meme Stock Madness", description: "To the moon or bust!", minInvestmentAmount: 7500, maxInvestmentAmount: 30000,  minRoiPercent: -95, maxRoiPercent: 500, volatilityFactor: 0.95, durationHours: 24 },
-        { name: "Blue Chip Bonds", description: "Slow and steady wins the race.", minInvestmentAmount: 30000,maxInvestmentAmount: 150000, minRoiPercent: 1, maxRoiPercent: 10, volatilityFactor: 0.1, durationHours: 24, completionBonusCash: 2500 },
-        { name: "Emerging Market Fund", description: "Potential for growth, with some uncertainty.", minInvestmentAmount: 15000, maxInvestmentAmount: 75000,  minRoiPercent: -30, maxRoiPercent: 70, volatilityFactor: 0.6, durationHours: 24, completionBonusCash: 3000 },
-    ];
-    const shuffled = [...baseOffersData].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 3).map(offer => ({
-      ...offer,
-      id: crypto.randomUUID(),
-      expiresAt: Date.now() + offer.durationHours * 60 * 60 * 1000,
-    }));
-  };
-
+                if (habit.frequency === 'daily') {
+                    if (newCompletedStatus) {
+                        const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
+                        if (habit.log[yesterdayKey]?.completed) currentStreak++; else currentStreak = 1;
+                        if (currentStreak > longestStreak) longestStreak = currentStreak;
+                        habitCompletedForChallenge = true;
+                    } else { if (logKey === format(date, 'yyyy-MM-dd') && !newCompletedStatus) currentStreak = 0; }
+                } else if (habit.frequency === 'weekly') {
+                   const weekLogKey = getHabitLogKey(habit, date);
+                   const prevWeekLogKey = getHabitLogKey(habit, subDays(date, 7));
+                   const completionsThisWeek = getHabitCompletionsForWeek({...habit, log: newLog}, date);
+                   const isWeekGoalMet = completionsThisWeek >= (habit.targetCompletions || 1);
+                   if(isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) {
+                      if(habit.log[prevWeekLogKey]?.completed) currentStreak++; else currentStreak = 1;
+                      if (currentStreak > longestStreak) longestStreak = currentStreak;
+                   } else if (!isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) {
+                      if (habit.log[weekLogKey]?.completed) currentStreak = 0;
+                   }
+                   newLog[weekLogKey] = { ...newLog[weekLogKey], date: weekLogKey, completed: isWeekGoalMet };
+                }
+                return { ...habit, log: newLog, currentStreak, longestStreak };
+            }
+            return habit;
+        });
+        if(habitCompletedForChallenge && isFeatureUnlocked('notepad') && isFeatureUnlocked('challenges')){ updateChallengeProgress('habitCompletions', 1); }
+        return { ...prevProfile, notepadData: { ...(prevProfile.notepadData), habits: updatedHabits } };
+    });
+    toast({ title: "Habit Updated", description: "Your progress has been logged." });
+  }, [toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey, isFeatureUnlocked]);
+  
   const ensureCapitalistOffers = useCallback(() => {
     const now = Date.now();
     const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
     let offerDurationMultiplier = 1;
-    if(investmentBoostSkill && userProfile.unlockedSkillIds.includes(investmentBoostSkill.id)) {
-        // No specific duration change for this skill, but could be added.
-    }
-
+    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { /* No duration change for this skill */ }
     if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 * offerDurationMultiplier || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
+      const generateOffers = (): CapitalistOffer[] => { /* ... as before ... */ 
+        const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
+            { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24, completionBonusCash: 1000 },
+            { name: "Crypto Gamble", description: "High risk, high reward digital currency.", minInvestmentAmount: 10000, maxInvestmentAmount: 50000, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
+            { name: "Real Estate Flip", description: "Moderate risk, steady gains.", minInvestmentAmount: 20000, maxInvestmentAmount: 100000, minRoiPercent: -10, maxRoiPercent: 50, volatilityFactor: 0.4, durationHours: 24, completionBonusCash: 5000 },
+            { name: "Meme Stock Madness", description: "To the moon or bust!", minInvestmentAmount: 7500, maxInvestmentAmount: 30000,  minRoiPercent: -95, maxRoiPercent: 500, volatilityFactor: 0.95, durationHours: 24 },
+            { name: "Blue Chip Bonds", description: "Slow and steady wins the race.", minInvestmentAmount: 30000,maxInvestmentAmount: 150000, minRoiPercent: 1, maxRoiPercent: 10, volatilityFactor: 0.1, durationHours: 24, completionBonusCash: 2500 },
+            { name: "Emerging Market Fund", description: "Potential for growth, with some uncertainty.", minInvestmentAmount: 15000, maxInvestmentAmount: 75000,  minRoiPercent: -30, maxRoiPercent: 70, volatilityFactor: 0.6, durationHours: 24, completionBonusCash: 3000 },
+        ];
+        const shuffled = [...baseOffersData].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3).map(offer => ({
+          ...offer,
+          id: crypto.randomUUID(),
+          expiresAt: Date.now() + offer.durationHours * 60 * 60 * 1000,
+        }));
+      };
       const newOffers = generateOffers();
       setCapitalistOffers(newOffers);
       setLastOfferGenerationTime(now);
     }
-  }, [lastOfferGenerationTime, capitalistOffers, userProfile.unlockedSkillIds]);
-
-  const investInOffer = useCallback(async (offerId: string, investmentAmount: number): Promise<{ success: boolean; message: string; profit?: number }> => {
-    const offer = capitalistOffers.find(o => o.id === offerId);
-    if (!offer) return { success: false, message: "Offer not found." };
-    if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
-    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
-    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
-
-    let actualMinRoi = offer.minRoiPercent;
-    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
-    if(investmentBoostSkill && userProfile.unlockedSkillIds.includes(investmentBoostSkill.id)) {
-        actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); // Example: boost min ROI by 5%
-    }
-
-    const randomFactor = Math.random();
-    let actualRoiPercent: number;
-    if (Math.random() < offer.volatilityFactor) {
-      actualRoiPercent = Math.random() < 0.5 ? actualMinRoi : offer.maxRoiPercent;
-    } else {
-       actualRoiPercent = actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor;
-    }
-
-    let profit = Math.round(investmentAmount * (actualRoiPercent / 100));
-    let finalCashChange = profit;
-    let message = profit >= 0 ? `Investment successful! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
-
-    if (profit >= 0 && offer.completionBonusCash) {
-        finalCashChange += offer.completionBonusCash;
-        message += ` Plus, a completion bonus of $${offer.completionBonusCash.toLocaleString()}!`;
-    }
-
-    setUserProfile(prev => ({ ...prev, cash: prev.cash + finalCashChange }));
-    addFloatingGain('cash', finalCashChange);
-    setCapitalistStatsForAchievements(prev => ({
-        firstInvestmentMade: true,
-        totalProfit: prev.totalProfit + (finalCashChange > 0 ? finalCashChange : 0)
-    }));
-
-    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
-
-    return { success: true, message, profit: finalCashChange };
-
-  }, [capitalistOffers, userProfile.cash, userProfile.unlockedSkillIds, addFloatingGain]);
-
+  }, [lastOfferGenerationTime, capitalistOffers, isSkillUnlocked]);
+  
   const claimChallengeReward = useCallback((challengeId: string) => {
     setDailyChallenges(prevChallenges => {
         const updatedChallenges = prevChallenges.map(challenge => {
@@ -1184,16 +744,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                     toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward.toLocaleString()} for '${challenge.title}'`});
                     addFloatingGain('xp', challenge.xpReward);
                     addFloatingGain('cash', challenge.cashReward);
-
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
-
                     return {
-                        ...prevProfile,
-                        xp: newXp,
-                        cash: prevProfile.cash + challenge.cashReward,
-                        level: newLevel,
-                        title: newTitle,
-                        skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
+                        ...prevProfile, xp: newXp, cash: prevProfile.cash + challenge.cashReward,
+                        level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
                         completedChallengeIds: updatedCompletedIds,
                     };
                 });
@@ -1204,33 +758,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return updatedChallenges;
     });
   }, [toast, checkForLevelUp, addFloatingGain]);
-
-  const getUnlockedAchievements = useCallback((): Achievement[] => {
-    return ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id));
-  }, [userProfile.unlockedAchievementIds]);
-
-
-  // Skill Tree Logic
-  const getAllSkills = useCallback(() => ALL_SKILLS, []);
-
-  const isSkillUnlocked = useCallback((skillId: string) => {
-    return userProfile.unlockedSkillIds.includes(skillId);
-  }, [userProfile.unlockedSkillIds]);
-
-  const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
-    // Timers and Skill Tree are always unlocked
-    if (featureKey === 'stats' && isSkillUnlocked('unlockStats')) return true;
-    if (featureKey === 'ambiance' && isSkillUnlocked('unlockAmbiance')) return true;
-    if (featureKey === 'notepad' && isSkillUnlocked('unlockNotepad')) return true;
-    if (featureKey === 'challenges' && isSkillUnlocked('unlockChallenges')) return true;
-    if (featureKey === 'shop' && isSkillUnlocked('unlockShop')) return true;
-    if (featureKey === 'capitalist' && isSkillUnlocked('unlockCapitalist')) return true;
-    if (featureKey === 'countdown' && isSkillUnlocked('unlockCountdown')) return true;
-    if (featureKey === 'achievements' && isSkillUnlocked('unlockAchievements')) return true;
-    if (featureKey === 'about' && isSkillUnlocked('unlockAbout')) return true;
-    return false;
-  }, [isSkillUnlocked]);
-
+  
   const canUnlockSkill = useCallback((skillId: string): { can: boolean, reason?: string } => {
     if (isSkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
     const skill = ALL_SKILLS.find(s => s.id === skillId);
@@ -1248,33 +776,225 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { can: true };
   }, [userProfile.skillPoints, userProfile.level, isSkillUnlocked]);
 
+  // Level 3: Depends on Level 2 functions and/or state
+  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => {
+    if (sessionDetails.durationInSeconds <= 0) { console.warn("Attempted to log session with zero duration."); return; }
+    const newSession: StudySession = {
+      id: crypto.randomUUID(), type: sessionDetails.type, startTime: sessionDetails.startTime,
+      endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000, duration: sessionDetails.durationInSeconds,
+      tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false,
+    };
+    setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
+    setUserProfile(prevProfile => {
+        const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
+        let awardedXp = 0, awardedCash = 0;
+        const minutesStudied = sessionDetails.durationInSeconds / 60;
+        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
+          awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
+          awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
+          if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
+        }
+        if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle && isFeatureUnlocked('challenges')) {
+            updateChallengeProgress('pomodoroCycles', 1);
+        }
+        if (prevProfile.lastStudyDate !== updatedLastStudyDate && isFeatureUnlocked('challenges')) {
+            updateChallengeProgress('studyStreak', 1);
+        }
+        const newXp = prevProfile.xp + awardedXp;
+        const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
+        const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
+        let rewardMessages = [];
+        if (awardedXp > 0) { rewardMessages.push(`${awardedXp} XP`); addFloatingGain('xp', awardedXp); }
+        if (awardedCash > 0) { rewardMessages.push(`$${awardedCash.toLocaleString()}`); addFloatingGain('cash', awardedCash); }
+        const streakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100;
+        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) { rewardMessages.push(`(${streakBonusPercent.toFixed(0)}% streak bonus!)`); }
+        const skillBonusXpPercent = getAppliedBoost('xp') * 100;
+        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardMessages.push(`(${skillBonusXpPercent.toFixed(0)}% skill XP bonus!)`); }
+        const skillBonusCashPercent = getAppliedBoost('cash') * 100;
+        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardMessages.push(`(${skillBonusCashPercent.toFixed(0)}% skill Cash bonus!)`); }
+        if (rewardMessages.length > 0) { toast({ title: "Session Rewards", description: `Gained: ${rewardMessages.join(', ')}` }); }
+        return {
+          ...prevProfile, xp: newXp, cash: prevProfile.cash + awardedCash, level: newLevel, title: newTitle,
+          currentStreak: updatedCurrentStreak, longestStreak: updatedLongestStreak, lastStudyDate: updatedLastStudyDate,
+          skillPoints: newSkillPoints,
+        };
+      });
+  }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked]);
+
+  const buySkin = useCallback((skinId: string) => {
+    const skin = getSkinById(skinId);
+    if (!skin) { toast({ title: "Error", description: "Skin not found.", variant: "destructive" }); return false; }
+    if (isSkinOwned(skinId)) { toast({ title: "Already Owned", description: "You already own this skin." }); return false; }
+    const shopDiscount = getAppliedBoost('shopDiscount');
+    const effectivePrice = Math.max(0, Math.round(skin.price * (1 - shopDiscount)));
+    if (userProfile.cash < effectivePrice) { toast({ title: "Not Enough Cash", description: `Need $${effectivePrice.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive" }); return false; }
+    if (userProfile.level < skin.levelRequirement) { toast({ title: "Level Too Low", description: `Need Level ${skin.levelRequirement}. You are Level ${userProfile.level}.`, variant: "destructive" }); return false; }
+    setUserProfile(prev => ({ ...prev, cash: prev.cash - effectivePrice, ownedSkinIds: [...prev.ownedSkinIds, skinId] }));
+    toast({ title: "Purchase Successful!", description: `Bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${(shopDiscount * 100).toFixed(0)}% discount!)` : ''}.` });
+    addFloatingGain('cash', -effectivePrice);
+    return true;
+  }, [userProfile.cash, userProfile.level, userProfile.ownedSkinIds, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain]);
+
+  const equipSkin = useCallback((skinId: string) => {
+    if (!isSkinOwned(skinId)) { toast({ title: "Error", description: "You don't own this skin.", variant: "destructive" }); return; }
+    const skinToEquip = getSkinById(skinId);
+    if (!skinToEquip) return;
+    setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
+    if (skinToEquip.isTheme && skinToEquip.themeClass) { applyThemePreference(skinToEquip.themeClass); localStorage.setItem('themePreference', skinToEquip.themeClass); }
+    else { applyThemePreference(null); localStorage.setItem('themePreference', 'classic'); }
+    toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.` });
+  }, [isSkinOwned, getSkinById, toast, applyThemePreference]);
+
+  const investInOffer = useCallback(async (offerId: string, investmentAmount: number): Promise<{ success: boolean; message: string; profit?: number }> => {
+    const offer = capitalistOffers.find(o => o.id === offerId);
+    if (!offer) return { success: false, message: "Offer not found." };
+    if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
+    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
+    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
+    let actualMinRoi = offer.minRoiPercent;
+    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
+    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); }
+    const randomFactor = Math.random();
+    let actualRoiPercent = Math.random() < offer.volatilityFactor ? (Math.random() < 0.5 ? actualMinRoi : offer.maxRoiPercent) : (actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor);
+    let profit = Math.round(investmentAmount * (actualRoiPercent / 100));
+    let finalCashChange = profit;
+    let message = profit >= 0 ? `Investment successful! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
+    if (profit >= 0 && offer.completionBonusCash) { finalCashChange += offer.completionBonusCash; message += ` Plus, a completion bonus of $${offer.completionBonusCash.toLocaleString()}!`; }
+    setUserProfile(prev => ({ ...prev, cash: prev.cash + finalCashChange }));
+    addFloatingGain('cash', finalCashChange);
+    setCapitalistStatsForAchievements(prev => ({ firstInvestmentMade: true, totalProfit: prev.totalProfit + (finalCashChange > 0 ? finalCashChange : 0) }));
+    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
+    return { success: true, message, profit: finalCashChange };
+  }, [capitalistOffers, userProfile.cash, isSkillUnlocked, addFloatingGain, toast]);
+  
   const unlockSkill = useCallback((skillId: string) => {
     const unlockCheck = canUnlockSkill(skillId);
-    if (!unlockCheck.can) {
-      toast({ title: "Cannot Unlock Skill", description: unlockCheck.reason, variant: "destructive" });
-      return false;
-    }
+    if (!unlockCheck.can) { toast({ title: "Cannot Unlock Skill", description: unlockCheck.reason, variant: "destructive" }); return false; }
     const skill = ALL_SKILLS.find(s => s.id === skillId);
-    if (!skill) return false; // Should be caught by canUnlockSkill
-
-    setUserProfile(prev => ({
-      ...prev,
-      skillPoints: prev.skillPoints - skill.cost,
-      unlockedSkillIds: [...prev.unlockedSkillIds, skillId],
-    }));
+    if (!skill) return false;
+    setUserProfile(prev => ({ ...prev, skillPoints: prev.skillPoints - skill.cost, unlockedSkillIds: [...prev.unlockedSkillIds, skillId] }));
     toast({ title: "Skill Unlocked!", description: `You unlocked: ${skill.name}`});
     return true;
   }, [canUnlockSkill, toast]);
 
+  // Level 4: Depends on Level 3 functions and/or state
+  const checkAndUnlockAchievements = useCallback(() => {
+    setUserProfile(prevUserProfile => {
+        const currentInvestmentStats = capitalistStatsForAchievements;
+        const currentSessions = sessions;
+        const currentDailyChallenges = dailyChallenges; // Assuming dailyChallenges state is up-to-date
+        const newlyUnlocked: string[] = [];
+        let totalCashRewardFromAchievements = 0;
+        ALL_ACHIEVEMENTS.forEach(ach => {
+          if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions, currentDailyChallenges, currentInvestmentStats)) {
+            newlyUnlocked.push(ach.id);
+            totalCashRewardFromAchievements += ach.cashReward;
+            if (isFeatureUnlocked('achievements')) { // Only toast if achievements page itself is unlocked
+              toast({ title: "Achievement Unlocked!", description: `${ach.name} - ${ach.description} (+$${ach.cashReward.toLocaleString()})` });
+              addFloatingGain('cash', ach.cashReward);
+            }
+          }
+        });
+        if (newlyUnlocked.length > 0) {
+          return { ...prevUserProfile, unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked], cash: prevUserProfile.cash + totalCashRewardFromAchievements };
+        }
+        return prevUserProfile;
+    });
+  }, [capitalistStatsForAchievements, sessions, dailyChallenges, toast, addFloatingGain, isFeatureUnlocked]); // Added dailyChallenges and isFeatureUnlocked
+
+  // --- End of Ordered useCallback definitions ---
+
+  // Notepad simple CRUD (Level 0 or 1, depends on updateNotepadField, toast, updateChallengeProgress)
+  const updateSessionDescription = useCallback((sessionId: string, description: string) => {
+    setSessions(prevSessions => prevSessions.map(session => session.id === sessionId ? { ...session, description } : session));
+  }, []);
+  const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
+    const currentNotes = userProfile.notepadData.notes || [];
+    updateNotepadField('notes', currentNotes.map(note => note.id === updatedNote.id ? { ...updatedNote, lastModified: Date.now() } : note));
+    toast({ title: "Note Updated", description: `"${updatedNote.title}" has been saved.` });
+  }, [userProfile.notepadData.notes, updateNotepadField, toast]);
+  const deleteNotepadNote = useCallback((noteId: string) => {
+    const currentNotes = userProfile.notepadData.notes || [];
+    const noteToDelete = currentNotes.find(n => n.id === noteId);
+    updateNotepadField('notes', currentNotes.filter(note => note.id !== noteId));
+    if (noteToDelete) toast({ title: "Note Deleted", description: `"${noteToDelete.title}" has been removed.` });
+  }, [userProfile.notepadData.notes, updateNotepadField, toast]);
+  const deleteRevisionConcept = useCallback((conceptId: string) => {
+    const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
+    const conceptToDelete = currentRevisionConcepts.find(c => c.id === conceptId);
+    updateNotepadField('revisionConcepts', currentRevisionConcepts.filter(c => c.id !== conceptId));
+    if (conceptToDelete) toast({ title: "Concept Removed", description: `"${conceptToDelete.name}" removed from revision.` });
+  }, [userProfile.notepadData.revisionConcepts, updateNotepadField, toast]);
+  const addHabit = useCallback((habitData: Omit<Habit, 'id' | 'createdAt' | 'log' | 'currentStreak' | 'longestStreak'>) => {
+    const newHabit: Habit = { ...habitData, id: crypto.randomUUID(), createdAt: Date.now(), log: {}, currentStreak: 0, longestStreak: 0 };
+    updateNotepadField('habits', [...(userProfile.notepadData.habits || []), newHabit]);
+    toast({ title: "Habit Added", description: `"${newHabit.name}" has been created.` });
+  }, [userProfile.notepadData.habits, updateNotepadField, toast]);
+  const updateHabit = useCallback((updatedHabit: Habit) => {
+    updateNotepadField('habits', (userProfile.notepadData.habits || []).map(h => h.id === updatedHabit.id ? updatedHabit : h));
+    toast({ title: "Habit Updated", description: `"${updatedHabit.name}" has been saved.`});
+  }, [userProfile.notepadData.habits, updateNotepadField, toast]);
+  const deleteHabit = useCallback((habitId: string) => {
+    const habitToDelete = (userProfile.notepadData.habits || []).find(h => h.id === habitId);
+    updateNotepadField('habits', (userProfile.notepadData.habits || []).filter(h => h.id !== habitId));
+    if (habitToDelete) toast({ title: "Habit Deleted", description: `"${habitToDelete.name}" has been removed.`});
+  }, [userProfile.notepadData.habits, updateNotepadField, toast]);
+  const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
+    const newEvent: NotepadCountdownEvent = { ...eventData, id: crypto.randomUUID(), createdAt: Date.now() };
+    updateNotepadField('countdownEvents', [...(userProfile.notepadData.countdownEvents || []), newEvent].sort((a,b) => parseISO(a.targetDate).getTime() - parseISO(b.targetDate).getTime()));
+    toast({ title: "Event Countdown Added", description: `"${newEvent.name}" is now being tracked.` });
+  }, [userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
+  const updateNotepadCountdownEvent = useCallback((updatedEvent: NotepadCountdownEvent) => {
+    updateNotepadField('countdownEvents', (userProfile.notepadData.countdownEvents || []).map(event => event.id === updatedEvent.id ? updatedEvent : event).sort((a,b) => parseISO(a.targetDate).getTime() - parseISO(b.targetDate).getTime()));
+    toast({ title: "Event Countdown Updated", description: `"${updatedEvent.name}" has been saved.` });
+  }, [userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
+  const deleteNotepadCountdownEvent = useCallback((eventId: string) => {
+    const eventToDelete = (userProfile.notepadData.countdownEvents || []).find(e => e.id === eventId);
+    updateNotepadField('countdownEvents', (userProfile.notepadData.countdownEvents || []).filter(event => event.id !== eventId));
+    if (eventToDelete) toast({ title: "Event Countdown Deleted", description: `"${eventToDelete.name}" has been removed.` });
+  }, [userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
+
+  // useEffects
+  useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        let currentLoginStreak = userProfile.dailyLoginStreak || 0;
+        if (userProfile.lastLoginDate && isYesterday(parseISO(userProfile.lastLoginDate))) currentLoginStreak++;
+        else if (userProfile.lastLoginDate && !isToday(parseISO(userProfile.lastLoginDate))) currentLoginStreak = 1;
+        else if (!userProfile.lastLoginDate) currentLoginStreak = 1;
+        const streakBonus = Math.min((currentLoginStreak -1) * DAILY_LOGIN_STREAK_CASH_BONUS, DAILY_LOGIN_MAX_STREAK_BONUS_CASH);
+        const loginBonusAwarded = DAILY_LOGIN_BASE_CASH + streakBonus;
+        setUserProfile(prev => ({ ...prev, cash: prev.cash + loginBonusAwarded, lastLoginDate: todayStr, dailyLoginStreak: currentLoginStreak }));
+        toast({ title: "Daily Login Bonus!", description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).` });
+        addFloatingGain('cash', loginBonusAwarded);
+    }
+  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem('studySessions', JSON.stringify(sessions));
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
+        if (lastOfferGenerationTime) localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
+        else localStorage.removeItem('lastOfferGenerationTime');
+        const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
+        localStorage.setItem('themePreference', (equippedSkin?.isTheme && equippedSkin.themeClass) ? equippedSkin.themeClass : 'classic');
+        localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
+        if (lastChallengeResetDate) localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
+        localStorage.setItem('capitalistStatsForAchievements', JSON.stringify(capitalistStatsForAchievements));
+      } catch (error) { console.error("Failed to save data to localStorage:", error); }
+    }
+  }, [sessions, userProfile, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
+
+  useEffect(() => {
+    if (isLoaded) { checkAndUnlockAchievements(); }
+  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length]);
 
 
-  if (!isLoaded) {
-    return null;
-  }
+  if (!isLoaded) { return null; }
 
   return (
     <SessionContext.Provider value={{
@@ -1305,3 +1025,6 @@ export const useSessions = () => {
   }
   return context;
 };
+
+
+    
