@@ -76,7 +76,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   unlockedAchievementIds: [],
   lastLoginDate: null,
   dailyLoginStreak: 0,
-  notepadData: DEFAULT_NOTEPAD_DATA, // Initialize notepadData within userProfile
+  notepadData: DEFAULT_NOTEPAD_DATA, 
 };
 
 
@@ -92,7 +92,7 @@ const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
     { id: 'ambiance15', title: 'Sound Scaper', description: 'Use the Ambiance Mixer for 15 minutes.', xpReward: 25, cashReward: 200, targetValue: 15, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
     { id: 'ambiance60', title: 'Audio Aficionado', description: 'Use the Ambiance Mixer for 60 minutes.', xpReward: 100, cashReward: 600, targetValue: 60, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
     { id: 'notepadNote1', title: 'Note Taker', description: 'Create one new note in your notepad.', xpReward: 20, cashReward: 150, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true },
-    { id: 'notepadRevision1', title: 'Revision Starter', description: 'Add one new concept to the Revision Hub.', xpReward: 30, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true }, // Assuming type 'notepadEntry' for simplicity
+    { id: 'notepadRevision1', title: 'Revision Starter', description: 'Add one new concept to the Revision Hub.', xpReward: 30, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true }, 
     { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
     { id: 'habitTracker1', title: 'Habit Hero', description: 'Complete one daily habit.', xpReward: 30, cashReward: 200, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'habitCompletions', resetsDaily: true},
     { id: 'habitTracker3', title: 'Habit Honcho', description: 'Complete three daily habits.', xpReward: 70, cashReward: 500, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'habitCompletions', resetsDaily: true},
@@ -128,7 +128,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'transcendentScholar', name: 'Transcendent Scholar', description: 'Reach Level 25: Transcendent Scholar.', iconName: 'Star', cashReward: 20000, criteria: (p) => p.level >= 25, category: 'Progression' },
   { id: 'levelThirtyLegend', name: 'Galactic Prodigy', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'Package', cashReward: 30000, criteria: (p) => p.level >= 30, category: 'Progression' },
   { id: 'thoughtEmperor', name: 'Thought Emperor', description: 'Reach Level 35: Thought Emperor.', iconName: 'Package', cashReward: 40000, criteria: (p) => p.level >= 35, category: 'Progression' },
-  { id: 'levelFiftyOracle', name: 'The Oracle', description: 'Reach Level 40: The Oracle.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 40, category: 'Progression' }, // Adjusted to L40
+  { id: 'levelFiftyOracle', name: 'The Oracle', description: 'Reach Level 40: The Oracle.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 40, category: 'Progression' }, 
 
   // Collection
   { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => !['classic', 'dark_mode', 'sepia_tone'].includes(id)).length >= 1, category: 'Collection' },
@@ -190,9 +190,6 @@ interface SessionContextType {
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
   updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
   
-  // Notepad specific data and functions are now directly under userProfile.notepadData
-  // Thus, direct notepadData state here is removed.
-  // The functions below will operate on userProfile.notepadData
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
   deleteNotepadNote: (noteId: string) => void;
@@ -219,10 +216,11 @@ interface SessionContextType {
   lastOfferGenerationTime: number | null;
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
-  updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void; // Added absoluteValue
+  updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void; 
   getUnlockedAchievements: () => Achievement[];
   checkAndUnlockAchievements: (investmentPayload?: Partial<AchievementCriteriaInvestmentPayload>) => void;
   isLoaded: boolean; 
+  updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void; // Expose generic notepad updater
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -230,11 +228,9 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
-  // NotepadData is now part of userProfile.
-  // const [notepadData, setNotepadData] = useState<NotepadData>(DEFAULT_NOTEPAD_DATA); // Removed
   const [capitalistOffers, setCapitalistOffers] = useState<CapitalistOffer[]>([]);
   const [lastOfferGenerationTime, setLastOfferGenerationTime] = useState<number | null>(null);
-  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]); // Initialize as empty, will be set by loadData
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]); 
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
@@ -260,16 +256,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (storedProfile) {
         const tempProfile = JSON.parse(storedProfile) as UserProfile;
         
-        // Ensure notepadData exists and has all its arrays
         const ensuredNotepadData: NotepadData = {
             ...DEFAULT_NOTEPAD_DATA,
-            ...(tempProfile.notepadData || {}), // Use existing or default
+            ...(tempProfile.notepadData || {}), 
             tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : [],
             notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : [],
             goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : [],
             links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : [],
             revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : [],
-            habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : [],
+            habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
         };
 
         parsedProfile = {
@@ -279,14 +274,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
             unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
-            notepadData: ensuredNotepadData, // Assign the ensured notepad data
+            notepadData: ensuredNotepadData, 
         };
       }
       setUserProfile(parsedProfile);
       
-      // Notepad data is now part of userProfile, so no separate loading for notepadData state
-      // const storedNotepad = localStorage.getItem('notepadData'); // Removed
-
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
 
@@ -376,7 +368,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.setItem('studySessions', JSON.stringify(sessions));
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        // No separate notepadData item as it's part of userProfile
         localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
         if (lastOfferGenerationTime) {
           localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
@@ -402,6 +393,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
+  }, []);
+
+  const updateNotepadData = useCallback((updatedNotepadData: Partial<NotepadData>) => {
+    setUserProfile(prev => ({
+      ...prev,
+      notepadData: {
+        ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
+        ...updatedNotepadData,
+      }
+    }));
   }, []);
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
@@ -705,7 +706,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       revisionStage: 0,
     };
     updateNotepadField('revisionConcepts', [...(userProfile.notepadData?.revisionConcepts || []), newConcept]);
-    updateChallengeProgress('notepadEntry', 1); // Or a specific revision challenge type
+    updateChallengeProgress('notepadEntry', 1); 
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
   }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField, updateChallengeProgress]);
 
@@ -780,10 +781,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let completions = 0;
     for (let i = 0; i < 7; i++) {
       const dayInWeek = addDays(weekStart, i);
-      const dayKey = format(dayInWeek, 'yyyy-MM-dd'); // Assuming weekly habits are logged daily towards a weekly goal
+      const dayKey = format(dayInWeek, 'yyyy-MM-dd'); 
       const logEntry = habit.log[dayKey];
       if (logEntry && logEntry.completed) {
-        completions += (logEntry.count || 1); // Use count if present, else assume 1
+        completions += (logEntry.count || 1); 
       }
     }
     return completions;
@@ -792,11 +793,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const logHabitCompletion = useCallback((habitId: string, date: Date, completed: boolean = true, countIncrement?: number) => {
       setUserProfile(prevProfile => {
-          if (!prevProfile.notepadData) return prevProfile;
+          if (!prevProfile.notepadData || !prevProfile.notepadData.habits) return prevProfile;
           
           let habitCompletedForChallenge = false;
 
-          const updatedHabits = (prevProfile.notepadData.habits || []).map(habit => {
+          const updatedHabits = prevProfile.notepadData.habits.map(habit => {
               if (habit.id === habitId) {
                   const logKey = getHabitLogKey(habit, date);
                   const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
@@ -805,20 +806,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                   let newCount = oldLogEntry.count || 0;
 
                   if (habit.frequency === 'weekly' && habit.targetCompletions) {
-                      if (completed) { // If marking weekly as "done for the day contributing to weekly"
+                      if (completed) { 
                          newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
-                      } else { // If un-marking
+                      } else { 
                          newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
                       }
                       newCompletedStatus = newCount >= habit.targetCompletions;
-                  } else { // Daily habit
+                  } else { 
                       newCount = completed ? 1 : 0;
                   }
                   
                   const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCompletedStatus, count: newCount };
                   const newLog = { ...habit.log, [logKey]: newLogEntry };
 
-                  // Streak calculation (simplified for daily, needs more complex logic for weekly based on full week completion)
                   let currentStreak = habit.currentStreak;
                   let longestStreak = habit.longestStreak;
 
@@ -835,21 +835,22 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                           }
                           habitCompletedForChallenge = true;
                       } else {
-                          // If unchecking today, check if yesterday was completed to maintain streak if today was the only break
+                          // Simplified: if today is unchecked, and yesterday was part of a streak, the streak might break.
+                          // A more accurate calculation would trace back. For now, if today is not complete,
+                          // and yesterday *was* complete, the currentStreak might need re-evaluation or reset.
+                          // For simplicity, this example doesn't deeply recalculate past streaks on uncheck.
+                          // It primarily focuses on incrementing.
                           const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
-                          const twoDaysAgoKey = format(subDays(date, 2), 'yyyy-MM-dd');
-                          if(habit.log[yesterdayKey]?.completed && habit.log[twoDaysAgoKey]?.completed) {
-                            // This logic is tricky, simple reset for now on uncheck if it breaks streak
-                             //currentStreak = habit.log[yesterdayKey]?.completed ? calculate streak from past : 0; 
-                          } else if (!habit.log[yesterdayKey]?.completed) {
-                             currentStreak = 0;
+                          if (!habit.log[yesterdayKey]?.completed) { // If yesterday was not completed, streak is definitely 0
+                            currentStreak = 0;
+                          } else {
+                            // If yesterday WAS completed, but today is being un-completed,
+                            // the streak effectively ends "yesterday". This is complex.
+                            // A simple approach is to reset if it was the last link.
+                            // For now, this just handles positive streak building.
                           }
                       }
                   }
-                  // Weekly streak would need to check if the *entire previous week* was completed
-                  // This requires iterating through all days of the previous week if targetCompletions was met.
-                  // For simplicity now, weekly streak is not as granularly updated here.
-
                   return { ...habit, log: newLog, currentStreak, longestStreak };
               }
               return habit;
@@ -862,8 +863,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           return {
               ...prevProfile,
               notepadData: {
-                  ...prevProfile.notepadData,
-                  habits: updatedHabits,
+                  ...(prevProfile.notepadData),
+                  habits: updatedHabits, 
               }
           };
       });
@@ -930,10 +931,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
-    toast({ title: "Investment Result", description: message });
+    // toast({ title: "Investment Result", description: message }); // Toast is handled by caller now
     return { success: true, message, profit: finalCashChange };
 
-  }, [capitalistOffers, userProfile.cash, toast]);
+  }, [capitalistOffers, userProfile.cash]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     setDailyChallenges(prevChallenges => {
@@ -980,7 +981,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   return (
     <SessionContext.Provider value={{ 
       sessions, addSession, clearSessions, updateSessionDescription,
-      userProfile, updateUserProfile, updateSleepWakeTimes,
+      userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
