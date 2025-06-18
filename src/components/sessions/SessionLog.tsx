@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
@@ -16,7 +17,7 @@ export default function SessionLog() {
         <CardTitle className="text-xl font-headline">Session Log</CardTitle>
         <CardDescription>Your recorded study sessions.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden p-0">
+      <CardContent className="flex-grow overflow-hidden p-0"> {/* Changed p-6 to p-0 */}
         {sessions.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6">
             <ListX className="h-16 w-16 mb-4" />
@@ -24,7 +25,7 @@ export default function SessionLog() {
             <p className="text-center text-sm">Start a timer and log your studies!</p>
           </div>
         ) : (
-          <ScrollArea className="h-full px-6">
+          <ScrollArea className="h-[280px] px-6"> {/* Added fixed height and internal padding */}
             {sessions.map((session) => (
               <SessionItem key={session.id} session={session} />
             ))}

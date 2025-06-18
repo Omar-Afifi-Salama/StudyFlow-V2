@@ -5,15 +5,15 @@ import * as React from "react"
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 4000 // Reduced delay slightly
-const TOAST_STAGGER_DELAY = 250; // Delay between showing multiple toasts
+const TOAST_REMOVE_DELAY = 10000 // Increased to 10 seconds
+const TOAST_STAGGER_DELAY = 250; 
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  icon?: React.ReactNode; // Added icon
+  icon?: React.ReactNode; 
 }
 
 const actionTypes = {
@@ -153,21 +153,21 @@ async function processToastQueue() {
         onOpenChange: (open) => { if (!open) dismiss(); },
       },
     });
-    addToRemoveQueue(id);
+    // addToRemoveQueue is called when the toast is dismissed, not when added.
+    // It should be called if the toast has a duration prop, or manually.
+    // For auto-dismiss, it's typically handled by ToastPrimitives.Provider duration or here.
+     addToRemoveQueue(id); // Ensure it gets removed after TOAST_REMOVE_DELAY
   }
   
   await new Promise(resolve => setTimeout(resolve, TOAST_STAGGER_DELAY));
   isProcessingQueue = false;
-  processToastQueue(); // Process next in queue
+  processToastQueue(); 
 }
 
 
 function toast(props: Toast) {
   toastQueue.push(props);
   processToastQueue();
-  // We can't return dismiss/update reliably here as the toast might not have been dispatched yet.
-  // For simplicity, we'll omit returning them from the direct toast() call.
-  // Advanced usage requiring update/dismiss can be handled differently if needed.
 }
 
 

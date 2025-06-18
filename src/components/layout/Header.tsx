@@ -6,7 +6,7 @@ import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Br
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, ACTUAL_LEVEL_THRESHOLDS as LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
+import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -22,13 +22,13 @@ interface NavItem {
   icon: React.ReactNode;
   hotkey: string;
   featureKey: FeatureKey;
-  alwaysVisible?: boolean; // For Timer and Skill Tree
+  alwaysVisible?: boolean;
 }
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, isFeatureUnlocked } = useSessions();
+  const { userProfile, isFeatureUnlocked, getAllSkills, isSkillUnlocked } = useSessions();
 
   const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
@@ -46,9 +46,12 @@ export default function Header() {
 
   const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || isFeatureUnlocked(item.featureKey));
 
-  const mainBarItemHrefs = ['/', '/skill-tree'];
+  const mainBarItemHrefs = ['/', '/skill-tree']; // Timers and Skill Tree are always primary
   const mainNavItems: NavItem[] = visibleNavItems.filter(item => mainBarItemHrefs.includes(item.href));
+  
+  // Other unlocked features go into "More" dropdown
   const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainBarItemHrefs.includes(item.href));
+
 
   allPossibleNavItems.forEach(item => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -60,12 +63,16 @@ export default function Header() {
     }, { preventDefault: true }, [isFeatureUnlocked, router, item.alwaysVisible, item.featureKey, item.href]);
   });
 
-  const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
-  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
+  const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
+  const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevelSegment = nextLevelXpTarget - currentLevelXpStart;
-  const xpProgressPercent = xpForNextLevelSegment > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelSegment) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
+  const xpProgressPercent = xpForNextLevelSegment > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelSegment) * 100)) : (userProfile.level >= ACTUAL_LEVEL_THRESHOLDS.length ? 100 : 0);
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
+
+  const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp;
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS)); // Basic calculation, skill boosts could be added
+  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -157,7 +164,7 @@ export default function Header() {
             <Tooltip>
               <TooltipTrigger asChild>
                  <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                    <Star className="h-4 w-4 text-yellow-400" />
+                    <Star className="h-4 w-4 text-yellow-400" /> {/* Skill Point Icon */}
                     <span>{userProfile.skillPoints || 0}</span>
                   </div>
               </TooltipTrigger>
@@ -172,16 +179,16 @@ export default function Header() {
                 <span className="text-accent font-medium text-xs">{userTitle}</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-60 p-3">
+            <PopoverContent className="w-60 p-3 bg-popover text-popover-foreground">
                 <div className="space-y-1">
                     <p className="text-sm font-semibold">Level {userProfile.level}: {userTitle}</p>
                     <Progress value={xpProgressPercent} className="h-1.5" />
                     <p className="text-xs text-muted-foreground">
                         {xpIntoCurrentLevel.toLocaleString()} / {xpForNextLevelSegment > 0 ? xpForNextLevelSegment.toLocaleString() : userProfile.xp.toLocaleString()} XP
                     </p>
-                    {userProfile.level < LEVEL_THRESHOLDS.length && xpForNextLevelSegment > 0 && (
+                    {userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length && xpForNextLevelSegment > 0 && timeToLevelUpSeconds > 0 && (
                         <p className="text-xs text-primary">
-                            Approx. {formatTime(((LEVEL_THRESHOLDS[userProfile.level] - userProfile.xp) / (XP_PER_MINUTE_FOCUS || 1)) * 60, true)} focus to next level
+                            Approx. {formatTime(timeToLevelUpSeconds, true)} focus to next level
                         </p>
                     )}
                 </div>

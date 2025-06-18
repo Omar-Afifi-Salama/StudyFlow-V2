@@ -438,9 +438,10 @@ body {
 }
 
 .floating-gain-cash {
-  background-color: hsl(48, 89%, 50%, 0.8); /* Green color for cash - example: gold/yellowish green */
-  color: hsl(var(--foreground)); /* Ensure good contrast */
-  border: 1px solid hsl(48, 89%, 40%);
+  background-color: transparent; /* Cleaner look */
+  color: hsl(134, 61%, 41%); /* Green text for cash */
+  border: 1px solid hsl(134, 61%, 31%); /* Optional: subtle border */
+  text-shadow: 0 0 5px hsl(var(--background) / 0.7); /* Slight glow for readability */
 }
 
 

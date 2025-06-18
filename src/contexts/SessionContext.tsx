@@ -15,7 +15,6 @@ export const DAILY_LOGIN_BASE_CASH = 200;
 export const DAILY_LOGIN_STREAK_CASH_BONUS = 50; // Extra cash per consecutive login day
 export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max bonus cash from login streak
 
-//LEVEL_THRESHOLDS now generated dynamically
 export const TITLES = [
   "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", // 1-10
   "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", // 11-15
@@ -31,30 +30,30 @@ const generateLevelThresholds = (numLevels: number, maxXp: number): number[] => 
   const thresholds: number[] = [0]; // Level 1 is 0 XP
   for (let i = 1; i < numLevels; i++) {
     const progress = i / (numLevels - 1);
-    const xp = Math.floor(maxXp * Math.pow(progress, 2.5));
+    const xp = Math.floor(maxXp * Math.pow(progress, 2.5)); // Exponential scaling
     thresholds.push(xp);
   }
   if (thresholds.length >= numLevels) {
-    thresholds[numLevels - 1] = maxXp;
+    thresholds[numLevels - 1] = maxXp; // Ensure max level hits exact maxXp
   }
   return thresholds.slice(0, numLevels);
 };
 
-export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds(TITLES.length, 600000); // 600k XP for Apex Scholar (L39)
+export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds(TITLES.length, 600000); // Target ~1000 hours at 10XP/min
 
 export const PREDEFINED_SKINS: Skin[] = [
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png', dataAiHint: 'classic blue study app homepage', isTheme: false },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png', dataAiHint: 'dark theme study dashboard', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png', dataAiHint: 'sepia theme timer interface', isTheme: true, themeClass: 'sepia' },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png', dataAiHint: 'forest theme study app interface', isTheme: true, themeClass: 'theme-forest' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png', dataAiHint: 'sunset theme study app focus mode', isTheme: true, themeClass: 'theme-sunset' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png', dataAiHint: 'galaxy theme app dashboard study', isTheme: true, themeClass: 'theme-galaxy' },
-  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png', dataAiHint: 'monochrome study app interface', isTheme: true, themeClass: 'theme-mono' },
-  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png', dataAiHint: 'ocean theme app timers and log', isTheme: true, themeClass: 'theme-ocean' },
-  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png', dataAiHint: 'neon theme study productivity app', isTheme: true, themeClass: 'theme-neon' },
-  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png', dataAiHint: 'pastel theme study app interface', isTheme: true, themeClass: 'theme-pastel' },
-  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png', dataAiHint: 'gold theme productivity app dashboard', isTheme: true, themeClass: 'theme-gold' },
-  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png', dataAiHint: 'elite theme study app stats page', isTheme: true, themeClass: 'theme-elite' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png?text=StudyFlow+Classic', dataAiHint: 'classic blue study app homepage', isTheme: true, themeClass: 'classic' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png?text=StudyFlow+Dark', dataAiHint: 'dark theme study dashboard', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png?text=StudyFlow+Sepia', dataAiHint: 'sepia theme timer interface', isTheme: true, themeClass: 'sepia' },
+  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png?text=Forest+Theme', dataAiHint: 'forest theme study app interface', isTheme: true, themeClass: 'theme-forest' },
+  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png?text=Sunset+Theme', dataAiHint: 'sunset theme study app focus mode', isTheme: true, themeClass: 'theme-sunset' },
+  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png?text=Galaxy+Theme', dataAiHint: 'galaxy theme app dashboard study', isTheme: true, themeClass: 'theme-galaxy' },
+  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png?text=Monochrome', dataAiHint: 'monochrome study app interface', isTheme: true, themeClass: 'theme-mono' },
+  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png?text=Ocean+Theme', dataAiHint: 'ocean theme app timers and log', isTheme: true, themeClass: 'theme-ocean' },
+  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png?text=Neon+Theme', dataAiHint: 'neon theme study productivity app', isTheme: true, themeClass: 'theme-neon' },
+  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png?text=Pastel+Theme', dataAiHint: 'pastel theme study app interface', isTheme: true, themeClass: 'theme-pastel' },
+  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png?text=Gold+Theme', dataAiHint: 'gold theme productivity app dashboard', isTheme: true, themeClass: 'theme-gold' },
+  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png?text=Elite+Theme', dataAiHint: 'elite theme study app stats page', isTheme: true, themeClass: 'theme-elite' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -68,7 +67,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   completedChallengeIds: [], currentStreak: 0, longestStreak: 0, lastStudyDate: null,
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
-  notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockAbout'], // Start with About unlocked
+  notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockAbout'],
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -149,25 +148,34 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
 ];
 
 export const ALL_SKILLS: Skill[] = [
-  { id: 'unlockStats', name: 'Data Analyst I', description: 'Unlock the Statistics page to track your progress metrics.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 2, category: 'Core Feature' },
-  { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlock the Ambiance Mixer for custom study soundscapes.', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteLevel: 3, category: 'Core Feature' },
-  { id: 'unlockNotepadMain', name: 'Notekeeper Access', description: 'Unlock the Digital Notepad page itself.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 1, category: 'Core Feature' },
-  { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlock Daily Challenges for bonus rewards.', cost: 1, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 4, category: 'Core Feature' },
-  { id: 'unlockShop', name: 'App Customizer', description: 'Unlock the Skin Shop to personalize your app.', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteLevel: 3, category: 'Core Feature' },
-  { id: 'unlockCapitalist', name: 'Financial Whiz', description: 'Unlock the Capitalist Corner for investments.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 5, category: 'Core Feature' },
-  { id: 'unlockCountdown', name: 'Event Tracker', description: 'Unlock the simple Countdown Timer page.', cost: 1, iconName: 'Timer', unlocksFeature: 'countdown', prerequisiteLevel: 4, category: 'Core Feature' },
-  { id: 'unlockAchievements', name: 'Trophy Hunter', description: 'Unlock the Achievements page.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteLevel: 2, category: 'Core Feature' },
-  { id: 'unlockAbout', name: 'App Historian', description: 'Unlock the About page to learn more about StudyFlow.', cost: 0, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, category: 'Core Feature' },
+  { id: 'unlockAbout', name: 'Inquisitive Mind', description: 'Unlocks the "About" page to learn more about StudyFlow.', cost: 0, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, category: 'Core Feature' },
+  
+  // Main Feature Unlocks - Tier 1 (Basic Access)
+  { id: 'unlockStats', name: 'Data Analyst I', description: 'Unlocks the "Statistics" page to track your progress metrics.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 2, category: 'Core Feature' },
+  { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlocks the "Ambiance Mixer" for custom study soundscapes.', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteLevel: 3, category: 'Core Feature' },
+  { id: 'unlockNotepadMain', name: 'Notekeeper Access', description: 'Unlocks the main "Digital Notepad" page.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 1, category: 'Core Feature' },
+  { id: 'unlockAchievements', name: 'Trophy Hunter', description: 'Unlocks the "Achievements" page to view your accomplishments.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteLevel: 2, category: 'Core Feature' },
+  { id: 'unlockShop', name: 'App Customizer', description: 'Unlocks the "Skin Shop" to personalize your app.', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteLevel: 3, category: 'Core Feature' },
 
-  { id: 'unlockNotepadChecklist', name: 'Task Organizer', description: 'Unlock the Checklist tab in the Notepad.', cost: 1, iconName: 'CheckSquare2', unlocksFeature: 'notepadChecklist', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
-  { id: 'unlockNotepadNotes', name: 'Quick Notes', description: 'Unlock the Notes tab for freeform thoughts.', cost: 1, iconName: 'StickyNote', unlocksFeature: 'notepadNotes', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
-  { id: 'unlockNotepadGoals', name: 'Goal Setter', description: 'Unlock the Goals tab to track objectives.', cost: 1, iconName: 'Target', unlocksFeature: 'notepadGoals', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
-  { id: 'unlockNotepadLinks', name: 'Resource Manager', description: 'Unlock the Links tab to save URLs.', cost: 1, iconName: 'LinkLucide', unlocksFeature: 'notepadLinks', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
-  { id: 'unlockNotepadRevision', name: 'Revision Strategist', description: 'Unlock the Revision Hub for spaced repetition.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 3, category: 'Notepad Feature' },
-  { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlock the Habit Tracker tab.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 4, category: 'Notepad Feature' },
-  { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlock the Events Countdown tab.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
-  { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlock the Eisenhower Matrix tab.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 5, category: 'Notepad Feature' },
+  // Notepad Tab Unlocks - Tier 2 (Requires NotepadMain)
+  { id: 'unlockNotepadChecklist', name: 'Task Organizer', description: 'Unlocks the Checklist tab in the Notepad.', cost: 1, iconName: 'CheckSquare2', unlocksFeature: 'notepadChecklist', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadNotes', name: 'Quick Notes', description: 'Unlocks the Notes tab for freeform thoughts.', cost: 1, iconName: 'StickyNote', unlocksFeature: 'notepadNotes', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadGoals', name: 'Goal Setter', description: 'Unlocks the Goals tab to track objectives.', cost: 1, iconName: 'Target', unlocksFeature: 'notepadGoals', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 2, category: 'Notepad Feature' },
+  { id: 'unlockNotepadLinks', name: 'Resource Manager', description: 'Unlocks the Links tab to save URLs.', cost: 1, iconName: 'LinkLucide', unlocksFeature: 'notepadLinks', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
+  
+  // More Advanced Feature Unlocks - Tier 3
+  { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges" for bonus rewards.', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
+  { id: 'unlockCapitalist', name: 'Financial Whiz', description: 'Unlocks the "Capitalist Corner" for investments.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
+  { id: 'unlockCountdown', name: 'Event Tracker', description: 'Unlocks the simple "Countdown Timer" page.', cost: 1, iconName: 'Timer', unlocksFeature: 'countdown', prerequisiteLevel: 4, category: 'Core Feature' },
+  
+  // Advanced Notepad Tabs - Tier 3 (Requires NotepadMain & higher level/other skills)
+  { id: 'unlockNotepadRevision', name: 'Revision Strategist', description: 'Unlocks the "Revision Hub" for spaced repetition.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadMain', 'unlockNotepadNotes'], prerequisiteLevel: 3, category: 'Notepad Feature' },
+  { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlocks the "Habit Tracker" tab.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadMain', 'unlockNotepadChecklist'], prerequisiteLevel: 4, category: 'Notepad Feature' },
+  { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockNotepadMain', 'unlockNotepadGoals'], prerequisiteLevel: 3, category: 'Notepad Feature' },
+  { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlocks the "Eisenhower Matrix" tab for task prioritization.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadMain', 'unlockNotepadTasks', 'unlockNotepadGoals'], prerequisiteLevel: 5, category: 'Notepad Feature' },
 
+
+  // Passive Boosts - Branching
   { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 1, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 2, category: 'Passive Boost' },
   { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 8, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
   { id: 'xpBoost3', name: 'Learner\'s Edge III', description: 'Gain an additional +10% XP (total +20%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.10, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Passive Boost' },
@@ -176,9 +184,10 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
   { id: 'cashBoost3', name: 'Money Mindset III', description: 'Gain an additional +10% Cash (total +20%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.10, prerequisiteLevel: 16, prerequisiteSkillIds: ['cashBoost2'], category: 'Passive Boost' },
 
-  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying.', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, category: 'Utility' },
+  // Utility Skills
+  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Effect not yet implemented)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, category: 'Utility' },
   { id: 'shopDiscount1', name: 'Savvy Shopper', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Utility' },
-  { id: 'investmentInsight', name: 'Investor\'s Edge', description: 'Slightly increases minimum ROI and bonus chance in Capitalist Corner.', cost: 2, iconName: 'Lightbulb', otherEffect: 'capitalist_boost', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
+  { id: 'investmentInsight', name: 'Investor\'s Edge', description: 'Slightly increases minimum ROI and bonus chance in Capitalist Corner. (Effect details may vary)', cost: 2, iconName: 'Lightbulb', otherEffect: 'capitalist_boost', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
   { id: 'revisionAccelerator', name: 'Memory Enhancer', description: 'Reduces revision intervals in the Revision Hub by 10%, making reviews slightly more frequent.', cost: 2, iconName: 'RepeatIcon', otherEffect: 'revision_boost', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockNotepadRevision'], category: 'Utility' },
   { id: 'skillPointRefund', name: 'Strategic Respec', description: 'Allows refunding ALL spent skill points ONCE. Use wisely!', cost: 5, iconName: 'Settings2', otherEffect: 'skill_refund', prerequisiteLevel: 20, category: 'Utility' },
 ];
@@ -257,20 +266,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
 
-  // Define functions that have minimal dependencies first
   const applyThemePreference = useCallback((themeClass?: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
     PREDEFINED_SKINS.forEach(skin => {
-        if (skin.isTheme && skin.themeClass) {
+        if (skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') { // Don't remove 'classic' as it's not a real class
             root.classList.remove(skin.themeClass);
         }
     });
-    if (themeClass && themeClass !== 'classic') {
+    if (themeClass && themeClass !== 'classic') { // 'classic' means no specific theme class, rely on default CSS
       root.classList.add(themeClass);
     }
   }, []);
-
+  
   const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
     if (amount === 0) return;
     const newGain: FloatingGain = { id: crypto.randomUUID(), type, amount, timestamp: Date.now() };
@@ -278,14 +286,30 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(() => setFloatingGains(prev => prev.filter(g => g.id !== newGain.id)), 2500);
   }, []);
 
+  const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
+    setUserProfile(prev => ({...prev, ...updatedProfileData}));
+  }, []);
+
   const clearSessions = useCallback(() => {
     setSessions([]);
     toast({ title: "Session Log Cleared", description: "All study sessions have been removed.", icon: <Trash2/> });
   }, [toast]);
 
-  const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
-    setUserProfile(prev => ({...prev, ...updatedProfileData}));
-  }, []);
+  const isSkillUnlocked = useCallback((skillId: string) => {
+    return userProfile.unlockedSkillIds.includes(skillId);
+  }, [userProfile.unlockedSkillIds]);
+  
+  const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
+    return userProfile.unlockedSkillIds.reduce((totalBoost, skillId) => {
+      const skill = ALL_SKILLS.find(s => s.id === skillId);
+      if (skill) {
+        if (type === 'xp' && skill.xpBoostPercent) return totalBoost + skill.xpBoostPercent;
+        if (type === 'cash' && skill.cashBoostPercent) return totalBoost + skill.cashBoostPercent;
+        if (type === 'shopDiscount' && skill.shopDiscountPercent) return totalBoost + skill.shopDiscountPercent;
+      }
+      return totalBoost;
+    }, 0);
+  }, [userProfile.unlockedSkillIds]);
 
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
     setDailyChallenges(prevChallenges =>
@@ -302,27 +326,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         })
     );
   }, [toast]);
-
-  const isSkillUnlocked = useCallback((skillId: string) => userProfile.unlockedSkillIds.includes(skillId), [userProfile.unlockedSkillIds]);
-
+  
   const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
-    if (featureKey === 'timers' || featureKey === 'skill-tree') return true; // Always available
+    if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
     const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
-    if (!skill) return false; // If no skill defines this feature, it's considered locked/unavailable
+    if (!skill) return false;
     return isSkillUnlocked(skill.id);
   }, [isSkillUnlocked]);
-
-  const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
-    return userProfile.unlockedSkillIds.reduce((totalBoost, skillId) => {
-      const skill = ALL_SKILLS.find(s => s.id === skillId);
-      if (skill) {
-        if (type === 'xp' && skill.xpBoostPercent) return totalBoost + skill.xpBoostPercent;
-        if (type === 'cash' && skill.cashBoostPercent) return totalBoost + skill.cashBoostPercent;
-        if (type === 'shopDiscount' && skill.shopDiscountPercent) return totalBoost + skill.shopDiscountPercent;
-      }
-      return totalBoost;
-    }, 0);
-  }, [userProfile.unlockedSkillIds]);
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -349,20 +359,32 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let currentStudyStreak = currentProfile.currentStreak;
     let longestStudyStreak = currentProfile.longestStreak;
     let lastStudyDay = currentProfile.lastStudyDate;
+
     if (lastStudyDay) {
       const lastDate = parseISO(lastStudyDay);
       const diff = differenceInDays(today, lastDate);
-      if (diff === 1) currentStudyStreak++;
-      else if (diff > 1) currentStudyStreak = 1;
-    } else currentStudyStreak = 1;
+      if (diff === 1) {
+        currentStudyStreak++;
+      } else if (diff > 1) {
+        currentStudyStreak = 1; // Reset streak
+      }
+      // If diff is 0, streak remains same, no update to lastStudyDay needed here
+    } else { // First study session ever
+      currentStudyStreak = 1;
+    }
+
     let newLastStudyDate = lastStudyDay;
-    if (lastStudyDay !== todayStr) {
-        if (currentStudyStreak > longestStudyStreak) longestStudyStreak = currentStudyStreak;
+    if (lastStudyDay !== todayStr) { // Only update if it's a new day of study
+        if (currentStudyStreak > longestStudyStreak) {
+            longestStudyStreak = currentStudyStreak;
+        }
         newLastStudyDate = todayStr;
     }
+    
     const baseStreakBonus = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
     const skillXpBoost = getAppliedBoost('xp');
     const skillCashBoost = getAppliedBoost('cash');
+
     return {
         streakBonusMultiplier: baseStreakBonus,
         totalXpMultiplier: 1 + baseStreakBonus + skillXpBoost,
@@ -381,10 +403,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false,
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
+    
     setUserProfile(prevProfile => {
         const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
         let awardedXp = 0, awardedCash = 0;
         const minutesStudied = sessionDetails.durationInSeconds / 60;
+
         if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
           awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
           awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
@@ -393,24 +417,30 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle && isFeatureUnlocked('challenges')) {
             updateChallengeProgress('pomodoroCycles', 1);
         }
-        if (prevProfile.lastStudyDate !== updatedLastStudyDate && isFeatureUnlocked('challenges')) {
+
+        if (prevProfile.lastStudyDate !== updatedLastStudyDate && isFeatureUnlocked('challenges')) { // Check if it's a new study day
             updateChallengeProgress('studyStreak', 1);
         }
+        
         const newXp = prevProfile.xp + awardedXp;
         const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
         const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
+
         if (awardedXp > 0) addFloatingGain('xp', awardedXp);
         if (awardedCash > 0) addFloatingGain('cash', awardedCash);
 
         const rewardParts: string[] = [];
         if (awardedXp > 0) rewardParts.push(`${awardedXp} XP`);
         if (awardedCash > 0) rewardParts.push(`$${awardedCash.toLocaleString()}`);
-        const streakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100;
-        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) { rewardParts.push(`(+${streakBonusPercent.toFixed(0)}% streak)`); }
+        
+        const baseStreakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100; // Isolate base streak bonus
+        if (baseStreakBonusPercent > 0.1 && (awardedXp > 0 || awardedCash > 0)) { // Only show if meaningful
+            rewardParts.push(`(+${baseStreakBonusPercent.toFixed(0)}% streak)`);
+        }
         const skillBonusXpPercent = getAppliedBoost('xp') * 100;
-        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardParts.push(`(+${skillBonusXpPercent.toFixed(0)}% skill)`); }
+        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardParts.push(`(+${skillBonusXpPercent.toFixed(0)}% skill XP)`); }
         const skillBonusCashPercent = getAppliedBoost('cash') * 100;
-        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardParts.push(`(+${skillBonusCashPercent.toFixed(0)}% skill)`); }
+        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardParts.push(`(+${skillBonusCashPercent.toFixed(0)}% skill cash)`); }
 
         if (rewardParts.length > 0) {
             toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
@@ -484,9 +514,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const addRevisionConcept = useCallback((name: string, learnedDate: Date) => {
     if(!isFeatureUnlocked('notepadRevision')) { toast({ title: "Feature Locked", description: "Unlock Revision Hub in the Skill Tree.", icon: <XCircle/> }); return; }
     const learnedDateStr = format(learnedDate, 'yyyy-MM-dd');
+    let revisionAcceleratorBoost = 1;
+    if(isSkillUnlocked('revisionAccelerator')) revisionAcceleratorBoost = 0.9; // 10% shorter
     const calculateNextRevDate = (lsd: string, stage: number) => {
       let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
-      if (isSkillUnlocked('revisionAccelerator')) interval = Math.max(1, Math.round(interval * 0.9));
+      interval = Math.max(1, Math.round(interval * revisionAcceleratorBoost));
       return format(addDays(parseISO(lsd), interval), 'yyyy-MM-dd');
     };
     const newConcept: RevisionConcept = { id: crypto.randomUUID(), name, learnedDate: learnedDateStr, lastRevisedDate: learnedDateStr, nextRevisionDate: calculateNextRevDate(learnedDateStr, 0), revisionStage: 0 };
@@ -497,9 +529,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const markConceptRevised = useCallback((conceptId: string) => {
     if(!isFeatureUnlocked('notepadRevision')) return;
+    let revisionAcceleratorBoost = 1;
+    if(isSkillUnlocked('revisionAccelerator')) revisionAcceleratorBoost = 0.9;
     const calculateNextRevDate = (lsd: string, stage: number) => {
       let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
-      if (isSkillUnlocked('revisionAccelerator')) interval = Math.max(1, Math.round(interval * 0.9));
+      interval = Math.max(1, Math.round(interval * revisionAcceleratorBoost));
       return format(addDays(parseISO(lsd), interval), 'yyyy-MM-dd');
     };
     const concepts = (userProfile.notepadData.revisionConcepts || []).map(c => {
@@ -562,7 +596,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd'); // For weekly, check daily log
     return habit.log[logKey];
   }, []);
-
 
   const logHabitCompletion = useCallback((habitId: string, date: Date, completed: boolean = true, countIncrement?: number) => {
     if(!isFeatureUnlocked('notepadHabits')) return;
@@ -632,9 +665,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [isFeatureUnlocked, userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
 
   const updateNotepadEisenhowerMatrix = useCallback((matrix: UserProfile['notepadData']['eisenhowerMatrix']) => {
-    if(!isFeatureUnlocked('notepadEisenhower')) return;
+    if(!isFeatureUnlocked('notepadEisenhower')) { toast({ title: "Feature Locked", description: "Unlock Eisenhower Matrix in Skill Tree.", icon: <XCircle/> }); return; }
     updateNotepadData({ eisenhowerMatrix: matrix });
-  }, [isFeatureUnlocked, updateNotepadData]);
+  }, [isFeatureUnlocked, updateNotepadData, toast]);
 
   const getSkinById = useCallback((id: string) => PREDEFINED_SKINS.find(skin => skin.id === id), []);
   const isSkinOwned = useCallback((skinId: string) => userProfile.ownedSkinIds.includes(skinId), [userProfile.ownedSkinIds]);
@@ -648,6 +681,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const effectivePrice = Math.max(0, Math.round(skin.price * (1 - shopDiscount)));
     if (userProfile.cash < effectivePrice) { toast({ title: "Not Enough Cash", description: `Need $${effectivePrice.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive", icon: <DollarSign/> }); return false; }
     if (userProfile.level < skin.levelRequirement) { toast({ title: "Level Too Low", description: `Need Level ${skin.levelRequirement}. You are Level ${userProfile.level}.`, variant: "destructive", icon: <TrendingDown/> }); return false; }
+    
     setUserProfile(prev => ({ ...prev, cash: prev.cash - effectivePrice, ownedSkinIds: [...prev.ownedSkinIds, skinId] }));
     toast({ title: "Purchase Successful!", description: `Bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${(shopDiscount * 100).toFixed(0)}% discount!)` : ''}.`, icon: <ShoppingCart/> });
     addFloatingGain('cash', -effectivePrice);
@@ -655,20 +689,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [isFeatureUnlocked, userProfile.cash, userProfile.level, userProfile.ownedSkinIds, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain]);
 
   const equipSkin = useCallback((skinId: string) => {
-    if(!isFeatureUnlocked('shop')) return;
+    if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return; }
     if (!isSkinOwned(skinId)) { toast({ title: "Error", description: "You don't own this skin.", variant: "destructive", icon: <XCircle/> }); return; }
     const skinToEquip = getSkinById(skinId);
     if (!skinToEquip) return;
+    
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
+    applyThemePreference(skinToEquip.isTheme ? skinToEquip.themeClass : null); // Apply theme immediately
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
-  }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
+  }, [isFeatureUnlocked, isSkinOwned, getSkinById, applyThemePreference, toast]);
 
   const ensureCapitalistOffers = useCallback(() => {
     if(!isFeatureUnlocked('capitalist')) return;
     const now = Date.now();
     const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
-    let offerDurationMultiplier = 1;
-    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { /* No specific duration change for this skill */ }
+    let offerDurationMultiplier = 1; // Default
+    // Example: if (investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { offerDurationMultiplier = 0.8; // 20% shorter duration }
+    
     if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 * offerDurationMultiplier || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
       const generateOffers = (): CapitalistOffer[] => {
         const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
@@ -699,23 +736,41 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
     if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
     if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
+    
     let actualMinRoi = offer.minRoiPercent;
+    let bonusChanceMultiplier = 1; // Default
     const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
-    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); }
+    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { 
+        actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); // Example: +5% to min ROI
+        bonusChanceMultiplier = 1.1; // Example: 10% better chance of good outcome / bonus
+    }
+
     const randomFactor = Math.random();
-    let actualRoiPercent = Math.random() < offer.volatilityFactor ? (Math.random() < 0.5 ? actualMinRoi : offer.maxRoiPercent) : (actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor);
+    // Adjusted logic for volatility and bonus chance
+    let actualRoiPercent = actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor;
+    if (Math.random() > offer.volatilityFactor * (1/bonusChanceMultiplier)) { // Good outcome
+      actualRoiPercent = Math.max(actualRoiPercent, (actualMinRoi + offer.maxRoiPercent) / 2 * randomFactor * bonusChanceMultiplier); // Skew towards better outcomes
+    } else { // Bad outcome
+      actualRoiPercent = Math.min(actualRoiPercent, actualMinRoi + ( (actualMinRoi + offer.maxRoiPercent) / 2 - actualMinRoi ) * randomFactor ); // Skew towards worse outcomes if volatile
+    }
+
+
     let profit = Math.round(investmentAmount * (actualRoiPercent / 100));
     let finalCashChange = profit;
     let message = profit >= 0 ? `Investment success! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
-    if (profit >= 0 && offer.completionBonusCash) { finalCashChange += offer.completionBonusCash; message += ` Bonus: $${offer.completionBonusCash.toLocaleString()}!`; }
+    
+    if (profit >= 0 && offer.completionBonusCash && Math.random() < (0.2 * bonusChanceMultiplier) ) { // 20% base chance for bonus, modified by skill
+        finalCashChange += offer.completionBonusCash; 
+        message += ` Bonus: $${offer.completionBonusCash.toLocaleString()}!`; 
+    }
 
     setUserProfile(prev => {
         const newCash = prev.cash + finalCashChange;
         addFloatingGain('cash', finalCashChange);
-        setCapitalistStatsForAchievements(cs => ({ firstInvestmentMade: true, totalProfit: cs.totalProfit + (finalCashChange > 0 ? finalCashChange : 0) })); // Only count positive profit for achievement
+        setCapitalistStatsForAchievements(cs => ({ firstInvestmentMade: true, totalProfit: cs.totalProfit + (finalCashChange > 0 ? finalCashChange : 0) }));
         return { ...prev, cash: newCash };
     });
-    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
+    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId)); // Remove offer after investment
     return { success: true, message, profit: finalCashChange };
   }, [isFeatureUnlocked, capitalistOffers, userProfile.cash, isSkillUnlocked, addFloatingGain]);
 
@@ -744,13 +799,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return updatedChallenges;
     });
   }, [isFeatureUnlocked, toast, checkForLevelUp, addFloatingGain]);
-
+  
   const checkAndUnlockAchievements = useCallback(() => {
     if(!isFeatureUnlocked('achievements')) return;
     setUserProfile(prevUserProfile => {
         const currentInvestmentStats = capitalistStatsForAchievements;
-        const currentSessions = sessions;
-        const currentDailyChallenges = dailyChallenges;
+        const currentSessions = sessions; // Use current state of sessions
+        const currentDailyChallenges = dailyChallenges; // Use current state of challenges
         const newlyUnlocked: string[] = [];
         let totalCashRewardFromAchievements = 0;
         ALL_ACHIEVEMENTS.forEach(ach => {
@@ -796,7 +851,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     let pointsToRefund = 0;
-    const skillsToKeep = [skillToRefund.id, 'unlockAbout'];
+    const skillsToKeep = [skillToRefund.id, 'unlockAbout']; // Keep the respec skill and about page
     userProfile.unlockedSkillIds.forEach(id => {
       if (!skillsToKeep.includes(id)) {
         const skill = ALL_SKILLS.find(s => s.id === id);
@@ -808,7 +863,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       skillPoints: prev.skillPoints + pointsToRefund,
       unlockedSkillIds: skillsToKeep,
     }));
-    toast({ title: "Skill Points Refunded!", description: `All skill points (except for Respec & About) have been refunded. You gained ${pointsToRefund} points.`, icon: <RepeatIcon /> });
+    toast({ title: "Skill Points Refunded!", description: `All skill points (except for Respec & About) have been refunded. You gained ${pointsToRefund} points. Features will need to be re-unlocked.`, icon: <RepeatIcon /> });
   }, [userProfile.unlockedSkillIds, isSkillUnlocked, toast]);
 
   const unlockSkill = useCallback((skillId: string) => {
@@ -817,7 +872,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const skill = ALL_SKILLS.find(s => s.id === skillId);
     if (!skill) return false;
 
-    if (skill.id === 'skillPointRefund') { refundAllSkillPoints(); return true; }
+    if (skill.id === 'skillPointRefund') { refundAllSkillPoints(); return true; } // Special handling for respec
 
     setUserProfile(prev => ({ ...prev, skillPoints: prev.skillPoints - skill.cost, unlockedSkillIds: [...prev.unlockedSkillIds, skillId] }));
     toast({ title: "Skill Unlocked!", description: `You unlocked: ${skill.name}`, icon: <CheckCircle/>});
@@ -829,7 +884,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved.", icon: <Settings/> });
   }, [updateUserProfile, toast]);
 
-  // Load data from localStorage on initial mount
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
@@ -862,7 +916,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             skillPoints: typeof tempProfile.skillPoints === 'number' ? tempProfile.skillPoints : DEFAULT_USER_PROFILE.skillPoints,
             unlockedSkillIds: Array.isArray(tempProfile.unlockedSkillIds) ? tempProfile.unlockedSkillIds : DEFAULT_USER_PROFILE.unlockedSkillIds,
         };
-        if (!parsedProfile.unlockedSkillIds.includes('unlockAbout')) {
+        if (!parsedProfile.unlockedSkillIds.includes('unlockAbout')) { // Ensure "About" is always unlocked if not present
             parsedProfile.unlockedSkillIds.push('unlockAbout');
         }
       }
@@ -892,12 +946,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (storedCapitalistStats) setCapitalistStatsForAchievements(JSON.parse(storedCapitalistStats));
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
-      setUserProfile(DEFAULT_USER_PROFILE);
+      setUserProfile(DEFAULT_USER_PROFILE); // Fallback to default on error
       const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
       setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
     } finally {
-        setIsLoaded(true); // Set loaded after profile might be parsed
+        setIsLoaded(true);
     }
   }, []);
 
@@ -905,7 +959,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    if (isLoaded) { // Apply theme only after profile and its equippedSkinId is loaded
+    if (isLoaded) {
       const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
       applyThemePreference(equippedSkin?.isTheme ? equippedSkin.themeClass : null);
     }
@@ -975,6 +1029,3 @@ export const useSessions = () => {
   }
   return context;
 };
-
-
-    
