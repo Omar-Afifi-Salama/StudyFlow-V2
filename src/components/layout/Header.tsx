@@ -6,7 +6,7 @@ import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCi
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS } from '@/contexts/SessionContext'; 
+import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS } from '@/contexts/SessionContext';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -23,7 +23,7 @@ export default function Header() {
   const navItems = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't' },
     { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's' },
-    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm' }, 
+    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm' },
     { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd' },
     { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x' },
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
@@ -40,9 +40,9 @@ export default function Header() {
 
 
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
-  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length 
-                             ? LEVEL_THRESHOLDS[userProfile.level] 
-                             : userProfile.xp; 
+  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length
+                             ? LEVEL_THRESHOLDS[userProfile.level]
+                             : userProfile.xp;
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevelRaw = nextLevelXpTarget - currentLevelXpStart;
   const xpForNextLevelDisplay = xpForNextLevelRaw > 0 ? xpForNextLevelRaw : 'MAX';
@@ -64,7 +64,7 @@ export default function Header() {
           </svg>
           <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
         </Link>
-        
+
         <div className="flex-1 min-w-0"> {/* Added min-w-0 to allow shrinking */}
           <nav className="flex items-center space-x-1 overflow-x-auto pb-2 -mb-2 scrollbar-hide"> {/* scrollbar-hide for Tailwind if plugin exists, or custom CSS */}
             {navItems.map((item) => (
@@ -86,7 +86,13 @@ export default function Header() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey ? item.hotkey.toUpperCase() : ''}</span></p>
+                    <p>{item.label}
+                      {item.hotkey && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
+                        <span className="text-xs p-1 bg-muted rounded-sm ml-1">
+                          {item.hotkey.toUpperCase()}
+                        </span>
+                      )}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -104,9 +110,9 @@ export default function Header() {
             <PopoverContent className="w-48 p-2">
               <div className="text-sm font-medium mb-2 px-2">Themes</div>
               {PREDEFINED_SKINS.filter(s => s.isTheme || s.id === 'classic').map(skin => (
-                 <Button 
-                    key={skin.id} 
-                    variant={userProfile.equippedSkinId === skin.id ? "secondary" : "ghost"} 
+                 <Button
+                    key={skin.id}
+                    variant={userProfile.equippedSkinId === skin.id ? "secondary" : "ghost"}
                     size="sm"
                     className="w-full justify-start mb-1 btn-animated"
                     onClick={() => handleThemeChange(skin.id)}
@@ -163,7 +169,7 @@ export default function Header() {
             <DollarSign className="h-4 w-4 text-green-500" />
             <span>{userProfile.cash.toLocaleString()}</span>
           </div>
-            
+
             <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="ghost" className="hidden md:flex items-center space-x-1 text-xs bg-accent/20 px-2 py-1 rounded-md cursor-pointer btn-animated">
