@@ -88,18 +88,12 @@ export default function Header() {
                   <TooltipContent>
                     <p>
                       {item.label}
-                      {(() => {
-                        // Defensive check for hotkey rendering
-                        const hotkeyVal = item?.hotkey;
-                        if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                          return (
-                            <span className="text-xs p-1 bg-muted rounded-sm ml-1">
-                              {hotkeyVal.toUpperCase()}
-                            </span>
-                          );
-                        }
-                        return null; // Return null if hotkey is not a valid string
-                      })()}
+                      {/* Direct and robust check for hotkey */}
+                      {item && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
+                        <span className="text-xs p-1 bg-muted rounded-sm ml-1">
+                          {item.hotkey.toUpperCase()}
+                        </span>
+                      )}
                     </p>
                   </TooltipContent>
                 </Tooltip>
