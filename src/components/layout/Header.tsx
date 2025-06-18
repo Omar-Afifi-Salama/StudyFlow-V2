@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -13,27 +13,39 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  hotkey: string;
+}
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { userProfile, equipSkin } = useSessions();
 
-  const navItems = [
+  const mainNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't' },
     { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's' },
     { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm' },
-    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd' },
-    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x' },
-    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n' },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h' },
+  ];
+
+  const dropdownNavItems: NavItem[] = [
+    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x' },
+    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
+    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd' },
     { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v' },
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a' },
   ];
 
-  navItems.forEach(item => {
+  const allNavItems = [...mainNavItems, ...dropdownNavItems];
+
+  allNavItems.forEach(item => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useHotkeys(item.hotkey, (e) => { e.preventDefault(); router.push(item.href);}, { preventDefault: true });
   });
@@ -65,9 +77,9 @@ export default function Header() {
           <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
         </Link>
 
-        <div className="flex-1 min-w-0"> {/* Added min-w-0 to allow shrinking */}
-          <nav className="flex items-center space-x-1 overflow-x-auto pb-2 -mb-2 scrollbar-hide"> {/* scrollbar-hide for Tailwind if plugin exists, or custom CSS */}
-            {navItems.map((item) => (
+        <div className="flex-1 min-w-0">
+          <nav className="flex items-center space-x-1 overflow-x-auto pb-2 -mb-2">
+            {mainNavItems.map((item) => (
               <TooltipProvider key={item.href} delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -88,7 +100,6 @@ export default function Header() {
                   <TooltipContent>
                     <p>
                       {item.label}
-                      {/* Direct and robust check for hotkey */}
                       {item && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
                         <span className="text-xs p-1 bg-muted rounded-sm ml-1">
                           {item.hotkey.toUpperCase()}
@@ -99,6 +110,39 @@ export default function Header() {
                 </Tooltip>
               </TooltipProvider>
             ))}
+            <DropdownMenu>
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
+                      >
+                        <MoreVertical className="h-5 w-5 md:mr-2" />
+                        <span className="hidden md:inline-block">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent><p>More Options</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenuContent align="end">
+                {dropdownNavItems.map((item) => (
+                  <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
+                    <Link href={item.href} className="flex items-center w-full">
+                      {item.icon}
+                      <span className="ml-2">{item.label}</span>
+                      {item && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
+                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
+                          {item.hotkey.toUpperCase()}
+                        </span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
         </div>
 
@@ -137,7 +181,7 @@ export default function Header() {
               </TooltipTrigger>
               <TooltipContent>
                 <p className="font-semibold">{userTitle}</p>
-                <div className="w-40 mt-1">
+                <div className="w-48 mt-1">
                   <Progress value={xpProgressPercent} className="h-2" />
                   <p className="text-xs text-muted-foreground text-center mt-0.5">
                     {xpIntoCurrentLevel.toLocaleString()} / {typeof xpForNextLevelDisplay === 'number' ? xpForNextLevelDisplay.toLocaleString() : xpForNextLevelDisplay} XP
@@ -179,16 +223,20 @@ export default function Header() {
                         <span className="text-accent font-medium">{userTitle}</span>
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-64 p-0">
-                    <ScrollArea className="h-[200px] p-2">
-                        <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1">All Titles</div>
+                <PopoverContent className="w-72 p-0">
+                    <ScrollArea className="h-[250px] p-2">
+                        <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
                         {TITLES.map((title, index) => {
                             const levelReq = index + 1;
                             const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
+                            const totalHoursForLevel = XP_PER_MINUTE_FOCUS > 0 ? (xpReq / XP_PER_MINUTE_FOCUS / 60).toFixed(1) : 'N/A';
                             return (
                                 <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'bg-muted/50'}`}>
                                     <p>{title}</p>
-                                    <p className="text-muted-foreground text-[0.7rem]">Requires: Level {levelReq} (Approx. {xpReq.toLocaleString()} XP)</p>
+                                    <p className="text-muted-foreground text-[0.7rem]">
+                                      Requires: Level {levelReq} 
+                                      (Approx. {xpReq.toLocaleString()} XP / {totalHoursForLevel} hrs total focus)
+                                    </p>
                                 </div>
                             );
                         })}
