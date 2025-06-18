@@ -10,9 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, PlusCircle, Edit3, Save, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext'; // Import for safety, though ideally not needed if userProfile.notepadData is guaranteed
 
 export default function ChecklistTab() {
-  const { notepadData, updateNotepadData, updateTaskChallengeProgress } = useSessions();
+  const { userProfile, updateNotepadData, updateChallengeProgress } = useSessions();
+  const currentNotepadData = userProfile.notepadData || DEFAULT_NOTEPAD_DATA;
+  const tasks = currentNotepadData.tasks || [];
+
   const [newTaskText, setNewTaskText] = useState('');
   const [editingTask, setEditingTask] = useState<NotepadTask | null>(null);
   const [editText, setEditText] = useState('');
@@ -25,24 +29,24 @@ export default function ChecklistTab() {
       completed: false,
       createdAt: Date.now(),
     };
-    const newTasks = [...notepadData.tasks, newTask];
+    const newTasks = [...tasks, newTask];
     updateNotepadData({ tasks: newTasks });
-    updateTaskChallengeProgress(newTasks.filter(t => t.completed).length);
+    updateChallengeProgress('tasksCompleted', newTasks.filter(t => t.completed).length, true);
     setNewTaskText('');
   };
 
   const handleToggleTask = (taskId: string) => {
-    const newTasks = notepadData.tasks.map(task =>
+    const newTasks = tasks.map(task =>
       task.id === taskId ? { ...task, completed: !task.completed } : task
     );
     updateNotepadData({ tasks: newTasks });
-    updateTaskChallengeProgress(newTasks.filter(t => t.completed).length);
+    updateChallengeProgress('tasksCompleted', newTasks.filter(t => t.completed).length, true);
   };
 
   const handleDeleteTask = (taskId: string) => {
-    const newTasks = notepadData.tasks.filter(task => task.id !== taskId);
+    const newTasks = tasks.filter(task => task.id !== taskId);
     updateNotepadData({ tasks: newTasks });
-    updateTaskChallengeProgress(newTasks.filter(t => t.completed).length);
+    updateChallengeProgress('tasksCompleted', newTasks.filter(t => t.completed).length, true);
   };
 
   const startEditing = (task: NotepadTask) => {
@@ -57,7 +61,7 @@ export default function ChecklistTab() {
 
   const handleSaveEdit = () => {
     if (!editingTask || editText.trim() === '') return;
-    const newTasks = notepadData.tasks.map(task =>
+    const newTasks = tasks.map(task =>
       task.id === editingTask.id ? { ...task, text: editText.trim() } : task
     );
     updateNotepadData({ tasks: newTasks });
@@ -107,11 +111,11 @@ export default function ChecklistTab() {
           </div>
         )}
 
-        {notepadData.tasks.length === 0 && !editingTask ? (
+        {(tasks.length === 0) && !editingTask ? (
           <p className="text-muted-foreground text-center py-4">No tasks yet. Add some!</p>
         ) : (
           <ul className="space-y-2">
-            {notepadData.tasks.sort((a,b) => Number(a.completed) - Number(b.completed) || a.createdAt - b.createdAt).map(task => (
+            {tasks.sort((a,b) => Number(a.completed) - Number(b.completed) || a.createdAt - b.createdAt).map(task => (
               <li
                 key={task.id}
                 className={`flex items-center justify-between p-3 rounded-md border ${task.completed ? 'bg-muted/50' : 'bg-card'} ${editingTask?.id === task.id ? 'ring-2 ring-primary' : ''}`}

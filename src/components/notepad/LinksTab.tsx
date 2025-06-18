@@ -10,9 +10,13 @@ import { Trash2, PlusCircle, ExternalLink, Edit3, Save, XCircle } from 'lucide-r
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link'; 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
 export default function LinksTab() {
-  const { notepadData, updateNotepadData } = useSessions();
+  const { userProfile, updateNotepadData } = useSessions();
+  const currentNotepadData = userProfile.notepadData || DEFAULT_NOTEPAD_DATA;
+  const links = currentNotepadData.links || [];
+
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newLinkDescription, setNewLinkDescription] = useState('');
 
@@ -34,13 +38,13 @@ export default function LinksTab() {
       description: newLinkDescription.trim() || urlToSave,
       createdAt: Date.now(),
     };
-    updateNotepadData({ links: [...notepadData.links, newLink] });
+    updateNotepadData({ links: [...links, newLink] });
     setNewLinkUrl('');
     setNewLinkDescription('');
   };
 
   const handleDeleteLink = (linkId: string) => {
-    updateNotepadData({ links: notepadData.links.filter(link => link.id !== linkId) });
+    updateNotepadData({ links: links.filter(link => link.id !== linkId) });
   };
 
   const startEditing = (link: NotepadLink) => {
@@ -62,7 +66,7 @@ export default function LinksTab() {
         urlToSave = 'https://' + urlToSave;
     }
     updateNotepadData({
-      links: notepadData.links.map(link =>
+      links: links.map(link =>
         link.id === editingLink.id ? { 
             ...link, 
             url: urlToSave, 
@@ -120,11 +124,11 @@ export default function LinksTab() {
         {!editingLink && renderLinkForm(false)}
         {editingLink && renderLinkForm(true)}
 
-        {notepadData.links.length === 0 && !editingLink ? (
+        {(links.length === 0) && !editingLink ? (
           <p className="text-muted-foreground text-center py-4">No links saved yet. Add some resources!</p>
         ) : (
           <ul className="space-y-2">
-            {notepadData.links.sort((a,b) => a.createdAt - b.createdAt).map(link => (
+            {links.sort((a,b) => a.createdAt - b.createdAt).map(link => (
               <li
                 key={link.id}
                 className={`flex items-center justify-between p-3 rounded-md border bg-card ${editingLink?.id === link.id ? 'ring-2 ring-primary': ''}`}

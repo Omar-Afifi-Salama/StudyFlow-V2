@@ -13,9 +13,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, isValid } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
 export default function GoalsTab() {
-  const { notepadData, updateNotepadData } = useSessions();
+  const { userProfile, updateNotepadData } = useSessions();
+  const currentNotepadData = userProfile.notepadData || DEFAULT_NOTEPAD_DATA;
+  const goals = currentNotepadData.goals || [];
+
   const [newGoalText, setNewGoalText] = useState('');
   const [newGoalDueDate, setNewGoalDueDate] = useState<Date | undefined>(undefined);
   
@@ -33,21 +37,21 @@ export default function GoalsTab() {
       completed: false,
       createdAt: Date.now(),
     };
-    updateNotepadData({ goals: [...notepadData.goals, newGoal] });
+    updateNotepadData({ goals: [...goals, newGoal] });
     setNewGoalText('');
     setNewGoalDueDate(undefined);
   };
 
   const handleToggleGoal = (goalId: string) => {
     updateNotepadData({
-      goals: notepadData.goals.map(goal =>
+      goals: goals.map(goal =>
         goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
       ),
     });
   };
 
   const handleDeleteGoal = (goalId: string) => {
-    updateNotepadData({ goals: notepadData.goals.filter(goal => goal.id !== goalId) });
+    updateNotepadData({ goals: goals.filter(goal => goal.id !== goalId) });
   };
 
   const startEditing = (goal: NotepadGoal) => {
@@ -66,7 +70,7 @@ export default function GoalsTab() {
   const handleSaveEdit = () => {
     if (!editingGoal || editGoalText.trim() === '') return;
     updateNotepadData({
-      goals: notepadData.goals.map(goal =>
+      goals: goals.map(goal =>
         goal.id === editingGoal.id ? { 
           ...goal, 
           text: editGoalText.trim(), 
@@ -138,11 +142,11 @@ export default function GoalsTab() {
         {!editingGoal && renderGoalForm(false)}
         {editingGoal && renderGoalForm(true)}
 
-        {notepadData.goals.length === 0 && !editingGoal ? (
+        {(goals.length === 0) && !editingGoal ? (
           <p className="text-muted-foreground text-center py-4">No goals set yet. Aim high!</p>
         ) : (
           <ul className="space-y-2">
-            {notepadData.goals.sort((a,b) => Number(a.completed) - Number(b.completed) || (a.dueDate || 'zzzz').localeCompare(b.dueDate || 'zzzz') || a.createdAt - b.createdAt).map(goal => (
+            {goals.sort((a,b) => Number(a.completed) - Number(b.completed) || (a.dueDate || 'zzzz').localeCompare(b.dueDate || 'zzzz') || a.createdAt - b.createdAt).map(goal => (
               <li
                 key={goal.id}
                 className={`p-3 rounded-md border ${goal.completed ? 'bg-muted/50' : 'bg-card'} ${editingGoal?.id === goal.id ? 'ring-2 ring-primary': ''}`}
@@ -164,7 +168,7 @@ export default function GoalsTab() {
                         {goal.text}
                         </label>
                         {goal.dueDate && (() => {
-                          const dateObj = parseISO(goal.dueDate);
+                          const dateObj = parseISO(goal.dueDate as string); // Added 'as string'
                           return isValid(dateObj) ? (
                             <p className={`text-xs ${goal.completed ? 'text-muted-foreground' : 'text-primary'}`}>
                               Due: {format(dateObj, "PPP")}

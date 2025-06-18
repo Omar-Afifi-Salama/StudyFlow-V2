@@ -11,9 +11,13 @@ import { PlusCircle, Save, Trash2, Edit3, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
 export default function NotesTab() {
-  const { notepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote } = useSessions();
+  const { userProfile, addNotepadNote, updateNotepadNote, deleteNotepadNote } = useSessions();
+  const currentNotepadData = userProfile.notepadData || DEFAULT_NOTEPAD_DATA;
+  const notes = currentNotepadData.notes || [];
+
   const [isAddingNewNote, setIsAddingNewNote] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteContent, setNewNoteContent] = useState('');
@@ -44,7 +48,7 @@ export default function NotesTab() {
 
   const handleUpdateNote = () => {
     if (!editingNoteId || editTitle.trim() === '' || editContent.trim() === '') return;
-    const originalNote = notepadData.notes.find(n => n.id === editingNoteId);
+    const originalNote = notes.find(n => n.id === editingNoteId);
     if(originalNote) {
         updateNotepadNote({ ...originalNote, title: editTitle, content: editContent });
     }
@@ -99,11 +103,11 @@ export default function NotesTab() {
       <CardContent className="space-y-4">
         {(isAddingNewNote || editingNoteId) && renderNoteForm()}
 
-        {notepadData.notes.length === 0 && !isAddingNewNote && !editingNoteId ? (
+        {(notes.length === 0) && !isAddingNewNote && !editingNoteId ? (
           <p className="text-muted-foreground text-center py-4">No notes yet. Add some!</p>
         ) : (
           <Accordion type="multiple" className="w-full">
-            {notepadData.notes.sort((a,b) => b.lastModified - a.lastModified).map(note => 
+            {notes.sort((a,b) => b.lastModified - a.lastModified).map(note => 
               editingNoteId === note.id ? null : ( // Don't render the accordion item if it's being edited above
               <AccordionItem value={note.id} key={note.id} className="bg-card border rounded-md mb-2 overflow-hidden transition-shadow duration-200 hover:shadow-md">
                 <AccordionTrigger className="px-4 py-3 hover:no-underline">

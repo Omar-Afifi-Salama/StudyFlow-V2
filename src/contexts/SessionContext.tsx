@@ -51,7 +51,7 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/300x200/1A237E/C5CAE9.png', dataAiHint: 'dark blue elegant' },
 ];
 
-const DEFAULT_NOTEPAD_DATA: NotepadData = {
+export const DEFAULT_NOTEPAD_DATA: NotepadData = {
   tasks: [],
   notes: [],
   goals: [],
@@ -212,7 +212,7 @@ interface SessionContextType {
   isSkinOwned: (skinId: string) => boolean;
   capitalistOffers: CapitalistOffer[];
   ensureCapitalistOffers: () => void;
-  investInOffer: (offerId: string, investmentAmount: number) => { success: boolean; message: string; profit?: number };
+  investInOffer: (offerId: string, investmentAmount: number) => Promise<{ success: boolean; message: string; profit?: number }>; // Changed to Promise
   lastOfferGenerationTime: number | null;
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
@@ -220,7 +220,8 @@ interface SessionContextType {
   getUnlockedAchievements: () => Achievement[];
   checkAndUnlockAchievements: (investmentPayload?: Partial<AchievementCriteriaInvestmentPayload>) => void;
   isLoaded: boolean; 
-  updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void; // Expose generic notepad updater
+  updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void; 
+  updateTaskChallengeProgress: (completedTasksCount: number) => void; // Specific for checklist
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -257,13 +258,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const tempProfile = JSON.parse(storedProfile) as UserProfile;
         
         const ensuredNotepadData: NotepadData = {
-            ...DEFAULT_NOTEPAD_DATA,
+            ...DEFAULT_NOTEPAD_DATA, 
             ...(tempProfile.notepadData || {}), 
-            tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : [],
-            notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : [],
-            goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : [],
-            links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : [],
-            revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : [],
+            tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : DEFAULT_NOTEPAD_DATA.tasks,
+            notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : DEFAULT_NOTEPAD_DATA.notes,
+            goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : DEFAULT_NOTEPAD_DATA.goals,
+            links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : DEFAULT_NOTEPAD_DATA.links,
+            revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : DEFAULT_NOTEPAD_DATA.revisionConcepts,
             habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
         };
 
@@ -404,6 +405,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       }
     }));
   }, []);
+  
+  const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
+    updateChallengeProgress('tasksCompleted', completedTasksCount, true);
+  }, [/* Removed updateChallengeProgress from dependencies as it causes infinite loop if not memoized itself */]);
+
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     setUserProfile(prev => ({...prev, wakeUpTime, sleepTime }));
@@ -668,13 +674,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       createdAt: Date.now(),
       lastModified: Date.now(),
     };
-    updateNotepadField('notes', [newNote, ...(userProfile.notepadData?.notes || [])]);
+    const currentNotes = userProfile.notepadData?.notes || [];
+    updateNotepadField('notes', [newNote, ...currentNotes]);
     updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Note Added", description: `"${note.title}" has been saved.` });
   }, [toast, updateChallengeProgress, userProfile.notepadData?.notes, updateNotepadField]);
 
   const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
-    const newNotes = (userProfile.notepadData?.notes || []).map(note =>
+    const currentNotes = userProfile.notepadData?.notes || [];
+    const newNotes = currentNotes.map(note =>
         note.id === updatedNote.id ? { ...updatedNote, lastModified: Date.now() } : note
       );
     updateNotepadField('notes', newNotes);
@@ -682,8 +690,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, userProfile.notepadData?.notes, updateNotepadField]);
 
   const deleteNotepadNote = useCallback((noteId: string) => {
-    const noteToDelete = userProfile.notepadData?.notes.find(n => n.id === noteId);
-    const newNotes = (userProfile.notepadData?.notes || []).filter(note => note.id !== noteId);
+    const currentNotes = userProfile.notepadData?.notes || [];
+    const noteToDelete = currentNotes.find(n => n.id === noteId);
+    const newNotes = currentNotes.filter(note => note.id !== noteId);
     updateNotepadField('notes', newNotes);
     if (noteToDelete) {
         toast({ title: "Note Deleted", description: `"${noteToDelete.title}" has been removed.` });
@@ -705,13 +714,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       nextRevisionDate: calculateNextRevisionDate(learnedDateStr, 0),
       revisionStage: 0,
     };
-    updateNotepadField('revisionConcepts', [...(userProfile.notepadData?.revisionConcepts || []), newConcept]);
+    const currentRevisionConcepts = userProfile.notepadData?.revisionConcepts || [];
+    updateNotepadField('revisionConcepts', [...currentRevisionConcepts, newConcept]);
     updateChallengeProgress('notepadEntry', 1); 
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
   }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField, updateChallengeProgress]);
 
   const markConceptRevised = useCallback((conceptId: string) => {
-    const concepts = (userProfile.notepadData?.revisionConcepts || []).map(c => {
+    const currentRevisionConcepts = userProfile.notepadData?.revisionConcepts || [];
+    const concepts = currentRevisionConcepts.map(c => {
         if (c.id === conceptId) {
           const todayStr = format(new Date(), 'yyyy-MM-dd');
           const newStage = c.revisionStage + 1;
@@ -729,8 +740,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, userProfile.notepadData?.revisionConcepts, updateNotepadField]);
 
   const deleteRevisionConcept = useCallback((conceptId: string) => {
-    const conceptToDelete = userProfile.notepadData?.revisionConcepts?.find(c => c.id === conceptId);
-    const newConcepts = (userProfile.notepadData?.revisionConcepts || []).filter(c => c.id !== conceptId);
+    const currentRevisionConcepts = userProfile.notepadData?.revisionConcepts || [];
+    const conceptToDelete = currentRevisionConcepts.find(c => c.id === conceptId);
+    const newConcepts = currentRevisionConcepts.filter(c => c.id !== conceptId);
     updateNotepadField('revisionConcepts', newConcepts);
     if (conceptToDelete) {
         toast({ title: "Concept Removed", description: `"${conceptToDelete.name}" removed from revision.` });
@@ -746,19 +758,22 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       currentStreak: 0,
       longestStreak: 0,
     };
-    updateNotepadField('habits', [...(userProfile.notepadData?.habits || []), newHabit]);
+    const currentHabits = userProfile.notepadData?.habits || [];
+    updateNotepadField('habits', [...currentHabits, newHabit]);
     toast({ title: "Habit Added", description: `"${newHabit.name}" has been created.` });
   }, [toast, userProfile.notepadData?.habits, updateNotepadField]);
 
   const updateHabit = useCallback((updatedHabit: Habit) => {
-    const newHabits = (userProfile.notepadData?.habits || []).map(h => h.id === updatedHabit.id ? updatedHabit : h);
+    const currentHabits = userProfile.notepadData?.habits || [];
+    const newHabits = currentHabits.map(h => h.id === updatedHabit.id ? updatedHabit : h);
     updateNotepadField('habits', newHabits);
     toast({ title: "Habit Updated", description: `"${updatedHabit.name}" has been saved.`});
   }, [toast, userProfile.notepadData?.habits, updateNotepadField]);
 
   const deleteHabit = useCallback((habitId: string) => {
-    const habitToDelete = userProfile.notepadData?.habits.find(h => h.id === habitId);
-    const newHabits = (userProfile.notepadData?.habits || []).filter(h => h.id !== habitId);
+    const currentHabits = userProfile.notepadData?.habits || [];
+    const habitToDelete = currentHabits.find(h => h.id === habitId);
+    const newHabits = currentHabits.filter(h => h.id !== habitId);
     updateNotepadField('habits', newHabits);
     if (habitToDelete) {
         toast({ title: "Habit Deleted", description: `"${habitToDelete.name}" has been removed.`});
@@ -899,7 +914,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [lastOfferGenerationTime, capitalistOffers]);
 
-  const investInOffer = useCallback((offerId: string, investmentAmount: number) => {
+  const investInOffer = useCallback(async (offerId: string, investmentAmount: number): Promise<{ success: boolean; message: string; profit?: number }> => { // Added Promise return type
     const offer = capitalistOffers.find(o => o.id === offerId);
     if (!offer) return { success: false, message: "Offer not found." };
     if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
@@ -931,7 +946,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
 
-    // toast({ title: "Investment Result", description: message }); // Toast is handled by caller now
     return { success: true, message, profit: finalCashChange };
 
   }, [capitalistOffers, userProfile.cash]);
@@ -982,6 +996,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     <SessionContext.Provider value={{ 
       sessions, addSession, clearSessions, updateSessionDescription,
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
+      updateTaskChallengeProgress, // Added this
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
@@ -1003,5 +1018,3 @@ export const useSessions = () => {
   }
   return context;
 };
-
-    

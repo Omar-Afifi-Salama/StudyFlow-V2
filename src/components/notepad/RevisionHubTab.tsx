@@ -12,9 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlusCircle, Trash2, CalendarIcon, CheckCircle, Edit3, Save, XCircle } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
 export default function RevisionHubTab() {
-  const { notepadData, addRevisionConcept, markConceptRevised, deleteRevisionConcept } = useSessions();
+  const { userProfile, addRevisionConcept, markConceptRevised, deleteRevisionConcept } = useSessions();
+  const currentNotepadData = userProfile.notepadData || DEFAULT_NOTEPAD_DATA;
+  const concepts = currentNotepadData.revisionConcepts || [];
+  
   const [newConceptName, setNewConceptName] = useState('');
   const [newLearnedDate, setNewLearnedDate] = useState<Date | undefined>(new Date());
   
@@ -38,7 +42,6 @@ export default function RevisionHubTab() {
     deleteRevisionConcept(conceptId);
   };
 
-  // Basic editing for name and learned date for now
   const startEditing = (concept: RevisionConcept) => {
     setEditingConcept(concept);
     setEditConceptName(concept.name);
@@ -54,15 +57,13 @@ export default function RevisionHubTab() {
 
   const handleSaveEdit = () => {
      if (!editingConcept || editConceptName.trim() === '' || !editLearnedDate || !isValid(editLearnedDate)) return;
-    // For simplicity, re-adding with new details. A true update would be better in a full backend.
     deleteRevisionConcept(editingConcept.id);
     addRevisionConcept(editConceptName.trim(), editLearnedDate);
     cancelEditing();
   };
   
-  const concepts = notepadData.revisionConcepts || [];
-
-  const formatDateSafe = (dateString: string, formatString: string = 'PPP') => {
+  const formatDateSafe = (dateString: string | undefined, formatString: string = 'PPP') => {
+    if (!dateString) return "N/A";
     const dateObj = parseISO(dateString);
     return isValid(dateObj) ? format(dateObj, formatString) : "Invalid Date";
   };
@@ -131,7 +132,7 @@ export default function RevisionHubTab() {
         )}
 
 
-        {concepts.length === 0 && !editingConcept ? (
+        {(concepts.length === 0) && !editingConcept ? (
           <p className="text-muted-foreground text-center py-4">No concepts added for revision yet.</p>
         ) : (
           <ul className="space-y-3">
@@ -139,7 +140,7 @@ export default function RevisionHubTab() {
                 const dateA = parseISO(a.nextRevisionDate);
                 const dateB = parseISO(b.nextRevisionDate);
                 if (!isValid(dateA) && !isValid(dateB)) return 0;
-                if (!isValid(dateA)) return 1; // Invalid dates go to the end
+                if (!isValid(dateA)) return 1; 
                 if (!isValid(dateB)) return -1;
                 return dateA.getTime() - dateB.getTime();
             }).map(concept => {
