@@ -29,7 +29,7 @@ export default function Header() {
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n' },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h' },
-    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v' }, // Changed icon for achievements
+    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v' },
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a' },
   ];
 
@@ -86,12 +86,20 @@ export default function Header() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{item.label}
-                      {item.hotkey && typeof item.hotkey === 'string' && item.hotkey.length > 0 && (
-                        <span className="text-xs p-1 bg-muted rounded-sm ml-1">
-                          {item.hotkey.toUpperCase()}
-                        </span>
-                      )}
+                    <p>
+                      {item.label}
+                      {(() => {
+                        // Defensive check for hotkey rendering
+                        const hotkeyVal = item?.hotkey;
+                        if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
+                          return (
+                            <span className="text-xs p-1 bg-muted rounded-sm ml-1">
+                              {hotkeyVal.toUpperCase()}
+                            </span>
+                          );
+                        }
+                        return null; // Return null if hotkey is not a valid string
+                      })()}
                     </p>
                   </TooltipContent>
                 </Tooltip>
