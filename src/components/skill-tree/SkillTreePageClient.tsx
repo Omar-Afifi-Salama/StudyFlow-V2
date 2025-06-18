@@ -8,7 +8,7 @@ import * as LucideIcons from 'lucide-react';
 import type { Skill } from '@/types';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Network, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Target as TargetIcon, Edit, Repeat, ListChecks, CalendarClock, Grid, CheckSquare2, StickyNote, Link as LinkLucide, Brain, Sparkles, XCircle, CheckCircle, Percent, RepeatIcon, Briefcase, Timer, UserCircle, Info } from 'lucide-react';
+import { Network, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Target as TargetIcon, Edit, Repeat, ListChecks, CalendarClock, Grid, CheckSquare2, StickyNote, Link as LinkLucide, Brain, Sparkles, XCircle, CheckCircle, Percent, RepeatIcon, Briefcase, Timer, UserCircle, Info, Lock, Gem } from 'lucide-react';
 
 
 type IconName = keyof typeof LucideIcons;
@@ -19,7 +19,7 @@ const getIconComponent = (iconName?: string): React.ComponentType<{ className?: 
   }
   const Icon = LucideIcons[iconName as IconName];
   if (typeof Icon === 'string' || typeof Icon === 'number' || typeof Icon === 'boolean' || Icon === null || Icon === undefined) {
-    return LucideIcons.Star; // Fallback if the resolved icon is not a component
+    return LucideIcons.Star; 
   }
   return Icon as React.ComponentType<{ className?: string }>;
 };
@@ -61,7 +61,7 @@ export default function SkillTreePageClient() {
           <CardDescription>{skill.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1 text-sm">
-          <p>Cost: <span className="font-semibold">{skill.cost}</span> Skill Point(s)</p>
+          <p>Cost: <span className="font-semibold">{skill.cost}</span> <Gem className="inline h-3 w-3 mb-0.5 text-yellow-400" /> Skill Point(s)</p>
           {skill.prerequisiteLevel && <p>Requires Level: <span className="font-semibold">{skill.prerequisiteLevel}</span></p>}
           {skill.prerequisiteSkillIds && skill.prerequisiteSkillIds.length > 0 && (
             <div>
@@ -78,7 +78,7 @@ export default function SkillTreePageClient() {
         <CardFooter>
           {isUnlocked ? (
             <Button variant="ghost" disabled className="w-full">
-              <LucideIcons.CheckCircle className="mr-2 h-4 w-4" /> Unlocked
+              <CheckCircle className="mr-2 h-4 w-4" /> Unlocked
             </Button>
           ) : (
             <TooltipProvider>
@@ -90,7 +90,7 @@ export default function SkillTreePageClient() {
                       disabled={!can}
                       className="w-full btn-animated"
                     >
-                      <LucideIcons.Lock className="mr-2 h-4 w-4" /> Unlock
+                      <Lock className="mr-2 h-4 w-4" /> Unlock
                     </Button>
                   </span>
                 </TooltipTrigger>
@@ -122,19 +122,28 @@ export default function SkillTreePageClient() {
         {categoryOrder.map(categoryName => {
           const skills = skillsByCategory[categoryName];
           if (!skills || skills.length === 0) return null;
+          // Filter out always unlocked skills from display, unless it's the 'Core Feature' category for initial items
+          const displaySkills = categoryName === 'Core Feature' 
+            ? skills.filter(skill => skill.cost === 0 || !isSkillUnlocked(skill.id) || canUnlockSkill(skill.id).can) // Show always unlocked OR unlockable/not yet unlocked core
+            : skills.filter(skill => skill.cost > 0); // For other categories, only show skills with a cost
+          
+          if (displaySkills.length === 0 && categoryName !== 'Core Feature') return null;
+
+
           return (
             <div key={categoryName}>
               <h2 className="text-2xl font-semibold mb-4 text-primary border-b pb-2">{categoryName}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {skills.map(skill => <SkillCardDisplay key={skill.id} skill={skill} />)}
+                {displaySkills.map(skill => <SkillCardDisplay key={skill.id} skill={skill} />)}
               </div>
             </div>
           );
         })}
         <p className="text-center text-muted-foreground text-sm pt-4">
-          More skills and a visual tree layout coming soon!
+          A visual, branching skill tree is planned for a future update!
         </p>
       </CardContent>
     </Card>
   );
 }
+

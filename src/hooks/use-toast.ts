@@ -5,7 +5,7 @@ import * as React from "react"
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 10000 // Increased to 10 seconds
+const TOAST_REMOVE_DELAY = 5000 // Changed to 5 seconds
 const TOAST_STAGGER_DELAY = 250; 
 
 type ToasterToast = ToastProps & {
@@ -153,10 +153,8 @@ async function processToastQueue() {
         onOpenChange: (open) => { if (!open) dismiss(); },
       },
     });
-    // addToRemoveQueue is called when the toast is dismissed, not when added.
-    // It should be called if the toast has a duration prop, or manually.
-    // For auto-dismiss, it's typically handled by ToastPrimitives.Provider duration or here.
-     addToRemoveQueue(id); // Ensure it gets removed after TOAST_REMOVE_DELAY
+    
+     addToRemoveQueue(id); 
   }
   
   await new Promise(resolve => setTimeout(resolve, TOAST_STAGGER_DELAY));
@@ -192,3 +190,4 @@ function useToast() {
 }
 
 export { useToast, toast }
+

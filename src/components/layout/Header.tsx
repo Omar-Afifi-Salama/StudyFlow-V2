@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Star, DollarSign, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, Grid as GridLucide } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Star, DollarSign, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, Grid as GridLucide, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -46,10 +46,9 @@ export default function Header() {
 
   const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || isFeatureUnlocked(item.featureKey));
 
-  const mainBarItemHrefs = ['/', '/skill-tree']; // Timers and Skill Tree are always primary
+  const mainBarItemHrefs = ['/', '/skill-tree']; 
   const mainNavItems: NavItem[] = visibleNavItems.filter(item => mainBarItemHrefs.includes(item.href));
   
-  // Other unlocked features go into "More" dropdown
   const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainBarItemHrefs.includes(item.href));
 
 
@@ -71,7 +70,7 @@ export default function Header() {
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
 
   const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp;
-  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS)); // Basic calculation, skill boosts could be added
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS)); 
   const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
 
   return (
@@ -164,7 +163,7 @@ export default function Header() {
             <Tooltip>
               <TooltipTrigger asChild>
                  <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                    <Star className="h-4 w-4 text-yellow-400" /> {/* Skill Point Icon */}
+                    <Star className="h-4 w-4 text-yellow-400" /> 
                     <span>{userProfile.skillPoints || 0}</span>
                   </div>
               </TooltipTrigger>
@@ -174,9 +173,10 @@ export default function Header() {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-1.5 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-pointer h-auto btn-animated">
+              <Button variant="ghost" className="flex items-center space-x-1.5 text-xs text-accent font-medium px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/20">
                 <ShieldCheck className="h-4 w-4 text-accent" />
-                <span className="text-accent font-medium text-xs">{userTitle}</span>
+                <span>{userTitle}</span>
+                <ChevronDown className="h-3 w-3" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-60 p-3 bg-popover text-popover-foreground">
@@ -228,3 +228,4 @@ export default function Header() {
     </header>
   );
 }
+
