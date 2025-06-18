@@ -5,6 +5,7 @@ import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, CheckCircle, Lock, DollarSign, Trophy } from 'lucide-react';
 import * as LucideIcons from 'lucide-react'; // Import all icons
+import type { Achievement } from '@/types'; // Explicitly import Achievement type
 
 type IconName = keyof typeof LucideIcons;
 
@@ -17,7 +18,7 @@ const getIconComponent = (iconName?: string): React.ComponentType<{ className?: 
 
 const achievementCategories: Achievement['category'][] = [
     'Study Time', 'Pomodoro', 'Progression', 'Collection', 
-    'Streaks & Challenges', 'Capitalist', 'Notepad & Revision', 'General'
+    'Streaks & Challenges', 'Capitalist', 'Notepad & Revision', 'Habits', 'General'
 ];
 
 
@@ -91,5 +92,3 @@ export default function AchievementsPageClient() {
     </Card>
   );
 }
-
-```

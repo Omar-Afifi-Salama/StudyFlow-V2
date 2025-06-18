@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
-import type { Habit, HabitFrequency, HabitLogEntry, NotepadData } from '@/types'; // Added NotepadData
+import type { Habit, HabitFrequency, HabitLogEntry, NotepadData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,24 +11,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame, Check } from 'lucide-react'; // CheckSquare changed to Check
+import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, getWeek, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, getWeek, parseISO, isValid } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
 
-const PREDEFINED_COLORS = ["#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF", "#A0C4FF", "#BDB2FF", "#FFC6FF", "#E0E0E0"];
+const PREDEFINED_COLORS = ["#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF", "#A0C4FF", "#BDB2FF", "#FFC6FF", "#E0E0E0", "#FF9AA2", "#FFDAC1", "#B5EAD7", "#C7CEEA", "#F3E6E8"];
 
 
 export default function HabitTrackerTab() {
   const { userProfile, addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek } = useSessions();
   
   const habitsList = useMemo(() => {
-    return userProfile.notepadData?.habits || [];
+    return Array.isArray(userProfile.notepadData?.habits) ? userProfile.notepadData.habits : [];
   }, [userProfile.notepadData?.habits]);
 
 
@@ -71,7 +70,7 @@ export default function HabitTrackerTab() {
   const renderHabitForm = () => {
     if (!isEditing || !currentHabit) return null;
     return (
-      <Card className="mb-6 shadow-md">
+      <Card className="mb-6 shadow-md card-animated">
         <CardHeader>
           <CardTitle>{currentHabit.id ? 'Edit Habit' : 'Add New Habit'}</CardTitle>
         </CardHeader>
@@ -80,11 +79,13 @@ export default function HabitTrackerTab() {
             placeholder="Habit Name (e.g., Exercise, Read)"
             value={currentHabit.name || ''}
             onChange={(e) => handleInputChange('name', e.target.value)}
+            className="btn-animated"
           />
           <Textarea
             placeholder="Optional: Description"
             value={currentHabit.description || ''}
             onChange={(e) => handleInputChange('description', e.target.value)}
+            className="btn-animated"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -93,7 +94,7 @@ export default function HabitTrackerTab() {
                 value={currentHabit.frequency}
                 onValueChange={(value: HabitFrequency) => handleInputChange('frequency', value)}
               >
-                <SelectTrigger id="frequency">
+                <SelectTrigger id="frequency" className="btn-animated">
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,6 +112,7 @@ export default function HabitTrackerTab() {
                   min="1"
                   value={currentHabit.targetCompletions || 1}
                   onChange={(e) => handleInputChange('targetCompletions', e.target.value)}
+                  className="btn-animated"
                 />
               </div>
             )}
@@ -121,21 +123,24 @@ export default function HabitTrackerTab() {
               {PREDEFINED_COLORS.map(color => (
                 <Button
                   key={color}
-                  size="icon"
-                  variant={currentHabit.color === color ? 'default' : 'outline'}
-                  style={{ backgroundColor: currentHabit.color === color ? color : undefined, width: '2rem', height: '2rem' }}
+                  variant="outline"
+                  style={{ backgroundColor: color }}
                   onClick={() => handleInputChange('color', color)}
-                  className="rounded-full border-2"
+                  className={cn(
+                    "h-8 w-8 rounded-full border-2 p-0 btn-animated", 
+                    currentHabit.color === color ? "ring-2 ring-offset-2 ring-ring border-ring" : "border-transparent hover:border-muted-foreground"
+                  )}
+                  aria-label={`Select color ${color}`}
                 >
-                  {currentHabit.color === color && <Check className="h-4 w-4" />}
+                  {currentHabit.color === color && <Check className="h-4 w-4 text-white mix-blend-difference" />}
                 </Button>
               ))}
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
-          <Button variant="ghost" onClick={closeEditor}><XCircle className="mr-2 h-4 w-4" />Cancel</Button>
-          <Button onClick={handleSaveHabit}><Save className="mr-2 h-4 w-4" />Save Habit</Button>
+          <Button variant="ghost" onClick={closeEditor} className="btn-animated"><XCircle className="mr-2 h-4 w-4" />Cancel</Button>
+          <Button onClick={handleSaveHabit} className="btn-animated"><Save className="mr-2 h-4 w-4" />Save Habit</Button>
         </CardFooter>
       </Card>
     );
@@ -151,7 +156,7 @@ export default function HabitTrackerTab() {
           id={`habit-${habit.id}-${format(viewDate, 'yyyy-MM-dd')}`}
           checked={isCompleted}
           onCheckedChange={(checked) => logHabitCompletion(habit.id, viewDate, !!checked)}
-          className="mr-2 h-5 w-5"
+          className="mr-2 h-5 w-5 btn-animated"
         />
         <Label htmlFor={`habit-${habit.id}-${format(viewDate, 'yyyy-MM-dd')}`} className="flex-grow">
           {isCompleted ? <span className="line-through text-muted-foreground">{habit.name}</span> : habit.name}
@@ -165,7 +170,7 @@ export default function HabitTrackerTab() {
   
   const WeeklyHabitView = ({ habit }: { habit: Habit }) => {
     const completionsThisWeek = getHabitCompletionsForWeek(habit, viewDate);
-    const target = habit.targetCompletions || 1;
+    const target = habit.targetCompletions || (habit.frequency === 'weekly' ? 1 : 7); // Default target 1 for weekly if not set
     const progressPercent = Math.min((completionsThisWeek / target) * 100, 100);
     const isWeekGoalMet = completionsThisWeek >= target;
 
@@ -184,8 +189,8 @@ export default function HabitTrackerTab() {
               size="xs" 
               variant="outline" 
               onClick={() => logHabitCompletion(habit.id, viewDate, true, 1)} 
-              disabled={isWeekGoalMet && completionsThisWeek >= target}
-              className="h-6 px-1.5 py-0.5 text-xs"
+              disabled={completionsThisWeek >= target}
+              className="h-6 px-1.5 py-0.5 text-xs btn-animated"
             >
             +1 Done
           </Button>
@@ -200,7 +205,7 @@ export default function HabitTrackerTab() {
 
 
   return (
-    <Card>
+    <Card className="card-animated">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -208,7 +213,7 @@ export default function HabitTrackerTab() {
             <CardDescription>Track and build positive habits.</CardDescription>
           </div>
           {!isEditing && (
-            <Button onClick={() => openEditor()} size="sm">
+            <Button onClick={() => openEditor()} size="sm" className="btn-animated">
               <PlusCircle className="mr-2 h-4 w-4" /> Add Habit
             </Button>
           )}
@@ -218,13 +223,19 @@ export default function HabitTrackerTab() {
         {renderHabitForm()}
         
         <div className="mb-4 flex items-center justify-between p-2 rounded-md bg-muted/50">
-          <Button variant="outline" size="icon" onClick={() => setViewDate(prev => subDays(prev, habitViewMode === 'daily' ? 1: 7))}><CalendarDays className="h-4 w-4 transform rotate-180" /> Prev</Button>
-          <span className="font-semibold text-lg">
-            {habitViewMode === 'daily' ? format(viewDate, 'EEEE, MMM d, yyyy') : `Week ${getWeek(viewDate, { weekStartsOn: 1 })} of ${format(startOfWeek(viewDate, {weekStartsOn: 1}), 'MMM d, yyyy')}`}
+          <Button variant="outline" size="sm" onClick={() => setViewDate(prev => subDays(prev, habitViewMode === 'daily' ? 1: 7))} className="btn-animated">
+            <CalendarDays className="mr-1 h-4 w-4 transform rotate-180" /> Prev
+          </Button>
+          <span className="font-semibold text-lg text-center flex-grow">
+            {habitViewMode === 'daily' 
+             ? (isValid(viewDate) ? format(viewDate, 'EEEE, MMM d, yyyy') : "Invalid Date")
+             : `Week ${isValid(viewDate) ? getWeek(viewDate, { weekStartsOn: 1 }) : '-'} of ${isValid(startOfWeek(viewDate, {weekStartsOn: 1})) ? format(startOfWeek(viewDate, {weekStartsOn: 1}), 'MMM d, yyyy') : "Invalid Date"}`}
           </span>
-          <Button variant="outline" size="icon" onClick={() => setViewDate(prev => addDays(prev, habitViewMode === 'daily' ? 1: 7))}>Next <CalendarDays className="h-4 w-4 ml-1" /></Button>
+          <Button variant="outline" size="sm" onClick={() => setViewDate(prev => addDays(prev, habitViewMode === 'daily' ? 1: 7))} className="btn-animated">
+            Next <CalendarDays className="h-4 w-4 ml-1" />
+          </Button>
           <Select value={habitViewMode} onValueChange={(val: 'daily' | 'weekly-overview') => setHabitViewMode(val)}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] btn-animated">
                   <SelectValue placeholder="View Mode" />
               </SelectTrigger>
               <SelectContent>
@@ -239,17 +250,17 @@ export default function HabitTrackerTab() {
         )}
 
         {habitViewMode === 'daily' && dailyHabits.map(habit => (
-          <Card key={habit.id} className="mb-3" style={{ borderLeft: `4px solid ${habit.color || 'hsl(var(--primary))'}`}}>
+          <Card key={habit.id} className="mb-3 card-animated" style={{ borderLeft: `4px solid ${habit.color || 'hsl(var(--primary))'}`}}>
             <CardContent className="p-3">
                <div className="flex items-center justify-between">
                 <DailyHabitView habit={habit} />
                 <div className="space-x-1">
-                  <Button variant="ghost" size="icon" onClick={() => openEditor(habit)} className="h-7 w-7"><Edit3 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEditor(habit)} className="h-7 w-7 btn-animated"><Edit3 className="h-4 w-4" /></Button>
                   <AlertDialog>
-                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 btn-animated"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader><AlertDialogTitle>Delete Habit?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete "{habit.name}"? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                      <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteHabit(habit.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                      <AlertDialogFooter><AlertDialogCancel className="btn-animated">Cancel</AlertDialogCancel><AlertDialogAction className="btn-animated" onClick={() => deleteHabit(habit.id)}>Delete</AlertDialogAction></AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
@@ -261,17 +272,17 @@ export default function HabitTrackerTab() {
         {habitViewMode === 'weekly-overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {habitsList.map(habit => (
-              <Card key={habit.id} style={{ borderTop: `4px solid ${habit.color || 'hsl(var(--primary))'}`}}>
+              <Card key={habit.id} className="card-animated" style={{ borderTop: `4px solid ${habit.color || 'hsl(var(--primary))'}`}}>
                 <CardHeader className="pb-2 pt-3">
                    <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{habit.name} <span className="text-xs text-muted-foreground">({habit.frequency})</span></CardTitle>
                      <div className="space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEditor(habit)} className="h-7 w-7"><Edit3 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEditor(habit)} className="h-7 w-7 btn-animated"><Edit3 className="h-4 w-4" /></Button>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 btn-animated"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>Delete Habit?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete "{habit.name}"? This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteHabit(habit.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                          <AlertDialogFooter><AlertDialogCancel className="btn-animated">Cancel</AlertDialogCancel><AlertDialogAction className="btn-animated" onClick={() => deleteHabit(habit.id)}>Delete</AlertDialogAction></AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
@@ -290,8 +301,8 @@ export default function HabitTrackerTab() {
                                     <Checkbox
                                         checked={isDone}
                                         onCheckedChange={(checked) => logHabitCompletion(habit.id, day, !!checked)}
-                                        className="h-7 w-full rounded-sm data-[state=checked]:bg-green-500"
-                                        style={isDone ? {backgroundColor: habit.color} : {borderColor: habit.color}}
+                                        className="h-7 w-full rounded-sm data-[state=checked]:bg-green-500 btn-animated"
+                                        style={isDone ? {backgroundColor: habit.color, borderColor: habit.color} : {borderColor: habit.color}}
                                     />
                                   </TooltipTrigger>
                                   <ShadTooltipContent><p>{format(day, 'EEE, MMM d')} - {isDone ? "Completed" : "Pending"}</p></ShadTooltipContent>

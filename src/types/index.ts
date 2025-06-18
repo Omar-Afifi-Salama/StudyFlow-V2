@@ -27,10 +27,9 @@ export interface UserProfile {
   wakeUpTime: { hour: number; period: 'AM' | 'PM' };
   sleepTime: { hour: number; period: 'AM' | 'PM' };
   unlockedAchievementIds: string[];
-  // revisionConcepts: RevisionConcept[]; // This was part of NotepadData, keep it there
   lastLoginDate: string | null; // YYYY-MM-DD format for daily login bonus
   dailyLoginStreak: number; // For daily login bonus
-  notepadData?: NotepadData; // Keep notepad data nested here if that was the intention or separate if loaded differently
+  notepadData: NotepadData; // Changed to non-optional as it's initialized
 }
 
 export interface Skin {
@@ -123,6 +122,13 @@ export interface Habit {
   longestStreak: number;
 }
 
+export interface NotepadCountdownEvent {
+  id: string;
+  name: string;
+  targetDate: string; // ISO string format (YYYY-MM-DDTHH:mm:ss.sssZ)
+  createdAt: number; // Unix timestamp in milliseconds
+  tags?: string[];
+}
 
 export interface NotepadData {
   tasks: NotepadTask[];
@@ -130,7 +136,8 @@ export interface NotepadData {
   goals: NotepadGoal[];
   links: NotepadLink[];
   revisionConcepts: RevisionConcept[];
-  habits: Habit[]; // Added habits here
+  habits: Habit[];
+  countdownEvents: NotepadCountdownEvent[]; // Added new field
 }
 
 
@@ -175,5 +182,3 @@ export interface AmbientSound {
   filePath: string; 
   icon: React.ComponentType<{ className?: string }>;
 }
-
-    
