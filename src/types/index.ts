@@ -1,5 +1,4 @@
 
-
 export interface StudySession {
   id: string;
   type: 'Stopwatch' | 'Pomodoro Focus' | 'Pomodoro Break';
@@ -15,7 +14,7 @@ export type TimerMode = 'stopwatch' | 'pomodoro';
 
 export interface UserProfile {
   xp: number;
-  cash: number; 
+  cash: number;
   level: number;
   title: string;
   ownedSkinIds: string[];
@@ -29,7 +28,9 @@ export interface UserProfile {
   unlockedAchievementIds: string[];
   lastLoginDate: string | null; // YYYY-MM-DD format for daily login bonus
   dailyLoginStreak: number; // For daily login bonus
-  notepadData: NotepadData; // Changed to non-optional as it's initialized
+  notepadData: NotepadData;
+  skillPoints: number; // New: For skill tree
+  unlockedSkillIds: string[]; // New: IDs of unlocked skills
 }
 
 export interface Skin {
@@ -40,8 +41,8 @@ export interface Skin {
   levelRequirement: number;
   imageUrl: string;
   dataAiHint: string;
-  isTheme?: boolean; 
-  themeClass?: 'dark' | 'sepia'; 
+  isTheme?: boolean;
+  themeClass?: 'dark' | 'sepia';
 }
 
 export interface CapitalistOffer {
@@ -50,12 +51,12 @@ export interface CapitalistOffer {
   description: string;
   minInvestmentAmount: number;
   maxInvestmentAmount?: number;
-  minRoiPercent: number; 
-  maxRoiPercent: number; 
-  volatilityFactor: number; 
-  durationHours: number; 
-  expiresAt?: number; 
-  completionBonusCash?: number; 
+  minRoiPercent: number;
+  maxRoiPercent: number;
+  volatilityFactor: number;
+  durationHours: number;
+  expiresAt?: number;
+  completionBonusCash?: number;
 }
 
 export interface NotepadTask {
@@ -137,7 +138,7 @@ export interface NotepadData {
   links: NotepadLink[];
   revisionConcepts: RevisionConcept[];
   habits: Habit[];
-  countdownEvents: NotepadCountdownEvent[]; // Added new field
+  countdownEvents: NotepadCountdownEvent[];
 }
 
 
@@ -147,13 +148,13 @@ export interface DailyChallenge {
   description: string;
   xpReward: number;
   cashReward: number;
-  targetValue: number; 
+  targetValue: number;
   currentValue: number;
-  isCompleted: boolean; 
-  rewardClaimed: boolean; 
+  isCompleted: boolean;
+  rewardClaimed: boolean;
   type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions';
-  resetsDaily: boolean; 
-  lastProgressUpdate?: number; 
+  resetsDaily: boolean;
+  lastProgressUpdate?: number;
 }
 
 export interface AchievementCriteriaInvestmentPayload {
@@ -165,13 +166,13 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
-  iconName?: string; 
+  iconName?: string;
   cashReward: number;
   criteria: (
-    profile: UserProfile, 
-    sessions: StudySession[], 
+    profile: UserProfile,
+    sessions: StudySession[],
     challenges: DailyChallenge[],
-    investmentStats: AchievementCriteriaInvestmentPayload 
+    investmentStats: AchievementCriteriaInvestmentPayload
   ) => boolean;
   category?: 'General' | 'Study Time' | 'Pomodoro' | 'Progression' | 'Collection' | 'Streaks & Challenges' | 'Capitalist' | 'Notepad & Revision' | 'Habits';
 }
@@ -179,6 +180,40 @@ export interface Achievement {
 export interface AmbientSound {
   id: string;
   name: string;
-  filePath: string; 
+  filePath: string;
   icon: React.ComponentType<{ className?: string }>;
+}
+
+// New: Skill Tree related types
+export type FeatureKey = 
+  | 'stats' 
+  | 'ambiance' 
+  | 'notepad' 
+  | 'challenges' 
+  | 'shop' 
+  | 'capitalist' 
+  | 'countdown' 
+  | 'achievements' 
+  | 'about';
+
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  cost: number; // Skill points needed
+  iconName: string; // Lucide icon name
+  prerequisiteLevel?: number;
+  prerequisiteSkillIds?: string[];
+  unlocksFeature?: FeatureKey; // Key of the feature this skill unlocks
+  xpBoostPercent?: number; // e.g., 0.05 for +5%
+  cashBoostPercent?: number; // e.g., 0.05 for +5%
+  shopDiscountPercent?: number;
+  otherEffect?: string; // For unique effects like "Streak Shield"
+}
+
+export interface FloatingGain {
+  id: string;
+  type: 'xp' | 'cash';
+  amount: number;
+  timestamp: number;
 }

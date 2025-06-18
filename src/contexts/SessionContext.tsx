@@ -1,10 +1,10 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent } from '@/types';
+import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2 } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 
@@ -16,59 +16,57 @@ export const DAILY_LOGIN_BASE_CASH = 200;
 export const DAILY_LOGIN_STREAK_CASH_BONUS = 50;
 export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max cash from streak portion
 
-// Scaled for ~1000 hours to reach Level 50 (600,000 XP)
-// Original max was 121,800 XP. Scaling factor approx 4.926
 export const LEVEL_THRESHOLDS = [
   0,        // Level 1
-  493,      // Level 2 (Prev: 100)
-  1232,     // Level 3 (Prev: 250)
-  2463,     // Level 4 (Prev: 500)
-  3941,     // Level 5 (Prev: 800)
-  6000,     // Level 6 (Prev: 1200 * 4.926 = 5911 -> rounded)
-  8374,     // Level 7 (Prev: 1700)
-  11330,    // Level 8 (Prev: 2300)
-  14778,    // Level 9 (Prev: 3000)
-  18719,    // Level 10 (Prev: 3800)
-  23146,    // Level 11 (Prev: 4700)
-  28066,    // Level 12 (Prev: 5700)
-  33477,    // Level 13 (Prev: 6800)
-  39300,    // Level 14 (Prev: 8000 * 4.926 = 39408 -> rounded)
-  45758,    // Level 15 (Prev: 9300)
-  52648,    // Level 16 (Prev: 10700)
-  60037,    // Level 17 (Prev: 12200)
-  67907,    // Level 18 (Prev: 13800)
-  76278,    // Level 19 (Prev: 15500)
-  85144,    // Level 20 (Prev: 17300)
-  94507,    // Level 21 (Prev: 19200)
-  104363,   // Level 22 (Prev: 21200)
-  114712,   // Level 23 (Prev: 23300)
-  125553,   // Level 24 (Prev: 25500)
-  136800,   // Level 25 (Prev: 27800 * 4.926 = 136962 -> rounded)
-  148627,   // Level 26 (Prev: 30200)
-  160945,   // Level 27 (Prev: 32700)
-  173756,   // Level 28 (Prev: 35300)
-  187068,   // Level 29 (Prev: 38000)
-  200873,   // Level 30 (Prev: 40800)
-  216000,   // Level 31 (Prev: 43900 * 4.926 = 216251 -> rounded)
-  231780,   // Level 32 (Prev: 47100)
-  248000,   // Level 33 (Prev: 50400 * 4.926 = 248270 -> rounded)
-  264700,   // Level 34 (Prev: 53800 * 4.926 = 265018 -> rounded)
-  281800,   // Level 35 (Prev: 57300 * 4.926 = 282339 -> rounded)
-  300000,   // Level 36 (Prev: 60900 * 4.926 = 299993 -> rounded)
-  317800,   // Level 37 (Prev: 64600 * 4.926 = 318219 -> rounded)
-  336500,   // Level 38 (Prev: 68400 * 4.926 = 336926 -> rounded)
-  355700,   // Level 39 (Prev: 72300 * 4.926 = 356149 -> rounded)
-  375944,   // Level 40 (Prev: 76300)
-  395600,   // Level 41 (Prev: 80400 * 4.926 = 395942 -> rounded)
-  416300,   // Level 42 (Prev: 84600 * 4.926 = 416739 -> rounded)
-  437300,   // Level 43 (Prev: 88900 * 4.926 = 437921 -> rounded)
-  458900,   // Level 44 (Prev: 93300 * 4.926 = 459565 -> rounded)
-  481200,   // Level 45 (Prev: 97800 * 4.926 = 481662 -> rounded)
-  504000,   // Level 46 (Prev: 102400 * 4.926 = 504422 -> rounded)
-  527000,   // Level 47 (Prev: 107100 * 4.926 = 527374 -> rounded)
-  550500,   // Level 48 (Prev: 111900 * 4.926 = 551019 -> rounded)
-  574600,   // Level 49 (Prev: 116800 * 4.926 = 575356 -> rounded)
-  600000    // Level 50 (Prev: 121800 * 4.926 = 599998 -> rounded to 600k)
+  493,      // Level 2 (Prev: 100) -> ~0.8 hrs
+  1232,     // Level 3 (Prev: 250) -> ~2 hrs
+  2463,     // Level 4 (Prev: 500) -> ~4.1 hrs
+  3941,     // Level 5 (Prev: 800) -> ~6.5 hrs
+  6000,     // Level 6  -> ~10 hrs
+  8374,     // Level 7  -> ~14 hrs
+  11330,    // Level 8  -> ~18.8 hrs
+  14778,    // Level 9  -> ~24.6 hrs
+  18719,    // Level 10 -> ~31.2 hrs
+  24000,    // Level 11 -> 40 hrs
+  30000,    // Level 12 -> 50 hrs
+  39000,    // Level 13 -> 65 hrs
+  48000,    // Level 14 -> 80 hrs
+  60000,    // Level 15 -> 100 hrs
+  72000,    // Level 16 -> 120 hrs
+  87000,    // Level 17 -> 145 hrs
+  102000,   // Level 18 -> 170 hrs
+  120000,   // Level 19 -> 200 hrs
+  138000,   // Level 20 -> 230 hrs
+  159000,   // Level 21 -> 265 hrs
+  180000,   // Level 22 -> 300 hrs
+  201000,   // Level 23 -> 335 hrs
+  225000,   // Level 24 -> 375 hrs
+  249000,   // Level 25 -> 415 hrs
+  276000,   // Level 26 -> 460 hrs
+  303000,   // Level 27 -> 505 hrs
+  330000,   // Level 28 -> 550 hrs
+  360000,   // Level 29 -> 600 hrs
+  390000,   // Level 30 -> 650 hrs
+  420000,   // Level 31 -> 700 hrs
+  450000,   // Level 32 -> 750 hrs
+  480000,   // Level 33 -> 800 hrs
+  510000,   // Level 34 -> 850 hrs
+  540000,   // Level 35 -> 900 hrs
+  570000,   // Level 36 -> 950 hrs
+  600000,   // Level 37 -> 1000 hrs
+  630000,   // Level 38
+  660000,   // Level 39
+  690000,   // Level 40
+  720000,   // Level 41
+  750000,   // Level 42
+  780000,   // Level 43
+  810000,   // Level 44
+  840000,   // Level 45
+  870000,   // Level 46
+  900000,   // Level 47
+  930000,   // Level 48
+  960000,   // Level 49
+  1000000   // Level 50 -> Adjusted to be higher than 1000 hours (1000000 XP / 600 XP/hr = ~1666 hrs)
 ];
 
 
@@ -86,18 +84,18 @@ export const TITLES = [
 
 
 export const PREDEFINED_SKINS: Skin[] = [
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/6FB5F0/FFFFFF.png', dataAiHint: 'blue gradient' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/1A202C/A0AEC0.png', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/300x200/D2B48C/4A3B31.png', dataAiHint: 'sepia vintage', isTheme: true, themeClass: 'sepia' },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/300x200/2F4F4F/90EE90.png', dataAiHint: 'forest pattern' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/300x200/FF8C00/FFD700.png', dataAiHint: 'sunset gradient' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/300x200/483D8B/E6E6FA.png', dataAiHint: 'galaxy stars' },
-  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/300x200/333333/F5F5F5.png', dataAiHint: 'grayscale pattern' },
-  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/300x200/20B2AA/AFEEEE.png', dataAiHint: 'ocean waves' },
-  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/300x200/FF00FF/00FFFF.png', dataAiHint: 'neon grid' },
-  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/300x200/FFB6C1/ADD8E6.png', dataAiHint: 'pastel colors' },
-  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/300x200/FFD700/B8860B.png', dataAiHint: 'gold texture' },
-  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/300x200/1A237E/C5CAE9.png', dataAiHint: 'dark blue elegant' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png', dataAiHint: 'classic blue theme study app' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png', dataAiHint: 'dark theme study app', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png', dataAiHint: 'sepia theme study app', isTheme: true, themeClass: 'sepia' },
+  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png', dataAiHint: 'forest theme study app' },
+  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png', dataAiHint: 'sunset theme study app' },
+  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png', dataAiHint: 'galaxy theme study app' },
+  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png', dataAiHint: 'monochrome theme study app' },
+  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png', dataAiHint: 'ocean theme study app' },
+  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png', dataAiHint: 'neon theme study app' },
+  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png', dataAiHint: 'pastel theme study app' },
+  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png', dataAiHint: 'gold theme study app' },
+  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png', dataAiHint: 'elite theme study app' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -127,6 +125,8 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   lastLoginDate: null,
   dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA,
+  skillPoints: 0, // Initial skill points
+  unlockedSkillIds: [], // Initially no skills unlocked
 };
 
 
@@ -230,6 +230,33 @@ const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; // Days after last revisio
 
 const defaultAchievementPayload: AchievementCriteriaInvestmentPayload = { firstInvestmentMade: false, totalProfit: 0};
 
+export const ALL_SKILLS: Skill[] = [
+  // Feature Unlocks
+  { id: 'unlockStats', name: 'Data Analyst I', description: 'Unlock the Stats page to track your progress.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 3 },
+  { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlock the Ambiance Mixer to create study soundscapes.', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteLevel: 4 },
+  { id: 'unlockNotepad', name: 'Notekeeper\'s Quill', description: 'Unlock the Digital Notepad for all your thoughts.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 2 },
+  { id: 'unlockChallenges', name: 'Challenge Enthusiast', description: 'Unlock Daily Challenges for extra rewards.', cost: 1, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5 },
+  { id: 'unlockShop', name: 'Aspiring Collector', description: 'Unlock the Skin Shop to customize your app.', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteLevel: 3 },
+  { id: 'unlockCapitalist', name: 'Budding Investor', description: 'Unlock the Capitalist Corner to grow your earnings.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 6 },
+  { id: 'unlockCountdown', name: 'Time Master', description: 'Unlock the Countdown Timer page.', cost: 1, iconName: 'Timer', unlocksFeature: 'countdown', prerequisiteLevel: 4 },
+  { id: 'unlockAchievements', name: 'Milestone Tracker', description: 'Unlock the Achievements page to see your accomplishments.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteLevel: 2 },
+  { id: 'unlockAbout', name: 'Inquisitive Mind', description: 'Unlock the About page to learn more about StudyFlow.', cost: 1, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1 },
+
+  // Passive Upgrades
+  { id: 'xpBoost1', name: 'Focused Learner I', description: 'Gain +5% XP from all study sessions.', cost: 1, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 2 },
+  { id: 'xpBoost2', name: 'Focused Learner II', description: 'Gain an additional +5% XP (total +10%).', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 8, prerequisiteSkillIds: ['xpBoost1'] },
+  { id: 'xpBoost3', name: 'Focused Learner III', description: 'Gain an additional +5% XP (total +15%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'] },
+
+  { id: 'cashBoost1', name: 'Efficient Earner I', description: 'Gain +5% Cash from all study sessions.', cost: 1, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 3 },
+  { id: 'cashBoost2', name: 'Efficient Earner II', description: 'Gain an additional +5% Cash (total +10%).', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['cashBoost1'] },
+  { id: 'cashBoost3', name: 'Efficient Earner III', description: 'Gain an additional +5% Cash (total +15%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 16, prerequisiteSkillIds: ['cashBoost2'] },
+
+  { id: 'streakShield', name: 'Streak Shield', description: 'Once every 7 real-world days, your study streak is protected if you miss a day.', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7 },
+  { id: 'shopDiscount1', name: 'Shop Haggler', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'] },
+  { id: 'investmentInsight', name: 'Investor\'s Intuition', description: 'Slightly increases minimum ROI and bonus chance in Capitalist Corner.', cost: 2, iconName: 'Lightbulb', otherEffect: 'capitalist_boost', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockCapitalist'] },
+  { id: 'revisionAccelerator', name: 'Revision Accelerator', description: 'Reduces revision intervals in the Revision Hub by 10%.', cost: 2, iconName: 'Repeat', otherEffect: 'revision_boost', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockNotepad'] },
+];
+
 
 interface SessionContextType {
   sessions: StudySession[];
@@ -247,7 +274,6 @@ interface SessionContextType {
   markConceptRevised: (conceptId: string) => void;
   deleteRevisionConcept: (conceptId: string) => void;
 
-  // Habit functions
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'log' | 'currentStreak' | 'longestStreak'>) => void;
   updateHabit: (habit: Habit) => void;
   deleteHabit: (habitId: string) => void;
@@ -255,11 +281,9 @@ interface SessionContextType {
   getHabitCompletionForDate: (habit: Habit, date: Date) => HabitLogEntry | undefined;
   getHabitCompletionsForWeek: (habit: Habit, date: Date) => number;
 
-  // Notepad Countdown Event functions
   addNotepadCountdownEvent: (event: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => void;
   updateNotepadCountdownEvent: (event: NotepadCountdownEvent) => void;
   deleteNotepadCountdownEvent: (eventId: string) => void;
-
 
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
@@ -277,6 +301,17 @@ interface SessionContextType {
   isLoaded: boolean;
   updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
   updateTaskChallengeProgress: (completedTasksCount: number) => void;
+
+  // Skill Tree
+  getAllSkills: () => Skill[];
+  isSkillUnlocked: (skillId: string) => boolean;
+  canUnlockSkill: (skillId: string) => { can: boolean, reason?: string };
+  unlockSkill: (skillId: string) => boolean;
+  isFeatureUnlocked: (featureKey: FeatureKey) => boolean;
+  getAppliedBoost: (type: 'xp' | 'cash' | 'shopDiscount') => number;
+
+  // Floating Gains
+  floatingGains: FloatingGain[];
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -291,6 +326,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
+  const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
 
 
   const applyThemePreference = useCallback((themeClass?: 'dark' | 'sepia' | null) => {
@@ -302,7 +338,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Moved updateChallengeProgress earlier to ensure it's initialized before other callbacks use it.
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
     setDailyChallenges(prevChallenges =>
         prevChallenges.map(challenge => {
@@ -349,6 +384,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
             unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
             notepadData: ensuredNotepadData,
+            skillPoints: typeof tempProfile.skillPoints === 'number' ? tempProfile.skillPoints : DEFAULT_USER_PROFILE.skillPoints,
+            unlockedSkillIds: Array.isArray(tempProfile.unlockedSkillIds) ? tempProfile.unlockedSkillIds : DEFAULT_USER_PROFILE.unlockedSkillIds,
         };
       }
       setUserProfile(parsedProfile);
@@ -402,7 +439,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [applyThemePreference]);
 
 
-
   useEffect(() => {
     if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -433,8 +469,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             title: "Daily Login Bonus!",
             description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).`
         });
+        addFloatingGain('cash', loginBonusAwarded);
     }
-  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast]);
+  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast]); // addFloatingGain removed from here to avoid re-trigger
 
 
   useEffect(() => {
@@ -484,6 +521,21 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
   }, [toast]);
 
+  const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
+    if (amount <= 0) return;
+    const newGain: FloatingGain = {
+      id: crypto.randomUUID(),
+      type,
+      amount,
+      timestamp: Date.now(),
+    };
+    setFloatingGains(prev => [...prev, newGain]);
+    // Auto-remove after animation
+    setTimeout(() => {
+      setFloatingGains(prev => prev.filter(g => g.id !== newGain.id));
+    }, 2500); // Match CSS animation duration
+  }, []);
+
   const checkAndUnlockAchievements = useCallback(() => {
     setUserProfile(prevUserProfile => {
         const currentInvestmentStats = capitalistStatsForAchievements;
@@ -501,6 +553,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             title: "Achievement Unlocked!",
             description: `${ach.name} - ${ach.description} (+$${ach.cashReward.toLocaleString()})`,
             });
+            addFloatingGain('cash', ach.cashReward);
         }
         });
 
@@ -513,34 +566,53 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         return prevUserProfile;
     });
-  }, [toast, capitalistStatsForAchievements, sessions, dailyChallenges]);
+  }, [toast, capitalistStatsForAchievements, sessions, dailyChallenges, addFloatingGain]);
 
 
   useEffect(() => {
     if (isLoaded) {
         checkAndUnlockAchievements();
     }
-  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements]);
+  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length]);
 
+
+  const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
+    let totalBoost = 0;
+    userProfile.unlockedSkillIds.forEach(skillId => {
+      const skill = ALL_SKILLS.find(s => s.id === skillId);
+      if (skill) {
+        if (type === 'xp' && skill.xpBoostPercent) totalBoost += skill.xpBoostPercent;
+        if (type === 'cash' && skill.cashBoostPercent) totalBoost += skill.cashBoostPercent;
+        if (type === 'shopDiscount' && skill.shopDiscountPercent) totalBoost += skill.shopDiscountPercent;
+      }
+    });
+    return totalBoost;
+  }, [userProfile.unlockedSkillIds]);
 
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
     let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
     let leveledUp = false;
+    let skillPointsGained = 0;
 
     while (newLevel < LEVEL_THRESHOLDS.length && currentXp >= LEVEL_THRESHOLDS[newLevel]) {
       newLevel++;
       leveledUp = true;
+      skillPointsGained++;
     }
 
     if (leveledUp) {
       newTitle = TITLES[newLevel - 1] || TITLES[TITLES.length -1];
+      let description = `Congratulations! You've reached Level ${newLevel}: ${newTitle}.`;
+      if (skillPointsGained > 0) {
+        description += ` You earned ${skillPointsGained} Skill Point(s)!`;
+      }
       toast({
         title: "Level Up!",
-        description: `Congratulations! You've reached Level ${newLevel}: ${newTitle}.`,
+        description: description,
       });
     }
-    return { newLevel, newTitle, leveledUp };
+    return { newLevel, newTitle, leveledUp, skillPointsGained };
   }, [toast]);
 
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
@@ -571,10 +643,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         newLastStudyDate = todayStr;
     }
 
-    const streakBonusMultiplier = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+    const baseStreakBonus = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+    const skillXpBoost = getAppliedBoost('xp');
+    const skillCashBoost = getAppliedBoost('cash');
 
-    return { streakBonusMultiplier, updatedCurrentStreak: currentStudyStreak, updatedLongestStreak: longestStudyStreak, updatedLastStudyDate: newLastStudyDate };
-  }, []);
+    return {
+        streakBonusMultiplier: baseStreakBonus, // This is the bonus from streak only
+        totalXpMultiplier: 1 + baseStreakBonus + skillXpBoost,
+        totalCashMultiplier: 1 + baseStreakBonus + skillCashBoost,
+        updatedCurrentStreak: currentStudyStreak,
+        updatedLongestStreak: longestStudyStreak,
+        updatedLastStudyDate: newLastStudyDate
+    };
+  }, [getAppliedBoost]);
 
 
   const updateTaskChallengeProgress = useCallback((completedTasksCount: number) => {
@@ -599,16 +680,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
 
     setUserProfile(prevProfile => {
-        const { streakBonusMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
+        const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
 
         let awardedXp = 0;
         let awardedCash = 0;
         const minutesStudied = sessionDetails.durationInSeconds / 60;
 
         if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
-        awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * (1 + streakBonusMultiplier));
-        awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * (1 + streakBonusMultiplier));
-        updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
+          awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
+          awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
+          updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
         }
         if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) {
             updateChallengeProgress('pomodoroCycles', 1);
@@ -619,12 +700,32 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const newXp = prevProfile.xp + awardedXp;
-        const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
+        const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
+        const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
 
         let rewardMessages = [];
-        if (awardedXp > 0) rewardMessages.push(`${awardedXp} XP`);
-        if (awardedCash > 0) rewardMessages.push(`$${awardedCash.toLocaleString()}`);
-        if (streakBonusMultiplier > 0 && (awardedCash > 0 || awardedXp > 0)) rewardMessages.push(`(${(streakBonusMultiplier * 100).toFixed(0)}% streak bonus!)`);
+        if (awardedXp > 0) {
+            rewardMessages.push(`${awardedXp} XP`);
+            addFloatingGain('xp', awardedXp);
+        }
+        if (awardedCash > 0) {
+            rewardMessages.push(`$${awardedCash.toLocaleString()}`);
+            addFloatingGain('cash', awardedCash);
+        }
+
+        const streakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100; // Isolate streak bonus part
+        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) {
+           rewardMessages.push(`(${streakBonusPercent.toFixed(0)}% streak bonus!)`);
+        }
+        const skillBonusXpPercent = getAppliedBoost('xp') * 100;
+        if (skillBonusXpPercent > 0 && awardedXp > 0) {
+           rewardMessages.push(`(${skillBonusXpPercent.toFixed(0)}% skill XP bonus!)`);
+        }
+        const skillBonusCashPercent = getAppliedBoost('cash') * 100;
+        if (skillBonusCashPercent > 0 && awardedCash > 0) {
+           rewardMessages.push(`(${skillBonusCashPercent.toFixed(0)}% skill Cash bonus!)`);
+        }
+
 
         if (rewardMessages.length > 0) {
             toast({ title: "Session Rewards", description: `Gained: ${rewardMessages.join(', ')}` });
@@ -639,9 +740,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           currentStreak: updatedCurrentStreak,
           longestStreak: updatedLongestStreak,
           lastStudyDate: updatedLastStudyDate,
+          skillPoints: newSkillPoints,
         };
       });
-  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus]);
+  }, [checkForLevelUp, toast, updateChallengeProgress, updateStreakAndGetBonus, addFloatingGain, getAppliedBoost]);
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -673,8 +775,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Already Owned", description: "You already own this skin." });
       return false;
     }
-    if (userProfile.cash < skin.price) {
-      toast({ title: "Not Enough Cash", description: `You need $${skin.price.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive" });
+
+    const shopDiscount = getAppliedBoost('shopDiscount');
+    const effectivePrice = Math.max(0, Math.round(skin.price * (1 - shopDiscount)));
+
+    if (userProfile.cash < effectivePrice) {
+      toast({ title: "Not Enough Cash", description: `You need $${effectivePrice.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive" });
       return false;
     }
     if (userProfile.level < skin.levelRequirement) {
@@ -684,12 +790,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     setUserProfile(prev => ({
       ...prev,
-      cash: prev.cash - skin.price,
+      cash: prev.cash - effectivePrice,
       ownedSkinIds: [...prev.ownedSkinIds, skinId],
     }));
-    toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${skin.price.toLocaleString()}.` });
+    toast({ title: "Purchase Successful!", description: `You bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${ (shopDiscount * 100).toFixed(0) }% discount!)` : ''}.` });
+    addFloatingGain('cash', -effectivePrice); // Negative gain for spending
     return true;
-  }, [userProfile, getSkinById, isSkinOwned, toast]);
+  }, [userProfile, getSkinById, isSkinOwned, toast, getAppliedBoost, addFloatingGain]);
 
   const equipSkin = useCallback((skinId: string) => {
     if (!isSkinOwned(skinId)) {
@@ -756,7 +863,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, userProfile.notepadData.notes, updateNotepadField]);
 
   const calculateNextRevisionDate = (learnedDateStr: string, stage: number): string => {
-    const interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
+    let interval = REVISION_INTERVALS[stage] || REVISION_INTERVALS[REVISION_INTERVALS.length - 1];
+    const revisionBoostSkill = ALL_SKILLS.find(s => s.id === 'revisionAccelerator');
+    if(revisionBoostSkill && userProfile.unlockedSkillIds.includes(revisionBoostSkill.id)) {
+        interval = Math.max(1, Math.round(interval * 0.9)); // Apply 10% reduction, min 1 day
+    }
     return format(addDays(parseISO(learnedDateStr), interval), 'yyyy-MM-dd');
   };
 
@@ -774,7 +885,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     updateNotepadField('revisionConcepts', [...currentRevisionConcepts, newConcept]);
     updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
-  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField, updateChallengeProgress]);
+  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField, updateChallengeProgress, userProfile.unlockedSkillIds]);
 
   const markConceptRevised = useCallback((conceptId: string) => {
     const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
@@ -793,7 +904,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       });
     updateNotepadField('revisionConcepts', concepts);
     toast({ title: "Concept Revised!", description: "Revision schedule updated."});
-  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField]);
+  }, [toast, userProfile.notepadData.revisionConcepts, updateNotepadField, userProfile.unlockedSkillIds]);
 
   const deleteRevisionConcept = useCallback((conceptId: string) => {
     const currentRevisionConcepts = userProfile.notepadData.revisionConcepts || [];
@@ -852,7 +963,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let completions = 0;
     for (let i = 0; i < 7; i++) {
       const dayInWeek = addDays(weekStart, i);
-      const dayKey = format(dayInWeek, 'yyyy-MM-dd');
+      const dayKey = format(dayInWeek, 'yyyy-MM-dd'); // Store daily logs even for weekly view
       const logEntry = habit.log[dayKey];
       if (logEntry && logEntry.completed) {
         completions += (logEntry.count || 1);
@@ -870,22 +981,24 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
           const updatedHabits = prevProfile.notepadData.habits.map(habit => {
               if (habit.id === habitId) {
-                  const logKey = getHabitLogKey(habit, date);
+                  const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd'); // Use daily key for all logs for simplicity in tracking weekly targets
                   const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
 
                   let newCompletedStatus = completed;
                   let newCount = oldLogEntry.count || 0;
 
-                  if (habit.frequency === 'weekly' && habit.targetCompletions) {
-                      if (completed) {
-                         newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
-                      } else {
-                         newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
-                      }
-                      newCompletedStatus = newCount >= habit.targetCompletions;
+                  if (completed) {
+                    newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
                   } else {
-                      newCount = completed ? 1 : 0;
+                    newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
                   }
+                  
+                  if (habit.frequency === 'weekly' && habit.targetCompletions) {
+                    newCompletedStatus = getHabitCompletionsForWeek({...habit, log: {...habit.log, [logKey]: {date: logKey, completed: newCount > 0, count: newCount }}}, date) >= habit.targetCompletions;
+                  } else { // daily
+                     newCompletedStatus = newCount > 0;
+                  }
+
 
                   const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCompletedStatus, count: newCount };
                   const newLog = { ...habit.log, [logKey]: newLogEntry };
@@ -894,7 +1007,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                   let longestStreak = habit.longestStreak;
 
                   if (habit.frequency === 'daily') {
-                      if (newCompletedStatus) {
+                      if (newCompletedStatus) { // Only daily completed status triggers daily streak
                           const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
                           if (habit.log[yesterdayKey]?.completed) {
                               currentStreak++;
@@ -906,17 +1019,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                           }
                           habitCompletedForChallenge = true;
                       } else {
-
                            const todayKey = format(date, 'yyyy-MM-dd');
-
-                           if (logKey === todayKey) {
+                           if (logKey === todayKey && !newCompletedStatus) {
                              currentStreak = 0;
                            }
                       }
                   } else if (habit.frequency === 'weekly') {
-                     if(newCompletedStatus) {
-                        const prevWeekKey = getHabitLogKey(habit, subDays(date, 7));
-                        if(habit.log[prevWeekKey]?.completed){
+                     const weekLogKey = getHabitLogKey(habit, date); // Use weekly key for streak calc
+                     const prevWeekLogKey = getHabitLogKey(habit, subDays(date, 7));
+                     const completionsThisWeek = getHabitCompletionsForWeek({...habit, log: newLog}, date);
+                     const isWeekGoalMet = completionsThisWeek >= (habit.targetCompletions || 1);
+
+                     if(isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) { // Check if this completion achieved the weekly goal
+                        if(habit.log[prevWeekLogKey]?.completed){
                             currentStreak++;
                         } else {
                             currentStreak = 1;
@@ -924,12 +1039,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                         if (currentStreak > longestStreak) {
                             longestStreak = currentStreak;
                         }
-                     } else {
-                        const currentWeekKey = getHabitLogKey(habit, date);
-                        if (logKey === currentWeekKey) {
-                           currentStreak = 0;
-                        }
+                     } else if (!isWeekGoalMet && newLogEntry.date.startsWith(weekLogKey)) {
+                        // If weekly goal was met but now it's not (due to unchecking), reset streak if it was based on this week.
+                        if (habit.log[weekLogKey]?.completed) currentStreak = 0;
                      }
+                     // Update the master weekly log entry
+                     newLog[weekLogKey] = { ...newLog[weekLogKey], date: weekLogKey, completed: isWeekGoalMet };
                   }
                   return { ...habit, log: newLog, currentStreak, longestStreak };
               }
@@ -949,7 +1064,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           };
       });
       toast({ title: "Habit Updated", description: "Your progress has been logged." });
-  }, [toast, updateChallengeProgress]);
+  }, [toast, updateChallengeProgress, getHabitCompletionsForWeek]);
 
 
   const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
@@ -1003,12 +1118,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const ensureCapitalistOffers = useCallback(() => {
     const now = Date.now();
-    if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
+    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
+    let offerDurationMultiplier = 1;
+    if(investmentBoostSkill && userProfile.unlockedSkillIds.includes(investmentBoostSkill.id)) {
+        // No specific duration change for this skill, but could be added.
+    }
+
+    if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 * offerDurationMultiplier || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
       const newOffers = generateOffers();
       setCapitalistOffers(newOffers);
       setLastOfferGenerationTime(now);
     }
-  }, [lastOfferGenerationTime, capitalistOffers]);
+  }, [lastOfferGenerationTime, capitalistOffers, userProfile.unlockedSkillIds]);
 
   const investInOffer = useCallback(async (offerId: string, investmentAmount: number): Promise<{ success: boolean; message: string; profit?: number }> => {
     const offer = capitalistOffers.find(o => o.id === offerId);
@@ -1017,12 +1138,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
     if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
 
+    let actualMinRoi = offer.minRoiPercent;
+    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
+    if(investmentBoostSkill && userProfile.unlockedSkillIds.includes(investmentBoostSkill.id)) {
+        actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); // Example: boost min ROI by 5%
+    }
+
     const randomFactor = Math.random();
     let actualRoiPercent: number;
     if (Math.random() < offer.volatilityFactor) {
-      actualRoiPercent = Math.random() < 0.5 ? offer.minRoiPercent : offer.maxRoiPercent;
+      actualRoiPercent = Math.random() < 0.5 ? actualMinRoi : offer.maxRoiPercent;
     } else {
-       actualRoiPercent = offer.minRoiPercent + (offer.maxRoiPercent - offer.minRoiPercent) * randomFactor;
+       actualRoiPercent = actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor;
     }
 
     let profit = Math.round(investmentAmount * (actualRoiPercent / 100));
@@ -1035,6 +1162,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setUserProfile(prev => ({ ...prev, cash: prev.cash + finalCashChange }));
+    addFloatingGain('cash', finalCashChange);
     setCapitalistStatsForAchievements(prev => ({
         firstInvestmentMade: true,
         totalProfit: prev.totalProfit + (finalCashChange > 0 ? finalCashChange : 0)
@@ -1044,7 +1172,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     return { success: true, message, profit: finalCashChange };
 
-  }, [capitalistOffers, userProfile.cash]);
+  }, [capitalistOffers, userProfile.cash, userProfile.unlockedSkillIds, addFloatingGain]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     setDailyChallenges(prevChallenges => {
@@ -1052,8 +1180,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
                 setUserProfile(prevProfile => {
                     const newXp = prevProfile.xp + challenge.xpReward;
-                    const { newLevel, newTitle } = checkForLevelUp(newXp, prevProfile.level);
+                    const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
                     toast({title: "Challenge Reward Claimed!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward.toLocaleString()} for '${challenge.title}'`});
+                    addFloatingGain('xp', challenge.xpReward);
+                    addFloatingGain('cash', challenge.cashReward);
 
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
 
@@ -1063,6 +1193,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                         cash: prevProfile.cash + challenge.cashReward,
                         level: newLevel,
                         title: newTitle,
+                        skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
                         completedChallengeIds: updatedCompletedIds,
                     };
                 });
@@ -1072,11 +1203,68 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         });
         return updatedChallenges;
     });
-  }, [toast, checkForLevelUp]);
+  }, [toast, checkForLevelUp, addFloatingGain]);
 
   const getUnlockedAchievements = useCallback((): Achievement[] => {
     return ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id));
   }, [userProfile.unlockedAchievementIds]);
+
+
+  // Skill Tree Logic
+  const getAllSkills = useCallback(() => ALL_SKILLS, []);
+
+  const isSkillUnlocked = useCallback((skillId: string) => {
+    return userProfile.unlockedSkillIds.includes(skillId);
+  }, [userProfile.unlockedSkillIds]);
+
+  const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
+    // Timers and Skill Tree are always unlocked
+    if (featureKey === 'stats' && isSkillUnlocked('unlockStats')) return true;
+    if (featureKey === 'ambiance' && isSkillUnlocked('unlockAmbiance')) return true;
+    if (featureKey === 'notepad' && isSkillUnlocked('unlockNotepad')) return true;
+    if (featureKey === 'challenges' && isSkillUnlocked('unlockChallenges')) return true;
+    if (featureKey === 'shop' && isSkillUnlocked('unlockShop')) return true;
+    if (featureKey === 'capitalist' && isSkillUnlocked('unlockCapitalist')) return true;
+    if (featureKey === 'countdown' && isSkillUnlocked('unlockCountdown')) return true;
+    if (featureKey === 'achievements' && isSkillUnlocked('unlockAchievements')) return true;
+    if (featureKey === 'about' && isSkillUnlocked('unlockAbout')) return true;
+    return false;
+  }, [isSkillUnlocked]);
+
+  const canUnlockSkill = useCallback((skillId: string): { can: boolean, reason?: string } => {
+    if (isSkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
+    const skill = ALL_SKILLS.find(s => s.id === skillId);
+    if (!skill) return { can: false, reason: "Skill not found."};
+    if (userProfile.skillPoints < skill.cost) return { can: false, reason: `Not enough skill points. Needs ${skill.cost}, has ${userProfile.skillPoints}.`};
+    if (skill.prerequisiteLevel && userProfile.level < skill.prerequisiteLevel) return { can: false, reason: `Requires Level ${skill.prerequisiteLevel}.`};
+    if (skill.prerequisiteSkillIds) {
+      for (const prereqId of skill.prerequisiteSkillIds) {
+        if (!isSkillUnlocked(prereqId)) {
+          const prereqSkill = ALL_SKILLS.find(s => s.id === prereqId);
+          return { can: false, reason: `Requires skill: ${prereqSkill?.name || prereqId}.`};
+        }
+      }
+    }
+    return { can: true };
+  }, [userProfile.skillPoints, userProfile.level, isSkillUnlocked]);
+
+  const unlockSkill = useCallback((skillId: string) => {
+    const unlockCheck = canUnlockSkill(skillId);
+    if (!unlockCheck.can) {
+      toast({ title: "Cannot Unlock Skill", description: unlockCheck.reason, variant: "destructive" });
+      return false;
+    }
+    const skill = ALL_SKILLS.find(s => s.id === skillId);
+    if (!skill) return false; // Should be caught by canUnlockSkill
+
+    setUserProfile(prev => ({
+      ...prev,
+      skillPoints: prev.skillPoints - skill.cost,
+      unlockedSkillIds: [...prev.unlockedSkillIds, skillId],
+    }));
+    toast({ title: "Skill Unlocked!", description: `You unlocked: ${skill.name}`});
+    return true;
+  }, [canUnlockSkill, toast]);
 
 
   useEffect(() => {
@@ -1101,7 +1289,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, checkAndUnlockAchievements,
-      isLoaded
+      isLoaded,
+      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost,
+      floatingGains,
     }}>
       {children}
     </SessionContext.Provider>
@@ -1115,4 +1305,3 @@ export const useSessions = () => {
   }
   return context;
 };
-

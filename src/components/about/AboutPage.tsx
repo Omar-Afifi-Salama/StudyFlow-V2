@@ -6,7 +6,7 @@ import { Info, Zap, Users, Star, Award } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
-export default function AboutPage() {
+export default function AboutPageContent() { // Renamed to AboutPageContent
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
@@ -40,6 +40,7 @@ export default function AboutPage() {
             <li><strong>Flexible Timers:</strong> Pomodoro, Stopwatch, and a simple Countdown timer.</li>
             <li><strong>Session Logging & Stats:</strong> Track your efforts and visualize your habits with a detailed dashboard and heatmap.</li>
             <li><strong>XP & Leveling System:</strong> Earn experience points and cash for studying, level up, and unlock titles.</li>
+            <li><strong>Skill Tree:</strong> Unlock app features and passive bonuses using Skill Points earned from leveling up.</li>
             <li><strong>Ambiance Mixer:</strong> Create your perfect study soundscape with various ambient sounds.</li>
             <li><strong>Skin Shop:</strong> Personalize your app with cosmetic skins, including Dark and Sepia themes.</li>
             <li><strong>Capitalist Corner:</strong> A fun minigame to invest your earnings.</li>
@@ -50,13 +51,13 @@ export default function AboutPage() {
             <li><strong>Hotkeys:</strong> Navigate and control timers efficiently with keyboard shortcuts.</li>
           </ul>
         </section>
-        
+
         <section className="text-center">
-            <Image 
-                src="https://placehold.co/600x300/6FB5F0/FFFFFF.png" 
-                alt="Focused student at a desk" 
-                width={600} 
-                height={300} 
+            <Image
+                src="https://placehold.co/600x300/6FB5F0/FFFFFF.png"
+                alt="Focused student at a desk"
+                width={600}
+                height={300}
                 className="rounded-lg shadow-md mx-auto"
                 data-ai-hint="study desk illustration"
             />
@@ -107,12 +108,12 @@ export default function AboutPage() {
             <span>Next.js, React, Tailwind CSS, ShadCN UI</span>
           </div>
         </section>
-        
+
         <section className="text-sm text-muted-foreground text-center pt-4">
           {currentYear ? (
             <p>&copy; {currentYear} StudyFlow App. Happy Studying!</p>
           ) : (
-            <p>&copy; StudyFlow App. Happy Studying!</p> 
+            <p>&copy; StudyFlow App. Happy Studying!</p>
           )}
         </section>
       </CardContent>

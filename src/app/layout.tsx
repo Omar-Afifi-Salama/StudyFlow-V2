@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from '@/contexts/SessionContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Footer from '@/components/layout/Footer';
+import FloatingGainIndicator from '@/components/FloatingGainIndicator'; // New import
 
 export const metadata: Metadata = {
   title: 'StudyFlow',
@@ -34,8 +35,9 @@ export default function RootLayout({
           <AppLayout>
             {children}
           </AppLayout>
-          <Footer /> 
+          <Footer />
           <Toaster />
+          <FloatingGainIndicator /> {/* Added FloatingGainIndicator */}
         </SessionProvider>
       </body>
     </html>

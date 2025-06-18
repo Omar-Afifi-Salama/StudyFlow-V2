@@ -2,11 +2,12 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical, Network, Settings, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS } from '@/contexts/SessionContext';
+import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS, ALL_SKILLS } from '@/contexts/SessionContext';
+import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -20,34 +21,46 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   hotkey: string;
+  featureKey?: FeatureKey; // For conditional rendering based on skill tree
+  alwaysVisible?: boolean; // e.g., for Timers and Skill Tree
 }
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, equipSkin } = useSessions();
+  const { userProfile, equipSkin, isFeatureUnlocked } = useSessions();
 
-  const mainNavItems: NavItem[] = [
-    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't' },
-    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's' },
-    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm' },
-    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n' },
-    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h' },
+  const allPossibleNavItems: NavItem[] = [
+    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', alwaysVisible: true },
+    { href: '/skill-tree', label: 'Skill Tree', icon: <Network className="h-5 w-5" />, hotkey: 'k', alwaysVisible: true },
+    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's', featureKey: 'stats' },
+    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm', featureKey: 'ambiance' },
+    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n', featureKey: 'notepad' },
+    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h', featureKey: 'challenges' },
+    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
+    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
+    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
+    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
+    { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a', featureKey: 'about' },
   ];
 
-  const dropdownNavItems: NavItem[] = [
-    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x' },
-    { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c' },
-    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd' },
-    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v' },
-    { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a' },
-  ];
+  const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey)) );
 
-  const allNavItems = [...mainNavItems, ...dropdownNavItems];
+  const mainNavItems: NavItem[] = visibleNavItems.filter(item => ['/', '/skill-tree'].includes(item.href) || (item.alwaysVisible && !['/', '/skill-tree'].includes(item.href) ));
+  const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainNavItems.includes(item));
 
-  allNavItems.forEach(item => {
+
+  allPossibleNavItems.forEach(item => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useHotkeys(item.hotkey, (e) => { e.preventDefault(); router.push(item.href);}, { preventDefault: true });
+    useHotkeys(item.hotkey, (e) => {
+      e.preventDefault();
+      if (item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey))) {
+        router.push(item.href);
+      } else {
+        // Optionally, provide feedback that the feature is locked
+        // For now, just don't navigate
+      }
+    }, { preventDefault: true }, [isFeatureUnlocked, router]);
   });
 
 
@@ -116,73 +129,55 @@ export default function Header() {
                 </Tooltip>
               </TooltipProvider>
             ))}
-            <DropdownMenu>
-              <TooltipProvider delayDuration={300}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
-                      >
-                        <MoreVertical className="h-5 w-5 md:mr-2" />
-                        <span className="hidden md:inline-block">More</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent><p>More Options</p></TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <DropdownMenuContent align="end">
-                {dropdownNavItems.map((item) => (
-                  <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
-                    <Link href={item.href} className="flex items-center w-full">
-                      {item.icon}
-                      <span className="ml-2">{item.label}</span>
-                      {(() => {
-                          const hotkeyVal = item?.hotkey;
-                          if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                            return (
-                              <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
-                                {hotkeyVal.toUpperCase()}
-                              </span>
-                            );
-                          }
-                          return null;
-                        })()}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {dropdownNavItems.length > 0 && (
+              <DropdownMenu>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
+                        >
+                          <MoreVertical className="h-5 w-5 md:mr-2" />
+                          <span className="hidden md:inline-block">More</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent><p>More Options</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <DropdownMenuContent align="end">
+                  {dropdownNavItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
+                      <Link href={item.href} className="flex items-center w-full">
+                        {item.icon}
+                        <span className="ml-2">{item.label}</span>
+                        {(() => {
+                            const hotkeyVal = item?.hotkey;
+                            if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
+                              return (
+                                <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
+                                  {hotkeyVal.toUpperCase()}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </nav>
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-3 ml-auto pl-1">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="btn-animated">
-                {userProfile.equippedSkinId === 'dark_mode' ? <Moon className="h-5 w-5"/> : userProfile.equippedSkinId === 'sepia_tone' ? <Palette className="h-5 w-5" /> : <Sun className="h-5 w-5"/>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2">
-              <div className="text-sm font-medium mb-2 px-2">Themes</div>
-              {PREDEFINED_SKINS.filter(s => s.isTheme || s.id === 'classic').map(skin => (
-                 <Button
-                    key={skin.id}
-                    variant={userProfile.equippedSkinId === skin.id ? "secondary" : "ghost"}
-                    size="sm"
-                    className="w-full justify-start mb-1 btn-animated"
-                    onClick={() => handleThemeChange(skin.id)}
-                  >
-                   {skin.id === 'dark_mode' ? <Moon className="mr-2 h-4 w-4"/> : skin.id === 'sepia_tone' ? <Palette className="mr-2 h-4 w-4"/> : <Sun className="mr-2 h-4 w-4"/>}
-                   {skin.name}
-                 </Button>
-              ))}
-            </PopoverContent>
-          </Popover>
-
-
+          <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md">
+            <Star className="h-4 w-4 text-yellow-400" />
+            <span>{userProfile.skillPoints || 0}</span>
+          </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -191,17 +186,28 @@ export default function Header() {
                   <span>Lvl {userProfile.level}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
-                <p className="font-semibold">{userTitle}</p>
-                <div className="w-48 mt-1">
-                  <Progress value={xpProgressPercent} className="h-2" />
-                  <p className="text-xs text-muted-foreground text-center mt-0.5">
-                    {xpIntoCurrentLevel.toLocaleString()} / {typeof xpForNextLevelDisplay === 'number' ? xpForNextLevelDisplay.toLocaleString() : xpForNextLevelDisplay} XP
-                  </p>
-                   <p className="text-xs text-muted-foreground text-center mt-0.5">
-                    Total: {userProfile.xp.toLocaleString()} XP
-                  </p>
-                </div>
+              <TooltipContent className="p-0"> {/* Remove default padding for ScrollArea to manage it */}
+                <ScrollArea className="h-[250px] w-72 p-2 bg-popover">
+                    <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
+                    {TITLES.map((title, index) => {
+                        const levelReq = index + 1;
+                        const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
+                        let totalHoursForLevel = '0.0';
+                        if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) {
+                            totalHoursForLevel = (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1);
+                        }
+
+                        return (
+                            <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground'}`}>
+                                <p>{title}</p>
+                                <p className="text-muted-foreground text-[0.7rem]">
+                                  Requires: Level {levelReq}
+                                  (Approx. {xpReq.toLocaleString()} XP / {totalHoursForLevel} hrs total focus)
+                                </p>
+                            </div>
+                        );
+                    })}
+                </ScrollArea>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -241,12 +247,15 @@ export default function Header() {
                         {TITLES.map((title, index) => {
                             const levelReq = index + 1;
                             const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
-                            const totalHoursForLevel = XP_PER_MINUTE_FOCUS > 0 && xpReq > 0 ? (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1) : '0.0';
+                            let totalHoursForLevel = '0.0';
+                            if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) {
+                                totalHoursForLevel = (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1);
+                            }
                             return (
-                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'bg-muted/50 text-foreground'}`}>
+                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground'}`}>
                                     <p>{title}</p>
                                     <p className="text-muted-foreground text-[0.7rem]">
-                                      Requires: Level {levelReq} 
+                                      Requires: Level {levelReq}
                                       (Approx. {xpReq.toLocaleString()} XP / {totalHoursForLevel} hrs total focus)
                                     </p>
                                 </div>
@@ -260,4 +269,3 @@ export default function Header() {
     </header>
   );
 }
-
