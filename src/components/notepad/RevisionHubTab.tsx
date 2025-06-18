@@ -24,7 +24,7 @@ export default function RevisionHubTab() {
 
 
   const handleAddConcept = () => {
-    if (newConceptName.trim() === '' || !newLearnedDate) return;
+    if (newConceptName.trim() === '' || !newLearnedDate || !isValid(newLearnedDate)) return;
     addRevisionConcept(newConceptName.trim(), newLearnedDate);
     setNewConceptName('');
     setNewLearnedDate(new Date());
@@ -42,7 +42,8 @@ export default function RevisionHubTab() {
   const startEditing = (concept: RevisionConcept) => {
     setEditingConcept(concept);
     setEditConceptName(concept.name);
-    setEditLearnedDate(parseISO(concept.learnedDate));
+    const parsedLearnedDate = parseISO(concept.learnedDate);
+    setEditLearnedDate(isValid(parsedLearnedDate) ? parsedLearnedDate : undefined);
   };
 
   const cancelEditing = () => {
@@ -52,7 +53,7 @@ export default function RevisionHubTab() {
   };
 
   const handleSaveEdit = () => {
-     if (!editingConcept || editConceptName.trim() === '' || !editLearnedDate) return;
+     if (!editingConcept || editConceptName.trim() === '' || !editLearnedDate || !isValid(editLearnedDate)) return;
     // For simplicity, re-adding with new details. A true update would be better in a full backend.
     deleteRevisionConcept(editingConcept.id);
     addRevisionConcept(editConceptName.trim(), editLearnedDate);
@@ -60,6 +61,11 @@ export default function RevisionHubTab() {
   };
   
   const concepts = notepadData.revisionConcepts || [];
+
+  const formatDateSafe = (dateString: string, formatString: string = 'PPP') => {
+    const dateObj = parseISO(dateString);
+    return isValid(dateObj) ? format(dateObj, formatString) : "Invalid Date";
+  };
 
   return (
     <Card>
@@ -82,7 +88,7 @@ export default function RevisionHubTab() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {newLearnedDate ? format(newLearnedDate, 'PPP') : <span>Learned Date</span>}
+                  {(newLearnedDate && isValid(newLearnedDate)) ? format(newLearnedDate, 'PPP') : <span>Learned Date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -108,7 +114,7 @@ export default function RevisionHubTab() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {editLearnedDate ? format(editLearnedDate, 'PPP') : <span>Learned Date</span>}
+                  {(editLearnedDate && isValid(editLearnedDate)) ? format(editLearnedDate, 'PPP') : <span>Learned Date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -129,7 +135,14 @@ export default function RevisionHubTab() {
           <p className="text-muted-foreground text-center py-4">No concepts added for revision yet.</p>
         ) : (
           <ul className="space-y-3">
-            {concepts.sort((a, b) => new Date(a.nextRevisionDate).getTime() - new Date(b.nextRevisionDate).getTime()).map(concept => {
+            {concepts.sort((a, b) => {
+                const dateA = parseISO(a.nextRevisionDate);
+                const dateB = parseISO(b.nextRevisionDate);
+                if (!isValid(dateA) && !isValid(dateB)) return 0;
+                if (!isValid(dateA)) return 1; // Invalid dates go to the end
+                if (!isValid(dateB)) return -1;
+                return dateA.getTime() - dateB.getTime();
+            }).map(concept => {
               const nextRevision = parseISO(concept.nextRevisionDate);
               const isDue = isValid(nextRevision) && nextRevision <= new Date();
               return (
@@ -138,13 +151,13 @@ export default function RevisionHubTab() {
                     <div className="flex-grow mb-2 sm:mb-0">
                       <h4 className="font-semibold text-lg">{concept.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Learned: {format(parseISO(concept.learnedDate), 'PPP')}
+                        Learned: {formatDateSafe(concept.learnedDate)}
                       </p>
                       <p className={`text-sm font-medium ${isDue ? 'text-primary animate-pulse' : 'text-foreground'}`}>
-                        Next Revision: {format(nextRevision, 'PPP')} (Stage {concept.revisionStage + 1})
+                        Next Revision: {formatDateSafe(concept.nextRevisionDate)} (Stage {concept.revisionStage + 1})
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Last Revised: {format(parseISO(concept.lastRevisedDate), 'PPP')}
+                        Last Revised: {formatDateSafe(concept.lastRevisedDate)}
                       </p>
                     </div>
                     <div className="flex space-x-1 self-start sm:self-center">

@@ -11,7 +11,7 @@ import { Trash2, PlusCircle, CalendarIcon, Edit3, Save, XCircle } from 'lucide-r
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function GoalsTab() {
@@ -53,7 +53,8 @@ export default function GoalsTab() {
   const startEditing = (goal: NotepadGoal) => {
     setEditingGoal(goal);
     setEditGoalText(goal.text);
-    setEditGoalDueDate(goal.dueDate ? parseISO(goal.dueDate) : undefined);
+    const parsedDate = goal.dueDate ? parseISO(goal.dueDate) : undefined;
+    setEditGoalDueDate(parsedDate && isValid(parsedDate) ? parsedDate : undefined);
   };
 
   const cancelEditing = () => {
@@ -103,7 +104,7 @@ export default function GoalsTab() {
                 aria-label={isEditMode ? "Pick new due date for goal" : "Pick due date for new goal"}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateValue ? format(dateValue, "PPP") : <span>Pick due date</span>}
+                {dateValue && isValid(dateValue) ? format(dateValue, "PPP") : <span>Pick due date</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -162,11 +163,16 @@ export default function GoalsTab() {
                         >
                         {goal.text}
                         </label>
-                        {goal.dueDate && (
-                        <p className={`text-xs ${goal.completed ? 'text-muted-foreground' : 'text-primary'}`}>
-                            Due: {format(parseISO(goal.dueDate), "PPP")} {/* Use parseISO for YYYY-MM-DD */}
-                        </p>
-                        )}
+                        {goal.dueDate && (() => {
+                          const dateObj = parseISO(goal.dueDate);
+                          return isValid(dateObj) ? (
+                            <p className={`text-xs ${goal.completed ? 'text-muted-foreground' : 'text-primary'}`}>
+                              Due: {format(dateObj, "PPP")}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-destructive">Due: Invalid Date</p>
+                          );
+                        })()}
                     </div>
                     </div>
                     <div className="flex space-x-1">
