@@ -4,8 +4,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info, Zap, Users, Star, Award } from "lucide-react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 export default function AboutPage() {
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
+
   return (
     <Card className="shadow-lg w-full card-animated">
       <CardHeader>
@@ -74,14 +81,14 @@ export default function AboutPage() {
             </div>
             <div className="text-center">
               <Image 
-                src="https://placehold.co/150x100/FFD700/8B4513.png" // Placeholder for a new logo
+                src="https://placehold.co/150x100/FFD700/8B4513.png" 
                 alt="Sponsor Logo - Al-Taqwa Food Delivery" 
                 width={100} 
                 height={67} 
                 className="rounded-md shadow-sm mx-auto mb-3 border border-yellow-700 dark:border-yellow-500"
                 data-ai-hint="food delivery logo gold"
               />
-              <p className="text-3xl font-semibold" style={{ color: 'hsl(var(--foreground))' }}>شركة التقوى لتوصيل المأكولات</p> {/* Using theme color for better contrast */}
+              <p className="text-3xl font-semibold" style={{ color: 'hsl(var(--foreground))' }}>شركة التقوى لتوصيل المأكولات</p>
               <p className="text-sm mt-2 opacity-80">Your trusted partner for delicious food delivery.</p>
             </div>
             <div className="mt-6 flex justify-center space-x-3">
@@ -101,11 +108,13 @@ export default function AboutPage() {
         </section>
         
         <section className="text-sm text-muted-foreground text-center pt-4">
-          <p>&copy; {new Date().getFullYear()} StudyFlow App. Happy Studying!</p>
+          {currentYear ? (
+            <p>&copy; {currentYear} StudyFlow App. Happy Studying!</p>
+          ) : (
+            <p>&copy; StudyFlow App. Happy Studying!</p> 
+          )}
         </section>
       </CardContent>
     </Card>
   );
 }
-
-```
