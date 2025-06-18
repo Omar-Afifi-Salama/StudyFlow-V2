@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
-import type { Habit, HabitFrequency } from '@/types';
+import type { Habit, HabitFrequency, HabitLogEntry } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,11 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame, Check } from 'lucide-react'; // Added Check
+import { PlusCircle, Edit3, Trash2, Save, XCircle, CalendarDays, TrendingUp, Flame, Check } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, getWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, getWeek, parseISO } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -24,11 +24,19 @@ const PREDEFINED_COLORS = ["#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF"
 
 export default function HabitTrackerTab() {
   const { userProfile, addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek } = useSessions();
-  const habits = userProfile.notepadData?.habits || [];
+  
+  // Defensively ensure habitsList is an array.
+  const habitsList = useMemo(() => {
+    if (userProfile && userProfile.notepadData && Array.isArray(userProfile.notepadData.habits)) {
+      return userProfile.notepadData.habits;
+    }
+    return [];
+  }, [userProfile]);
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentHabit, setCurrentHabit] = useState<Partial<Habit> | null>(null);
-  const [viewDate, setViewDate] = useState(new Date()); // For daily view
+  const [viewDate, setViewDate] = useState(new Date());
   const [habitViewMode, setHabitViewMode] = useState<'daily' | 'weekly-overview'>('daily');
 
 
@@ -188,9 +196,10 @@ export default function HabitTrackerTab() {
     );
   };
 
-  const weekDays = eachDayOfInterval({ start: startOfWeek(viewDate, { weekStartsOn: 1 }), end: endOfWeek(viewDate, { weekStartsOn: 1 }) });
-  const dailyHabits = habits.filter(h => h.frequency === 'daily');
-  const weeklyHabits = habits.filter(h => h.frequency === 'weekly');
+  const weekDays = useMemo(() => eachDayOfInterval({ start: startOfWeek(viewDate, { weekStartsOn: 1 }), end: endOfWeek(viewDate, { weekStartsOn: 1 }) }), [viewDate]);
+  const dailyHabits = useMemo(() => habitsList.filter(h => h.frequency === 'daily'), [habitsList]);
+  const weeklyHabits = useMemo(() => habitsList.filter(h => h.frequency === 'weekly'), [habitsList]);
+
 
   return (
     <Card>
@@ -213,7 +222,7 @@ export default function HabitTrackerTab() {
         <div className="mb-4 flex items-center justify-between p-2 rounded-md bg-muted/50">
           <Button variant="outline" size="icon" onClick={() => setViewDate(prev => subDays(prev, habitViewMode === 'daily' ? 1: 7))}><CalendarDays className="h-4 w-4 transform rotate-180" /> Prev</Button>
           <span className="font-semibold text-lg">
-            {habitViewMode === 'daily' ? format(viewDate, 'EEEE, MMM d, yyyy') : `Week of ${format(startOfWeek(viewDate, {weekStartsOn: 1}), 'MMM d')}`}
+            {habitViewMode === 'daily' ? format(viewDate, 'EEEE, MMM d, yyyy') : `Week ${getWeek(parseISO(viewDate.toISOString()), { weekStartsOn: 1 })} of ${format(startOfWeek(viewDate, {weekStartsOn: 1}), 'MMM d, yyyy')}`}
           </span>
           <Button variant="outline" size="icon" onClick={() => setViewDate(prev => addDays(prev, habitViewMode === 'daily' ? 1: 7))}>Next <CalendarDays className="h-4 w-4 ml-1" /></Button>
           <Select value={habitViewMode} onValueChange={(val: 'daily' | 'weekly-overview') => setHabitViewMode(val)}>
@@ -227,7 +236,7 @@ export default function HabitTrackerTab() {
           </Select>
         </div>
 
-        {habits.length === 0 && !isEditing && (
+        {habitsList.length === 0 && !isEditing && (
           <p className="text-muted-foreground text-center py-4">No habits set up yet. Start building!</p>
         )}
 
@@ -253,7 +262,7 @@ export default function HabitTrackerTab() {
         
         {habitViewMode === 'weekly-overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {habits.map(habit => (
+            {habitsList.map(habit => (
               <Card key={habit.id} style={{ borderTop: `4px solid ${habit.color || 'hsl(var(--primary))'}`}}>
                 <CardHeader className="pb-2 pt-3">
                    <div className="flex items-center justify-between">
@@ -287,7 +296,7 @@ export default function HabitTrackerTab() {
                                         style={isDone ? {backgroundColor: habit.color} : {borderColor: habit.color}}
                                     />
                                   </TooltipTrigger>
-                                  <ShadTooltipContent><p>{format(day, 'EEE, MMM d')} - {isDone ? "Completed" : "Pending"}</p></ShadTooltipContent>
+                                  <ShadTooltipContent><p>{format(parseISO(day.toISOString()), 'EEE, MMM d')} - {isDone ? "Completed" : "Pending"}</p></ShadTooltipContent>
                                </Tooltip>
                             </TooltipProvider>
                           );
@@ -311,3 +320,5 @@ export default function HabitTrackerTab() {
     </Card>
   );
 }
+
+    
