@@ -29,8 +29,8 @@ export interface UserProfile {
   lastLoginDate: string | null; // YYYY-MM-DD format for daily login bonus
   dailyLoginStreak: number; // For daily login bonus
   notepadData: NotepadData;
-  skillPoints: number; // New: For skill tree
-  unlockedSkillIds: string[]; // New: IDs of unlocked skills
+  skillPoints: number;
+  unlockedSkillIds: string[];
 }
 
 export interface Skin {
@@ -131,6 +131,21 @@ export interface NotepadCountdownEvent {
   tags?: string[];
 }
 
+export interface EisenhowerMatrixQuadrant {
+  // For now, these will store IDs of tasks or goals
+  // In a future update, these could be enriched objects
+  taskIds: string[]; 
+  goalIds: string[];
+}
+
+export interface NotepadEisenhowerMatrix {
+  urgentImportant: string[]; // Store item IDs (task or goal)
+  notUrgentImportant: string[];
+  urgentNotImportant: string[];
+  notUrgentNotImportant: string[];
+}
+
+
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
@@ -139,6 +154,7 @@ export interface NotepadData {
   revisionConcepts: RevisionConcept[];
   habits: Habit[];
   countdownEvents: NotepadCountdownEvent[];
+  eisenhowerMatrix: NotepadEisenhowerMatrix; // Added
 }
 
 
@@ -184,7 +200,6 @@ export interface AmbientSound {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-// New: Skill Tree related types
 export type FeatureKey = 
   | 'stats' 
   | 'ambiance' 
@@ -200,15 +215,15 @@ export interface Skill {
   id: string;
   name: string;
   description: string;
-  cost: number; // Skill points needed
-  iconName: string; // Lucide icon name
+  cost: number; 
+  iconName: string; 
   prerequisiteLevel?: number;
   prerequisiteSkillIds?: string[];
-  unlocksFeature?: FeatureKey; // Key of the feature this skill unlocks
-  xpBoostPercent?: number; // e.g., 0.05 for +5%
-  cashBoostPercent?: number; // e.g., 0.05 for +5%
+  unlocksFeature?: FeatureKey; 
+  xpBoostPercent?: number; 
+  cashBoostPercent?: number; 
   shopDiscountPercent?: number;
-  otherEffect?: string; // For unique effects like "Streak Shield"
+  otherEffect?: string; 
 }
 
 export interface FloatingGain {

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical, Network, Settings, HelpCircle } from 'lucide-react';
+import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical, Network, Settings, HelpCircle, Star } from 'lucide-react'; // Added Star
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -21,8 +21,8 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   hotkey: string;
-  featureKey?: FeatureKey; // For conditional rendering based on skill tree
-  alwaysVisible?: boolean; // e.g., for Timers and Skill Tree
+  featureKey?: FeatureKey;
+  alwaysVisible?: boolean;
 }
 
 export default function Header() {
@@ -46,9 +46,10 @@ export default function Header() {
 
   const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey)) );
 
-  const mainNavItems: NavItem[] = visibleNavItems.filter(item => ['/', '/skill-tree'].includes(item.href) || (item.alwaysVisible && !['/', '/skill-tree'].includes(item.href) ));
-  const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainNavItems.includes(item));
-
+  // Define which items always stay in the main bar vs. dropdown
+  const mainBarItemHrefs = ['/', '/skill-tree']; 
+  const mainNavItems: NavItem[] = visibleNavItems.filter(item => mainBarItemHrefs.includes(item.href));
+  const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainBarItemHrefs.includes(item.href));
 
   allPossibleNavItems.forEach(item => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -56,11 +57,8 @@ export default function Header() {
       e.preventDefault();
       if (item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey))) {
         router.push(item.href);
-      } else {
-        // Optionally, provide feedback that the feature is locked
-        // For now, just don't navigate
       }
-    }, { preventDefault: true }, [isFeatureUnlocked, router]);
+    }, { preventDefault: true }, [isFeatureUnlocked, router, item.alwaysVisible, item.featureKey, item.href]);
   });
 
 
@@ -70,15 +68,9 @@ export default function Header() {
                              : userProfile.xp;
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
   const xpForNextLevelRaw = nextLevelXpTarget - currentLevelXpStart;
-  const xpForNextLevelDisplay = xpForNextLevelRaw > 0 ? xpForNextLevelRaw : 'MAX';
-
+  
   const xpProgressPercent = xpForNextLevelRaw > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelRaw) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
-
-  const handleThemeChange = (skinId: string) => {
-    equipSkin(skinId);
-  };
-
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -175,7 +167,7 @@ export default function Header() {
 
         <div className="flex items-center space-x-2 md:space-x-3 ml-auto pl-1">
           <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md">
-            <Star className="h-4 w-4 text-yellow-400" />
+            <Star className="h-4 w-4 text-yellow-400" /> 
             <span>{userProfile.skillPoints || 0}</span>
           </div>
           <TooltipProvider>
@@ -186,7 +178,7 @@ export default function Header() {
                   <span>Lvl {userProfile.level}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="p-0"> {/* Remove default padding for ScrollArea to manage it */}
+              <TooltipContent className="p-0">
                 <ScrollArea className="h-[250px] w-72 p-2 bg-popover">
                     <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
                     {TITLES.map((title, index) => {
@@ -198,7 +190,7 @@ export default function Header() {
                         }
 
                         return (
-                            <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground'}`}>
+                            <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground bg-muted/50'}`}>
                                 <p>{title}</p>
                                 <p className="text-muted-foreground text-[0.7rem]">
                                   Requires: Level {levelReq}
@@ -242,17 +234,20 @@ export default function Header() {
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0">
-                    <ScrollArea className="h-[250px] p-2 bg-popover">
+                    <ScrollArea className="h-[250px] p-2 bg-popover"> {/* Added bg-popover */}
                         <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
                         {TITLES.map((title, index) => {
                             const levelReq = index + 1;
                             const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
                             let totalHoursForLevel = '0.0';
-                            if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) {
+                             if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) { // Ensure XP_PER_MINUTE_FOCUS is positive to avoid division by zero or negative results
                                 totalHoursForLevel = (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1);
+                            } else if (xpReq === 0) { // For level 1 where XP req is 0
+                                totalHoursForLevel = '0.0';
                             }
+
                             return (
-                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground'}`}>
+                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground bg-muted/50'}`}>
                                     <p>{title}</p>
                                     <p className="text-muted-foreground text-[0.7rem]">
                                       Requires: Level {levelReq}

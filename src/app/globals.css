@@ -100,45 +100,45 @@ body {
   }
 
   .sepia {
-    --background: 40 52% 95%; /* Lighter, creamy beige */
-    --foreground: 35 35% 30%; /* Dark, warm brown for text */
+    --background: 40 30% 92%; /* Creamy off-white */
+    --foreground: 35 45% 25%; /* Dark warm brown */
 
-    --card: 40 45% 90%; /* Slightly darker cream for cards */
-    --card-foreground: 35 35% 30%;
+    --card: 40 30% 95%; /* Slightly lighter cream for cards */
+    --card-foreground: 35 45% 25%;
 
-    --popover: 40 45% 88%; /* Popover background */
-    --popover-foreground: 35 35% 30%;
+    --popover: 40 30% 95%;
+    --popover-foreground: 35 45% 25%;
 
-    --primary: 30 60% 55%; /* Muted, warm terracotta/orange */
-    --primary-foreground: 40 50% 98%; /* Off-white text on primary */
+    --primary: 30 50% 50%;  /* Muted terracotta/orange */
+    --primary-foreground: 40 30% 98%; /* Very light cream */
 
-    --secondary: 35 25% 70%; /* Desaturated, lighter brown */
-    --secondary-foreground: 35 35% 30%;
+    --secondary: 35 20% 70%; /* Desaturated, lighter brown */
+    --secondary-foreground: 35 45% 25%;
 
-    --muted: 40 40% 92%; /* Very light beige for muted backgrounds */
+    --muted: 40 25% 88%; /* Very light beige for muted backgrounds */
     --muted-foreground: 35 30% 50%; /* Muted brown for text on muted */
 
-    --accent: 25 45% 65%; /* Slightly desaturated, warm ochre/orange */
-    --accent-foreground: 40 50% 98%;
+    --accent: 25 40% 60%; /* Slightly desaturated, warm ochre/orange */
+    --accent-foreground: 40 30% 98%;
 
-    --destructive: 0 55% 50%; /* Muted, darker red-brown */
-    --destructive-foreground: 40 50% 98%;
+    --destructive: 0 45% 45%; /* Muted, darker red-brown */
+    --destructive-foreground: 40 30% 98%;
 
-    --border: 35 30% 75%; /* Warm brown border */
-    --input: 35 30% 85%; /* Light warm brown input background */
-    --ring: 30 60% 55%; /* Ring color same as primary */
+    --border: 35 25% 70%; /* Warm brown border */
+    --input: 35 25% 80%;   /* Light warm brown input background */
+    --ring: 30 50% 50%; /* Ring color same as primary */
+    
+    --sidebar-background: 40 30% 90%;
+    --sidebar-foreground: 35 45% 25%;
+    --sidebar-primary: 30 50% 50%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 25 40% 60%;
+    --sidebar-accent-foreground: 40 30% 98%;
+    --sidebar-border: 35 25% 70%;
+    --sidebar-ring: 30 50% 50%;
 
-    --sidebar-background: 40 52% 93%;
-    --sidebar-foreground: 35 35% 30%;
-    --sidebar-primary: 30 60% 55%;
-    --sidebar-primary-foreground: 40 50% 98%;
-    --sidebar-accent: 25 45% 65%;
-    --sidebar-accent-foreground: 40 50% 98%;
-    --sidebar-border: 35 30% 75%;
-    --sidebar-ring: 30 60% 55%;
-
-    --chart-1: 30 60% 55%;
-    --chart-2: 25 45% 65%;
+    --chart-1: 30 50% 50%;
+    --chart-2: 25 40% 60%;
     --chart-3: 35 40% 40%;
     --chart-4: 45 35% 55%;
     --chart-5: 20 35% 60%;

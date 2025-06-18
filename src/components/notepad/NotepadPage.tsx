@@ -3,14 +3,15 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NotebookPen, CheckSquare, StickyNote, Target, Link as LinkIcon, Brain, ListChecks as HabitIcon, CalendarClock } from "lucide-react";
+import { NotebookPen, CheckSquare, StickyNote, Target, Link as LinkIcon, Brain, ListChecks as HabitIcon, CalendarClock, Grid } from "lucide-react"; // Added Grid
 import ChecklistTab from "./ChecklistTab";
 import NotesTab from "./NotesTab";
 import GoalsTab from "./GoalsTab";
 import LinksTab from "./LinksTab";
 import RevisionHubTab from "./RevisionHubTab";
 import HabitTrackerTab from "./HabitTrackerTab";
-import EventsCountdownTab from "./EventsCountdownTab"; // New import
+import EventsCountdownTab from "./EventsCountdownTab";
+import EisenhowerMatrixTab from "./EisenhowerMatrixTab"; // New import
 
 export default function NotepadPage() {
   return (
@@ -20,13 +21,13 @@ export default function NotepadPage() {
           <NotebookPen className="h-8 w-8 text-primary" />
           <div>
             <CardTitle className="text-3xl font-headline">Digital Notepad</CardTitle>
-            <CardDescription>Organize your thoughts, tasks, goals, resources, habits, revisions, and events.</CardDescription>
+            <CardDescription>Organize your thoughts, tasks, goals, resources, habits, revisions, events, and priorities.</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="checklist" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 mb-6"> {/* Adjusted grid-cols */}
             <TabsTrigger value="checklist" className="py-2 text-base md:py-3 btn-animated">
               <CheckSquare className="mr-2 h-5 w-5" /> Checklist
             </TabsTrigger>
@@ -47,6 +48,9 @@ export default function NotepadPage() {
             </TabsTrigger>
             <TabsTrigger value="events" className="py-2 text-base md:py-3 btn-animated">
               <CalendarClock className="mr-2 h-5 w-5" /> Events
+            </TabsTrigger>
+            <TabsTrigger value="eisenhower" className="py-2 text-base md:py-3 btn-animated"> {/* New Tab Trigger */}
+              <Grid className="mr-2 h-5 w-5" /> Matrix
             </TabsTrigger>
           </TabsList>
           <TabsContent value="checklist">
@@ -69,6 +73,9 @@ export default function NotepadPage() {
           </TabsContent>
           <TabsContent value="events">
             <EventsCountdownTab />
+          </TabsContent>
+          <TabsContent value="eisenhower"> {/* New Tab Content */}
+            <EisenhowerMatrixTab />
           </TabsContent>
         </Tabs>
       </CardContent>
