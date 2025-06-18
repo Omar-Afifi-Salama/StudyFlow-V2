@@ -12,11 +12,11 @@ type IconName = keyof typeof LucideIcons;
 
 const getIconComponent = (iconName?: string): React.ComponentType<{ className?: string }> => {
   if (!iconName || !(iconName in LucideIcons)) {
-    return LucideIcons.Star; // Default icon if not found or invalid
+    return LucideIcons.Star; 
   }
   const Icon = LucideIcons[iconName as IconName];
   if (typeof Icon === 'string' || typeof Icon === 'number' || typeof Icon === 'boolean' || Icon === null || Icon === undefined) {
-    return LucideIcons.Star; // Fallback for non-component exports
+    return LucideIcons.Star; 
   }
   return Icon as React.ComponentType<{ className?: string }>;
 };
@@ -26,26 +26,26 @@ interface SkillNodeProps {
   isUnlocked: boolean;
   canUnlock: { can: boolean; reason?: string };
   onUnlock: (skillId: string) => void;
-  isRoot?: boolean; // Special styling for root nodes
-  isLeaf?: boolean; // For potential future styling
-  isCentralTrunk?: boolean; // For central path
+  isRoot?: boolean; 
+  isLeaf?: boolean; 
+  isCentralTrunk?: boolean;
 }
 
 export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRoot, isLeaf, isCentralTrunk }: SkillNodeProps) {
   const Icon = getIconComponent(skill.iconName);
 
-  let bgColor = 'bg-muted/50 hover:bg-muted/70'; // Locked and cannot afford/prereq
+  let bgColor = 'bg-muted/50 hover:bg-muted/70'; 
   let textColor = 'text-muted-foreground';
   let borderColor = 'border-muted-foreground/30';
   let iconColor = 'text-muted-foreground/70';
 
   if (canUnlock.can && !isUnlocked) {
-    bgColor = 'bg-primary/20 hover:bg-primary/30'; // Can unlock
+    bgColor = 'bg-primary/20 hover:bg-primary/30'; 
     textColor = 'text-primary-foreground';
     borderColor = 'border-primary/50';
     iconColor = 'text-primary';
   } else if (isUnlocked) {
-    bgColor = 'bg-green-500/30 hover:bg-green-500/40'; // Unlocked
+    bgColor = 'bg-green-500/30 hover:bg-green-500/40'; 
     textColor = 'text-green-700 dark:text-green-300';
     borderColor = 'border-green-500/70';
     iconColor = 'text-green-600 dark:text-green-400';
@@ -64,24 +64,25 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
         <TooltipTrigger asChild>
           <div
             className={cn(
-              'relative w-20 h-20 md:w-24 md:h-24 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ease-in-out shadow-md hover:shadow-lg border-2',
+              'relative w-20 h-20 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg border-2 p-1',
               bgColor,
               borderColor,
-              'group' // For controlling button visibility
+              'group' 
             )}
-            onClick={() => { if (canUnlock.can && !isUnlocked) onUnlock(skill.id) }}
+            onClick={() => { if (canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
             tabIndex={0}
-            onKeyPress={(e) => { if (e.key === 'Enter' && canUnlock.can && !isUnlocked) onUnlock(skill.id) }}
+            onKeyPress={(e) => { if (e.key === 'Enter' && canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
+            aria-label={`Skill: ${skill.name}`}
           >
-            <Icon className={cn('w-8 h-8 md:w-10 md:h-10 mb-0.5', iconColor)} />
-            <span className={cn('text-xs font-medium text-center truncate w-full px-1', textColor)}>
+            <Icon className={cn('w-7 h-7 mb-0.5', iconColor)} /> {/* Icon size reduced */}
+            <span className={cn('text-[10px] font-medium text-center truncate w-full px-0.5', textColor)}> {/* Text size reduced */}
               {skill.name}
             </span>
             {isUnlocked && (
-              <Check className="absolute top-1 right-1 h-4 w-4 text-green-600 dark:text-green-400 bg-background rounded-full p-0.5" />
+              <Check className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-green-600 dark:text-green-400 bg-background rounded-full p-0.5" />
             )}
             {!isUnlocked && !canUnlock.can && (
-               <Lock className="absolute top-1 right-1 h-4 w-4 text-destructive bg-background/70 rounded-full p-0.5" />
+               <Lock className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-destructive bg-background/70 rounded-full p-0.5" />
             )}
           </div>
         </TooltipTrigger>
@@ -99,9 +100,6 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
                   <p>Requires Skills:</p>
                   <ul className="list-disc list-inside pl-3">
                     {skill.prerequisiteSkillIds.map(id => {
-                      // In a real app, you'd fetch skill names here. For now, just IDs.
-                      // const prereqSkill = ALL_SKILLS.find(s => s.id === id);
-                      // return <li key={id}>{prereqSkill?.name || id}</li>;
                       return <li key={id} className="text-muted-foreground/80">{id.replace('unlock','').replace(/([A-Z])/g, ' $1').trim()}</li>;
                     })}
                   </ul>
@@ -126,3 +124,4 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
     </TooltipProvider>
   );
 }
+

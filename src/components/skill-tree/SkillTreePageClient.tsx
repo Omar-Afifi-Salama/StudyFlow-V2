@@ -8,82 +8,79 @@ import type { Skill } from '@/types';
 import { Network, Zap } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 
-// Helper for simple straight line connectors
-const Connector = ({ direction = 'vertical', length = 'h-8', className = '' }: { direction?: 'vertical' | 'horizontal', length?: string, className?: string }) => {
-  const baseClasses = "bg-border";
-  const verticalClasses = `w-0.5 ${length} ${baseClasses}`;
-  const horizontalClasses = `h-0.5 ${length} ${baseClasses}`;
-  return <div className={cn(direction === 'vertical' ? verticalClasses : horizontalClasses, className, "shrink-0 grow-0")}></div>;
+const Connector = ({ 
+    type = 'vertical', // 'vertical', 'horizontal', 'elbow-br', 'elbow-bl', 'elbow-tr', 'elbow-tl', 't-down', 't-up', 't-left', 't-right', 'cross'
+    size = 'h-8 w-0.5', // Tailwind class for size
+    className = '' 
+}: { 
+    type?: string, 
+    size?: string, 
+    className?: string 
+}) => {
+  const baseClass = "bg-border shrink-0 grow-0";
+  
+  // Basic vertical and horizontal lines
+  if (type === 'vertical') return <div className={cn(baseClass, 'w-0.5', size, className)}></div>;
+  if (type === 'horizontal') return <div className={cn(baseClass, 'h-0.5', size, className)}></div>;
+
+  // Placeholder for more complex connector shapes (would require SVG or more complex CSS)
+  // For now, complex types will render as a small square dot or a simple line based on size
+  return <div className={cn(baseClass, size.includes('h-') ? 'h-1 w-0.5' : 'w-1 h-0.5', className)} title={`Connector: ${type}`}></div>;
 };
 
+
+const renderNodes = (skills: Skill[], { isUnlocked, canUnlockSkill, unlockSkill }: {
+  isUnlocked: (id: string) => boolean;
+  canUnlockSkill: (id: string) => { can: boolean; reason?: string };
+  unlockSkill: (id: string) => boolean;
+}) => skills.map(skill => skill && (
+  <SkillNode
+    key={skill.id}
+    skill={skill}
+    isUnlocked={isUnlocked(skill.id)}
+    canUnlock={canUnlockSkill(skill.id)}
+    onUnlock={unlockSkill}
+  />
+));
 
 export default function SkillTreePageClient() {
   const { userProfile, getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill } = useSessions();
   const allSkills = getAllSkills();
-
-  // Define skill tiers for layout
-  // This is a manual layout definition.
   const getSkill = (id: string) => allSkills.find(s => s.id === id);
 
-  const tier0_roots = [getSkill('unlockTimers'), getSkill('unlockSkillTree')].filter(Boolean) as Skill[]; // Base, always unlocked
+  // Define skill tiers and branches for layout
+  // Tier 0 (Conceptual Roots - always unlocked, not rendered as nodes)
+  // const rootSkills = [getSkill('unlockTimers'), getSkill('unlockSkillTree')];
 
-  const tier1_mainFeatures = [
-    getSkill('unlockStats'), 
-    getSkill('unlockNotepadMain'), 
-    getSkill('unlockShop'),
-    getSkill('unlockAbout'),
-  ].filter(Boolean) as Skill[];
+  // Tier 1: Initial Unlocks (Path from conceptual roots)
+  const tier1_CoreFeatures = [getSkill('unlockAbout'), getSkill('unlockNotepadMain'), getSkill('unlockStats')].filter(Boolean) as Skill[];
+  const tier1_Boosts = [getSkill('xpBoost1'), getSkill('cashBoost1')].filter(Boolean) as Skill[];
+  const tier1_ShopPath = [getSkill('unlockShop')].filter(Boolean) as Skill[];
 
-  const tier2_notepadBranch = [getSkill('unlockNotepadChecklist'), getSkill('unlockNotepadNotes')].filter(Boolean) as Skill[];
-  const tier2_statsBranch = [getSkill('unlockAchievements')].filter(Boolean) as Skill[];
-  const tier2_shopBranch = [getSkill('unlockCapitalist'), getSkill('shopDiscount1')].filter(Boolean) as Skill[];
-  const tier2_utilityBranch = [getSkill('unlockAmbiance'), getSkill('unlockCountdown'), getSkill('unlockChallenges')].filter(Boolean) as Skill[];
-  const tier2_boostsBranch = [getSkill('xpBoost1'), getSkill('cashBoost1')].filter(Boolean) as Skill[];
+  // Tier 2: Branching from Tier 1
+  const tier2_NotepadTabs = [getSkill('unlockNotepadChecklist'), getSkill('unlockNotepadNotes')].filter(Boolean) as Skill[]; // From NotepadMain
+  const tier2_StatsFeatures = [getSkill('unlockAchievements')].filter(Boolean) as Skill[]; // From Stats
+  const tier2_ShopFeatures = [getSkill('shopDiscount1'), getSkill('unlockCapitalist')].filter(Boolean) as Skill[]; // From Shop
+  const tier2_BoostsContinued = [getSkill('xpBoost2'), getSkill('cashBoost2')].filter(Boolean) as Skill[]; // From xpBoost1/cashBoost1
+  const tier2_UtilityFeatures = [getSkill('unlockAmbiance'), getSkill('unlockCountdown')].filter(Boolean) as Skill[]; // General progression
 
+  // Tier 3: Further Branching
+  const tier3_AdvancedNotepad = [getSkill('unlockNotepadGoals'), getSkill('unlockNotepadLinks'), getSkill('unlockNotepadRevision')].filter(Boolean) as Skill[];
+  const tier3_CoreGameplay = [getSkill('unlockChallenges')].filter(Boolean) as Skill[]; // From Achievements
+  const tier3_AdvancedEconomy = [getSkill('investmentInsight')].filter(Boolean) as Skill[]; // From Capitalist
+  const tier3_BoostsMax = [getSkill('xpBoost3'), getSkill('cashBoost3')].filter(Boolean) as Skill[]; // From BoostsContinued
 
-  const tier3_advNotepad = [
-    getSkill('unlockNotepadGoals'), // from checklist
-    getSkill('unlockNotepadLinks'), // from notes
-    getSkill('unlockNotepadRevision') // from notes & goals
-  ].filter(Boolean) as Skill[];
-  
-  const tier3_advUtility = [
-    getSkill('streakShield'), // from challenges
-    getSkill('investmentInsight') // from capitalist
-  ].filter(Boolean) as Skill[];
-
-  const tier3_boosts = [
-    getSkill('xpBoost2'), // from xpBoost1
-    getSkill('cashBoost2') // from cashBoost1
-  ].filter(Boolean) as Skill[];
-  
-  const tier4_expertNotepad = [
-      getSkill('unlockNotepadEisenhower'),
-      getSkill('unlockNotepadEvents'),
-      getSkill('unlockNotepadHabits'),
-      getSkill('revisionAccelerator')
-  ].filter(Boolean) as Skill[];
-
-  const tier4_masterBoosts = [
-      getSkill('xpBoost3'),
-      getSkill('cashBoost3'),
-      getSkill('skillPointRefund')
-  ].filter(Boolean) as Skill[];
+  // Tier 4: Expert/Endgame Features
+  const tier4_ExpertNotepad = [getSkill('unlockNotepadEisenhower'), getSkill('unlockNotepadEvents'), getSkill('unlockNotepadHabits')].filter(Boolean) as Skill[];
+  const tier4_UtilityMastery = [getSkill('revisionAccelerator'), getSkill('streakShield')].filter(Boolean) as Skill[];
+  const tier4_Ultimate = [getSkill('skillPointRefund')].filter(Boolean) as Skill[];
 
 
-  const renderNodes = (skills: Skill[]) => skills.map(skill => skill && (
-    <SkillNode
-      key={skill.id}
-      skill={skill}
-      isUnlocked={isSkillUnlocked(skill.id)}
-      canUnlock={canUnlockSkill(skill.id)}
-      onUnlock={unlockSkill}
-    />
-  ));
+  const sharedProps = { isSkillUnlocked, canUnlockSkill, unlockSkill };
 
   return (
-    <div className="w-full overflow-x-auto"> 
-      <Card className="shadow-lg w-full card-animated min-w-[1000px]"> {/* Ensure card has min-width */}
+    <div className="w-full overflow-x-auto">
+      <Card className="shadow-lg w-full card-animated min-w-[1200px]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -92,98 +89,139 @@ export default function SkillTreePageClient() {
                 <CardTitle className="text-3xl font-headline">Skill Tree</CardTitle>
                 <CardDescription>
                   Unlock app features and passive bonuses. Hover over skills for details.
+                  <br />
+                  <span className="text-xs italic">Note: A visual, branching tree UI with connecting lines is a planned future enhancement!</span>
                 </CardDescription>
               </div>
             </div>
             <div className="flex items-center space-x-2 text-lg font-semibold">
-              <Zap className="h-6 w-6 text-yellow-400" /> 
+              <Zap className="h-6 w-6 text-yellow-400" />
               <span>{userProfile.skillPoints} Skill Point(s)</span>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6 flex flex-col items-center space-y-4 md:space-y-6">
-          {/* This is a manual layout. A dynamic graph is much more complex. */}
-          {/* The lines are simplified visual connectors. */}
+        <CardContent className="pt-6 flex flex-col items-center space-y-10 overflow-visible">
+          {/* This layout attempts a more structured, connected look. Lines are simplified. */}
 
-          {/* Tier 1 */}
-          <div className="flex justify-around items-center w-full space-x-4">
-            {renderNodes(tier1_mainFeatures)}
-          </div>
-
-          {/* Connectors to Tier 2 */}
-          <div className="flex justify-around w-full items-center h-12">
-            {tier1_mainFeatures.map((_, index) => (
-              <Connector key={`conn-t1-${index}`} direction="vertical" length="h-full" />
-            ))}
-          </div>
-          
-          {/* Tier 2 - Grouped by "branch" for clarity */}
-          <div className="flex flex-col items-center w-full space-y-8">
-            {/* Notepad Branch from unlockNotepadMain */}
-            <div className="flex justify-center items-center space-x-8">
-              {renderNodes(tier2_notepadBranch)}
+          {/* Tier 1 Row */}
+          <div className="flex flex-col items-center w-full">
+            <div className="flex justify-around items-start w-full gap-x-8">
+              {/* Core Features Branch */}
+              <div className="flex flex-col items-center gap-y-2">
+                {renderNodes(tier1_CoreFeatures, sharedProps)}
+              </div>
+              {/* Boosts Branch */}
+              <div className="flex flex-col items-center gap-y-2">
+                {renderNodes(tier1_Boosts, sharedProps)}
+              </div>
+              {/* Shop Path Branch */}
+              <div className="flex flex-col items-center gap-y-2">
+                {renderNodes(tier1_ShopPath, sharedProps)}
+              </div>
             </div>
-             {/* Horizontal connector if needed */}
-             {tier2_notepadBranch.length > 1 && <Connector direction="horizontal" length="w-24" className="my-[-2rem]"/>}
-
-
-            {/* Stats Branch from unlockStats */}
-            <div className="flex justify-center items-center space-x-8">
-              {renderNodes(tier2_statsBranch)}
+            {/* Connectors to Tier 2 - Simplified visualisation */}
+            <div className="flex justify-around w-3/4 mt-4">
+              <Connector type="vertical" size="h-10" />
+              <Connector type="vertical" size="h-10" />
+              <Connector type="vertical" size="h-10" />
             </div>
-
-            {/* Shop Branch from unlockShop */}
-            <div className="flex justify-center items-center space-x-8">
-              {renderNodes(tier2_shopBranch)}
-            </div>
-            {tier2_shopBranch.length > 1 && <Connector direction="horizontal" length="w-24" className="my-[-2rem]"/>}
-
-
-            {/* Utility Branch (Ambiance, Countdown, Challenges) - conceptually connected to main trunk */}
-            <div className="flex justify-center items-center space-x-8">
-              {renderNodes(tier2_utilityBranch)}
-            </div>
-             {tier2_utilityBranch.length > 1 && <Connector direction="horizontal" length="w-40" className="my-[-2rem]"/>}
-
-
-            {/* Boosts Branch - conceptually connected to main trunk */}
-            <div className="flex justify-center items-center space-x-8">
-              {renderNodes(tier2_boostsBranch)}
-            </div>
-            {tier2_boostsBranch.length > 1 && <Connector direction="horizontal" length="w-24" className="my-[-2rem]"/>}
           </div>
           
-          {/* Connectors to Tier 3 */}
-          <div className="flex justify-center w-full items-center h-12">
-             <Connector direction="vertical" length="h-full" />
+          {/* Tier 2 Row - Multiple branches */}
+          <div className="flex flex-col items-center w-full">
+            <div className="flex justify-around items-start w-full gap-x-6 flex-wrap">
+              {/* Notepad Branch */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Notepad</p>
+                {renderNodes(tier2_NotepadTabs, sharedProps)}
+              </div>
+              {/* Stats Branch */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Stats</p>
+                {renderNodes(tier2_StatsFeatures, sharedProps)}
+              </div>
+              {/* Shop Branch */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Shop & Economy</p>
+                {renderNodes(tier2_ShopFeatures, sharedProps)}
+              </div>
+              {/* Boosts Continued Branch */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Boosts</p>
+                {renderNodes(tier2_BoostsContinued, sharedProps)}
+              </div>
+              {/* Utility Features Branch */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Utilities</p>
+                {renderNodes(tier2_UtilityFeatures, sharedProps)}
+              </div>
+            </div>
+             <div className="flex justify-around w-full mt-4"> {/* Full width for balanced connector appearance */}
+              <Connector type="vertical" size="h-10" className="opacity-50" />
+              <Connector type="vertical" size="h-10" className="opacity-50" />
+              <Connector type="vertical" size="h-10" className="opacity-50" />
+              <Connector type="vertical" size="h-10" className="opacity-50" />
+              <Connector type="vertical" size="h-10" className="opacity-50" />
+            </div>
           </div>
 
-          {/* Tier 3 */}
-           <div className="flex justify-around items-start w-full space-x-4 flex-wrap gap-y-8">
-             {renderNodes(tier3_advNotepad)}
-             {renderNodes(tier3_advUtility)}
-             {renderNodes(tier3_boosts)}
-           </div>
+          {/* Tier 3 Row */}
+          <div className="flex flex-col items-center w-full">
+            <div className="flex justify-around items-start w-full gap-x-6 flex-wrap">
+               {/* Advanced Notepad */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Advanced Notepad</p>
+                {renderNodes(tier3_AdvancedNotepad, sharedProps)}
+              </div>
+               {/* Core Gameplay */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Gameplay</p>
+                {renderNodes(tier3_CoreGameplay, sharedProps)}
+                 {renderNodes(tier3_AdvancedEconomy, sharedProps)}
+              </div>
+              {/* Boosts Max */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Max Boosts</p>
+                {renderNodes(tier3_BoostsMax, sharedProps)}
+              </div>
+            </div>
+            <div className="flex justify-around w-2/3 mt-4">
+              <Connector type="vertical" size="h-10" className="opacity-30" />
+              <Connector type="vertical" size="h-10" className="opacity-30" />
+               <Connector type="vertical" size="h-10" className="opacity-30" />
+            </div>
+          </div>
 
-           {/* Connectors to Tier 4 */}
-            <div className="flex justify-center w-full items-center h-12">
-             <Connector direction="vertical" length="h-full" />
-           </div>
-
-           {/* Tier 4 */}
-           <div className="flex justify-around items-start w-full space-x-4 flex-wrap gap-y-8">
-             {renderNodes(tier4_expertNotepad)}
-             {renderNodes(tier4_masterBoosts)}
-           </div>
-
+          {/* Tier 4 Row */}
+           <div className="flex flex-col items-center w-full">
+            <div className="flex justify-around items-start w-full gap-x-6 flex-wrap">
+               {/* Expert Notepad */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Expert Notepad</p>
+                {renderNodes(tier4_ExpertNotepad, sharedProps)}
+              </div>
+               {/* Utility Mastery */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Master Utilities</p>
+                {renderNodes(tier4_UtilityMastery, sharedProps)}
+              </div>
+               {/* Ultimate */}
+              <div className="flex flex-col items-center gap-y-2 p-2 border border-dashed border-muted-foreground/20 rounded-lg">
+                 <p className="text-xs text-muted-foreground mb-1">Ultimate</p>
+                {renderNodes(tier4_Ultimate, sharedProps)}
+              </div>
+            </div>
+            {/* No connectors needed below the last tier */}
+          </div>
 
         </CardContent>
         <CardFooter className="mt-6">
-            <p className="text-xs text-muted-foreground text-center w-full">
-                This skill tree layout is a simplified visual representation. A more detailed, interconnected tree UI is planned for a future update.
-            </p>
+          <p className="text-xs text-muted-foreground text-center w-full">
+            Skill connections are implied by prerequisites. Hover for details. A more graphical tree is planned!
+          </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
