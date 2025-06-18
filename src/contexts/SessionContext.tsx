@@ -18,42 +18,45 @@ export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max cash from streak po
 
 export const LEVEL_THRESHOLDS = [
   0,        // Level 1
-  493,      // Level 2 
-  1232,     // Level 3 
-  2463,     // Level 4 
-  3941,     // Level 5 
-  6000,     // Level 6  
-  8374,     // Level 7  
-  11330,    // Level 8  
-  14778,    // Level 9  
-  18719,    // Level 10 
-  24000,    // Level 11 
-  30000,    // Level 12 
-  39000,    // Level 13 
-  48000,    // Level 14 
-  60000,    // Level 15 -> ~100 hrs
-  72000,    // Level 16 
-  87000,    // Level 17 
-  102000,   // Level 18 
-  120000,   // Level 19 
-  138000,   // Level 20 
-  159000,   // Level 21 
-  180000,   // Level 22 
-  201000,   // Level 23 
-  225000,   // Level 24 
-  249000,   // Level 25 
-  276000,   // Level 26 
-  303000,   // Level 27 
-  330000,   // Level 28 
-  360000,   // Level 29 
-  390000,   // Level 30 
-  420000,   // Level 31 
-  450000,   // Level 32 
-  480000,   // Level 33 
-  510000,   // Level 34 
-  540000,   // Level 35 
-  570000,   // Level 36 
-  600000    // Level 37 -> 1000 hrs
+  500,      // Level 2
+  1250,     // Level 3
+  2500,     // Level 4
+  4000,     // Level 5
+  6000,     // Level 6
+  8500,     // Level 7
+  11500,    // Level 8
+  15000,    // Level 9
+  19000,    // Level 10
+  24000,    // Level 11
+  30000,    // Level 12
+  37000,    // Level 13
+  45000,    // Level 14
+  54000,    // Level 15
+  64000,    // Level 16
+  75000,    // Level 17
+  87000,    // Level 18
+  100000,   // Level 19
+  114000,   // Level 20
+  129000,   // Level 21
+  145000,   // Level 22
+  162000,   // Level 23
+  180000,   // Level 24
+  200000,   // Level 25
+  225000,   // Level 26
+  250000,   // Level 27
+  275000,   // Level 28
+  300000,   // Level 29
+  330000,   // Level 30
+  360000,   // Level 31
+  390000,   // Level 32
+  420000,   // Level 33
+  450000,   // Level 34
+  480000,   // Level 35
+  510000,   // Level 36
+  540000,   // Level 37
+  570000,   // Level 38
+  600000,   // Level 39 (Corresponds to ~1000 hours at 10XP/min)
+  // Add more levels if titles exceed this
 ];
 
 
@@ -64,24 +67,24 @@ export const TITLES = [
   "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", // 21-25
   "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", // 26-30
   "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", // 31-35
-  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", //"The Oracle", // 36-39 // Shortened to match thresholds
-  "Apex Scholar" // Level 37 (previously 40 for Oracle, 50 for Apex)
+  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", "Eternal Savant", // 36-39
+  "Apex Scholar" // Level 39 (Matches the last threshold)
 ];
 
 
 export const PREDEFINED_SKINS: Skin[] = [
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png', dataAiHint: 'classic blue study app homepage' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png', dataAiHint: 'classic blue study app homepage', isTheme: false }, // Classic is not a themeClass, it's the :root default
   { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png', dataAiHint: 'dark theme study dashboard', isTheme: true, themeClass: 'dark' },
   { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png', dataAiHint: 'sepia tone timer interface', isTheme: true, themeClass: 'sepia' },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png', dataAiHint: 'forest theme study app' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png', dataAiHint: 'sunset theme study app' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png', dataAiHint: 'galaxy theme study app' },
-  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png', dataAiHint: 'monochrome study app' },
-  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png', dataAiHint: 'ocean theme study app' },
-  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png', dataAiHint: 'neon theme study app' },
-  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png', dataAiHint: 'pastel theme study app' },
-  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png', dataAiHint: 'gold theme study app' },
-  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png', dataAiHint: 'elite theme study app' },
+  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png', dataAiHint: 'forest theme study app', isTheme: true, themeClass: 'theme-forest' },
+  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png', dataAiHint: 'sunset theme study app', isTheme: true, themeClass: 'theme-sunset' },
+  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png', dataAiHint: 'galaxy theme study app', isTheme: true, themeClass: 'theme-galaxy' },
+  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png', dataAiHint: 'monochrome study app', isTheme: true, themeClass: 'theme-mono' },
+  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png', dataAiHint: 'ocean theme study app', isTheme: true, themeClass: 'theme-ocean' },
+  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png', dataAiHint: 'neon theme study app', isTheme: true, themeClass: 'theme-neon' },
+  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png', dataAiHint: 'pastel theme study app', isTheme: true, themeClass: 'theme-pastel' },
+  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png', dataAiHint: 'gold theme study app', isTheme: true, themeClass: 'theme-gold' },
+  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png', dataAiHint: 'elite theme study app', isTheme: true, themeClass: 'theme-elite' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -105,7 +108,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   cash: 1000,
   level: 1,
   title: TITLES[0],
-  ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], // Dark and Sepia are free by default
+  ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'],
   equippedSkinId: 'classic',
   completedChallengeIds: [],
   currentStreak: 0,
@@ -170,7 +173,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'transcendentScholar', name: 'Transcendent Scholar', description: 'Reach Level 25: Transcendent Scholar.', iconName: 'Star', cashReward: 20000, criteria: (p) => p.level >= 25, category: 'Progression' },
   { id: 'levelThirtyLegend', name: 'Galactic Prodigy', description: 'Reach Level 30: Galactic Prodigy.', iconName: 'Package', cashReward: 30000, criteria: (p) => p.level >= 30, category: 'Progression' },
   { id: 'thoughtEmperor', name: 'Thought Emperor', description: 'Reach Level 35: Thought Emperor.', iconName: 'Package', cashReward: 40000, criteria: (p) => p.level >= 35, category: 'Progression' },
-  { id: 'levelFiftyOracle', name: 'Apex Scholar', description: 'Reach Level 37 (Apex Scholar).', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 37, category: 'Progression' },
+  { id: 'levelFiftyOracle', name: 'Apex Scholar', description: 'Reach Level 39 (Apex Scholar).', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 39, category: 'Progression' },
 
   // Collection
   { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.filter(id => !['classic', 'dark_mode', 'sepia_tone'].includes(id)).length >= 1, category: 'Collection' },
@@ -253,6 +256,8 @@ export const ALL_SKILLS: Skill[] = [
 interface SessionContextType {
   sessions: StudySession[];
   addSession: (sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => void;
+  deleteSession: (sessionId: string) => void; // New function
+  addTestSession: () => void; // New function for dev
   clearSessions: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   userProfile: UserProfile;
@@ -310,6 +315,7 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const SessionProvider = ({ children }: { children: ReactNode }) => {
+  const { toast } = useToast();
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
   const [capitalistOffers, setCapitalistOffers] = useState<CapitalistOffer[]>([]);
@@ -317,38 +323,46 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]);
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { toast } = useToast();
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
 
-  // --- Level 0: Pure functions, no internal SessionContext useCallback dependencies ---
-  const applyThemePreference = useCallback((themeClass?: 'dark' | 'sepia' | null) => {
+
+  const applyThemePreference = useCallback((themeClass?: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    root.classList.remove('dark', 'sepia');
+    // Remove all potential theme classes first
+    PREDEFINED_SKINS.forEach(skin => {
+        if (skin.isTheme && skin.themeClass) {
+            root.classList.remove(skin.themeClass);
+        }
+    });
+    root.classList.remove('dark', 'sepia'); // Also remove old hardcoded ones if any conflict
+
     if (themeClass) {
       root.classList.add(themeClass);
     }
   }, []);
 
   const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
-    if (amount <= 0 && type === 'xp') return;
-    if (amount === 0 && type === 'cash') return;
+    if (amount <= 0 && type === 'xp') return; // Don't show for 0 or negative XP
+    if (amount === 0 && type === 'cash') return; // Don't show for 0 cash change (negative cash is fine, e.g. purchases)
+
     const newGain: FloatingGain = { id: crypto.randomUUID(), type, amount, timestamp: Date.now() };
     setFloatingGains(prev => [...prev, newGain]);
     setTimeout(() => setFloatingGains(prev => prev.filter(g => g.id !== newGain.id)), 2500);
   }, []);
 
-  const clearSessions = useCallback(() => setSessions([]), []);
+  const clearSessions = useCallback(() => {
+    setSessions([]);
+    toast({ title: "Session Log Cleared", description: "All study sessions have been removed." });
+  }, [toast]);
+
   const getAllSkills = useCallback(() => ALL_SKILLS, []);
   const getSkinById = useCallback((id: string) => PREDEFINED_SKINS.find(skin => skin.id === id), []);
-  
   const getHabitLogKey = useCallback((habit: Habit, date: Date): string => {
     return habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : `${format(date, 'yyyy')}-W${String(getWeek(date, { weekStartsOn: 1 })).padStart(2, '0')}`;
   }, []);
 
-
-  // --- Level 1: Depend on Level 0 functions and/or simple state setters ---
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
   }, []);
@@ -378,12 +392,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       }
     }));
   }, []);
-  
+
   const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
       updateNotepadData({ [field]: data });
   }, [updateNotepadData]);
 
-  // --- Level 2: Depend on Level 1 functions ---
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
@@ -427,10 +440,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const equippedSkinFromProfile = PREDEFINED_SKINS.find(s => s.id === parsedProfile.equippedSkinId);
       if (equippedSkinFromProfile?.isTheme && equippedSkinFromProfile.themeClass) {
         applyThemePreference(equippedSkinFromProfile.themeClass);
-        localStorage.setItem('themePreference', equippedSkinFromProfile.themeClass);
       } else {
-         applyThemePreference(null);
-         localStorage.setItem('themePreference', 'classic');
+         applyThemePreference(null); // Apply default if classic or no theme class
       }
 
       const storedChallenges = localStorage.getItem('dailyChallenges');
@@ -461,7 +472,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setIsLoaded(true);
     }
   }, [applyThemePreference]);
-  
+
   const isSkillUnlocked = useCallback((skillId: string) => userProfile.unlockedSkillIds.includes(skillId), [userProfile.unlockedSkillIds]);
   const isSkinOwned = useCallback((skinId: string) => userProfile.ownedSkinIds.includes(skinId), [userProfile.ownedSkinIds]);
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
@@ -496,10 +507,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved." });
   }, [updateUserProfile, toast]);
 
+  const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
+    if (featureKey === 'timers' || featureKey === 'skill-tree') return true; // Timers and Skill Tree always unlocked
+    return !!ALL_SKILLS.find(skill => skill.unlocksFeature === featureKey && isSkillUnlocked(skill.id))
+  }, [isSkillUnlocked]);
 
-  // --- Level 3: Depend on Level 2 functions ---
-  const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => !!ALL_SKILLS.find(skill => skill.unlocksFeature === featureKey && isSkillUnlocked(skill.id)), [isSkillUnlocked]);
-  
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
     let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
@@ -566,7 +578,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { can: true };
   }, [userProfile.skillPoints, userProfile.level, isSkillUnlocked]);
 
-  // --- Level 4: Depend on Level 3 functions ---
   const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => {
     if (sessionDetails.durationInSeconds <= 0) { console.warn("Attempted to log session with zero duration."); return; }
     const newSession: StudySession = {
@@ -593,16 +604,27 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const newXp = prevProfile.xp + awardedXp;
         const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
         const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
-        let rewardMessages = [];
-        if (awardedXp > 0) { rewardMessages.push(`${awardedXp} XP`); addFloatingGain('xp', awardedXp); }
-        if (awardedCash > 0) { rewardMessages.push(`$${awardedCash.toLocaleString()}`); addFloatingGain('cash', awardedCash); }
+        if (awardedXp > 0) addFloatingGain('xp', awardedXp);
+        if (awardedCash > 0) addFloatingGain('cash', awardedCash);
+
+        // Consolidate toast messages if both XP and Cash are gained
+        const rewardParts: string[] = [];
+        if (awardedXp > 0) rewardParts.push(`${awardedXp} XP`);
+        if (awardedCash > 0) rewardParts.push(`$${awardedCash.toLocaleString()}`);
+        
         const streakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100;
-        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) { rewardMessages.push(`(${streakBonusPercent.toFixed(0)}% streak bonus!)`); }
+        if (streakBonusPercent > 0 && (awardedXp > 0 || awardedCash > 0)) { rewardParts.push(`(${streakBonusPercent.toFixed(0)}% streak)`); }
+        
         const skillBonusXpPercent = getAppliedBoost('xp') * 100;
-        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardMessages.push(`(${skillBonusXpPercent.toFixed(0)}% skill XP bonus!)`); }
+        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardParts.push(`(${skillBonusXpPercent.toFixed(0)}% skill XP)`); }
+        
         const skillBonusCashPercent = getAppliedBoost('cash') * 100;
-        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardMessages.push(`(${skillBonusCashPercent.toFixed(0)}% skill Cash bonus!)`); }
-        if (rewardMessages.length > 0) { toast({ title: "Session Rewards", description: `Gained: ${rewardMessages.join(', ')}` }); }
+        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardParts.push(`(${skillBonusCashPercent.toFixed(0)}% skill Cash)`); }
+
+        if (rewardParts.length > 0) {
+            toast({ title: "Session Rewards", description: `Gained: ${rewardParts.join(', ')}` });
+        }
+
         return {
           ...prevProfile, xp: newXp, cash: prevProfile.cash + awardedCash, level: newLevel, title: newTitle,
           currentStreak: updatedCurrentStreak, longestStreak: updatedLongestStreak, lastStudyDate: updatedLastStudyDate,
@@ -610,6 +632,24 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         };
       });
   }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked]);
+
+  const addTestSession = useCallback(() => {
+    addSession({
+      type: 'Pomodoro Focus',
+      startTime: Date.now() - (30 * 60 * 1000),
+      durationInSeconds: 30 * 60, // 30 minutes
+      isFullPomodoroCycle: true,
+    });
+    toast({title: "Test Session Added", description: "A 30-minute focus session has been logged."});
+  }, [addSession, toast]);
+
+  const deleteSession = useCallback((sessionId: string) => {
+    const sessionToDelete = sessions.find(s => s.id === sessionId);
+    setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
+    if (sessionToDelete) {
+      toast({ title: "Session Deleted", description: `Session of type "${sessionToDelete.type}" removed.` });
+    }
+  }, [sessions, toast]);
 
   const unlockSkill = useCallback((skillId: string) => {
     const unlockCheck = canUnlockSkill(skillId);
@@ -644,7 +684,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return prevUserProfile;
     });
   }, [capitalistStatsForAchievements, sessions, dailyChallenges, toast, addFloatingGain, isFeatureUnlocked]);
-  
+
   const claimChallengeReward = useCallback((challengeId: string) => {
     setDailyChallenges(prevChallenges => {
         const updatedChallenges = prevChallenges.map(challenge => {
@@ -669,14 +709,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return updatedChallenges;
     });
   }, [toast, checkForLevelUp, addFloatingGain]);
-  
+
   const ensureCapitalistOffers = useCallback(() => {
     const now = Date.now();
     const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
     let offerDurationMultiplier = 1;
     if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { /* No duration change planned for this skill */ }
     if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 * offerDurationMultiplier || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
-      const generateOffers = (): CapitalistOffer[] => { 
+      const generateOffers = (): CapitalistOffer[] => {
         const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
             { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24, completionBonusCash: 1000 },
             { name: "Crypto Gamble", description: "High risk, high reward digital currency.", minInvestmentAmount: 10000, maxInvestmentAmount: 50000, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
@@ -713,17 +753,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let finalCashChange = profit;
     let message = profit >= 0 ? `Investment successful! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
     if (profit >= 0 && offer.completionBonusCash) { finalCashChange += offer.completionBonusCash; message += ` Plus, a completion bonus of $${offer.completionBonusCash.toLocaleString()}!`; }
-    
+
     setUserProfile(prev => {
         const newCash = prev.cash + finalCashChange;
         addFloatingGain('cash', finalCashChange);
         setCapitalistStatsForAchievements(cs => ({ firstInvestmentMade: true, totalProfit: cs.totalProfit + (finalCashChange > 0 ? finalCashChange : 0) }));
         return { ...prev, cash: newCash };
     });
-    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId)); // Remove offer after investment
+    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId));
     return { success: true, message, profit: finalCashChange };
-  }, [capitalistOffers, userProfile.cash, isSkillUnlocked, addFloatingGain, toast]); //Removed toast from here as it is handled in CapitalistPage
-  
+  }, [capitalistOffers, userProfile.cash, isSkillUnlocked, addFloatingGain]);
+
   const buySkin = useCallback((skinId: string) => {
     const skin = getSkinById(skinId);
     if (!skin) { toast({ title: "Error", description: "Skin not found.", variant: "destructive" }); return false; }
@@ -743,19 +783,21 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const skinToEquip = getSkinById(skinId);
     if (!skinToEquip) return;
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
-    if (skinToEquip.isTheme && skinToEquip.themeClass) { applyThemePreference(skinToEquip.themeClass); localStorage.setItem('themePreference', skinToEquip.themeClass); }
-    else { applyThemePreference(null); localStorage.setItem('themePreference', 'classic'); }
+    if (skinToEquip.isTheme && skinToEquip.themeClass) {
+      applyThemePreference(skinToEquip.themeClass);
+    } else {
+      applyThemePreference(null); // Apply default if classic or no theme class
+    }
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.` });
   }, [isSkinOwned, getSkinById, toast, applyThemePreference]);
 
-  // --- Notepad Functions ---
   const updateSessionDescription = useCallback((sessionId: string, description: string) => {
     setSessions(prevSessions => prevSessions.map(session => session.id === sessionId ? { ...session, description } : session));
   }, []);
   const addNotepadNote = useCallback((note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => {
     const newNote: NotepadNote = { ...note, id: crypto.randomUUID(), createdAt: Date.now(), lastModified: Date.now() };
     updateNotepadField('notes', [newNote, ...(userProfile.notepadData.notes || [])]);
-    if(isFeatureUnlocked('notepad')) updateChallengeProgress('notepadEntry', 1);
+    if(isFeatureUnlocked('notepad') && isFeatureUnlocked('challenges')) updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Note Added", description: `"${note.title}" has been saved.` });
   }, [userProfile.notepadData.notes, updateNotepadField, updateChallengeProgress, toast, isFeatureUnlocked]);
   const updateNotepadNote = useCallback((updatedNote: NotepadNote) => {
@@ -776,7 +818,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
     const newConcept: RevisionConcept = { id: crypto.randomUUID(), name, learnedDate: learnedDateStr, lastRevisedDate: learnedDateStr, nextRevisionDate: calculateNextRevDate(learnedDateStr, 0), revisionStage: 0 };
     updateNotepadField('revisionConcepts', [...(userProfile.notepadData.revisionConcepts || []), newConcept]);
-    if(isFeatureUnlocked('notepad')) updateChallengeProgress('notepadEntry', 1);
+    if(isFeatureUnlocked('notepad') && isFeatureUnlocked('challenges')) updateChallengeProgress('notepadEntry', 1);
     toast({ title: "Concept Added", description: `"${name}" added for revision.`});
   }, [userProfile.notepadData.revisionConcepts, isSkillUnlocked, updateNotepadField, updateChallengeProgress, toast, isFeatureUnlocked]);
   const markConceptRevised = useCallback((conceptId: string) => {
@@ -821,45 +863,40 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         let habitCompletedForChallenge = false;
         const updatedHabits = prevProfile.notepadData.habits.map(habit => {
             if (habit.id === habitId) {
-                const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd'); // Use daily key for log entries even for weekly habits to mark specific days
+                const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd');
                 const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
-                let newCompletedStatus = completed;
                 let newCount = oldLogEntry.count || 0;
 
                 if (completed) newCount = (oldLogEntry.count || 0) + (countIncrement || 1);
                 else newCount = Math.max(0, (oldLogEntry.count || 0) - (countIncrement || 1));
-                
-                // For daily habits, simple completion status
-                if (habit.frequency === 'daily') newCompletedStatus = newCount > 0;
-                
-                const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCount > 0, count: newCount }; // Log entry completion based on count for that day
+
+                const newLogEntry: HabitLogEntry = { ...oldLogEntry, completed: newCount > 0, count: newCount };
                 const newLog = { ...habit.log, [logKey]: newLogEntry };
-                
+
                 let currentStreak = habit.currentStreak, longestStreak = habit.longestStreak;
 
                 if (habit.frequency === 'daily') {
-                    if (newCompletedStatus) {
+                    if (newLogEntry.completed) {
                         const yesterdayKey = format(subDays(date, 1), 'yyyy-MM-dd');
                         if (newLog[yesterdayKey]?.completed) currentStreak++; else currentStreak = 1;
                         if (currentStreak > longestStreak) longestStreak = currentStreak;
                         habitCompletedForChallenge = true;
-                    } else { if (logKey === format(date, 'yyyy-MM-dd') && !newCompletedStatus && isToday(date)) currentStreak = 0; }
+                    } else { if (logKey === format(date, 'yyyy-MM-dd') && !newLogEntry.completed && isToday(date)) currentStreak = 0; }
                 } else if (habit.frequency === 'weekly') {
-                   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
                    const completionsThisWeek = getHabitCompletionsForWeek({...habit, log: newLog}, date);
                    const isWeekGoalMet = completionsThisWeek >= (habit.targetCompletions || 1);
-                   
-                   const currentWeekKey = getHabitLogKey(habit, date); // e.g. 2023-W35
+
+                   const currentWeekKey = getHabitLogKey(habit, date);
                    const prevWeekKey = getHabitLogKey(habit, subDays(date, 7));
-                   
+
                    const weeklyLogEntry = habit.log[currentWeekKey] || {date: currentWeekKey, completed: false};
 
-                   if (isWeekGoalMet && !weeklyLogEntry.completed) { // Week goal newly met
+                   if (isWeekGoalMet && !weeklyLogEntry.completed) {
                        if (habit.log[prevWeekKey]?.completed) currentStreak++; else currentStreak = 1;
                        if (currentStreak > longestStreak) longestStreak = currentStreak;
                        newLog[currentWeekKey] = {...weeklyLogEntry, completed: true};
-                   } else if (!isWeekGoalMet && weeklyLogEntry.completed) { // Week goal no longer met
-                       currentStreak = 0; // Or adjust based on your logic for "losing" a weekly streak
+                   } else if (!isWeekGoalMet && weeklyLogEntry.completed) {
+                       currentStreak = 0;
                        newLog[currentWeekKey] = {...weeklyLogEntry, completed: false};
                    }
                 }
@@ -871,7 +908,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return { ...prevProfile, notepadData: { ...(prevProfile.notepadData), habits: updatedHabits } };
     });
     toast({ title: "Habit Updated", description: "Your progress has been logged." });
-  }, [toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey, isFeatureUnlocked, setUserProfile]); // Added setUserProfile
+  }, [toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey, isFeatureUnlocked, setUserProfile]);
   const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
     const newEvent: NotepadCountdownEvent = { ...eventData, id: crypto.randomUUID(), createdAt: Date.now() };
     updateNotepadField('countdownEvents', [...(userProfile.notepadData.countdownEvents || []), newEvent].sort((a,b) => parseISO(a.targetDate).getTime() - parseISO(b.targetDate).getTime()));
@@ -888,11 +925,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
   const updateNotepadEisenhowerMatrix = useCallback((matrix: UserProfile['notepadData']['eisenhowerMatrix']) => {
     updateNotepadData({ eisenhowerMatrix: matrix });
-    // No toast for this as it's usually part of a drag-drop interaction.
   }, [updateNotepadData]);
 
 
-  // useEffects
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
@@ -908,7 +943,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         toast({ title: "Daily Login Bonus!", description: `Welcome back! You received $${loginBonusAwarded.toLocaleString()}. Login Streak: ${currentLoginStreak} day(s).` });
         addFloatingGain('cash', loginBonusAwarded);
     }
-  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain, setUserProfile]); // Added setUserProfile
+  }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain, setUserProfile]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -918,8 +953,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
         if (lastOfferGenerationTime) localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
         else localStorage.removeItem('lastOfferGenerationTime');
-        const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
-        localStorage.setItem('themePreference', (equippedSkin?.isTheme && equippedSkin.themeClass) ? equippedSkin.themeClass : 'classic');
+
+        // Persist theme preference separately from equipped skin ID, as equipSkin handles application
+        const equippedSkinInfo = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
+        if (equippedSkinInfo?.isTheme && equippedSkinInfo.themeClass) {
+            localStorage.setItem('themePreference', equippedSkinInfo.themeClass);
+        } else {
+            localStorage.setItem('themePreference', 'classic'); // 'classic' indicates no specific theme class / use :root defaults
+        }
+
         localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
         if (lastChallengeResetDate) localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
         localStorage.setItem('capitalistStatsForAchievements', JSON.stringify(capitalistStatsForAchievements));
@@ -936,7 +978,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SessionContext.Provider value={{
-      sessions, addSession, clearSessions, updateSessionDescription,
+      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription,
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,

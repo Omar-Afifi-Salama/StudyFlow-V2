@@ -2,7 +2,7 @@
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'; // Added CardFooter
 import { Button } from '@/components/ui/button';
 import * as LucideIcons from 'lucide-react';
 import type { Skill } from '@/types';
@@ -33,7 +33,7 @@ export default function SkillTreePageClient() {
     const { can, reason } = canUnlockSkill(skill.id);
 
     return (
-      <Card 
+      <Card
         className={cn(
           "shadow-md hover:shadow-lg transition-shadow card-animated",
           isUnlocked && "border-primary bg-primary/10",
@@ -72,10 +72,10 @@ export default function SkillTreePageClient() {
               <Tooltip open={!can && reason ? undefined : false}>
                 <TooltipTrigger asChild>
                   {/* The Button needs to be wrapped for Tooltip when disabled */}
-                  <span tabIndex={0} className={cn("w-full", !can && "cursor-not-allowed")}> 
-                    <Button 
-                      onClick={() => unlockSkill(skill.id)} 
-                      disabled={!can} 
+                  <span tabIndex={0} className={cn("w-full", !can && "cursor-not-allowed")}>
+                    <Button
+                      onClick={() => unlockSkill(skill.id)}
+                      disabled={!can}
                       className="w-full btn-animated"
                     >
                       <LucideIcons.Lock className="mr-2 h-4 w-4" /> Unlock
