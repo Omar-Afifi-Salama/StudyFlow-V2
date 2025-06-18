@@ -86,7 +86,7 @@ export default function Header() {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p>
+                    <p>{item.label} <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey ? item.hotkey.toUpperCase() : ''}</span></p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
