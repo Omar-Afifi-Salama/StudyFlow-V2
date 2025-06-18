@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Gem, Zap } from 'lucide-react'; // Added Zap
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Flame, MoreVertical, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -47,7 +47,11 @@ export default function Header() {
   const mainBarItemHrefs = ['/', '/skill-tree'];
   const mainNavItems: NavItem[] = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
   
-  const dropdownNavItems: NavItem[] = allPossibleNavItems.filter(item => !mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
+  const dropdownNavItems: NavItem[] = allPossibleNavItems.filter(item => {
+    const isMainItem = mainBarItemHrefs.includes(item.href);
+    const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
+    return !isMainItem && isUnlockedOrAlwaysVisible;
+  });
 
 
   allPossibleNavItems.forEach(item => {
@@ -158,13 +162,12 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* User Stats Block - aligned to the far right */}
-        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
+        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1"> {/* User Stats Block */}
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
                  <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                    <Zap className="h-4 w-4 text-yellow-400" /> {/* Changed to Zap icon */}
+                    <Zap className="h-4 w-4 text-yellow-400" />
                     <span>{userProfile.skillPoints || 0}</span>
                   </div>
               </TooltipTrigger>
@@ -231,4 +234,3 @@ export default function Header() {
     </header>
   );
 }
-
