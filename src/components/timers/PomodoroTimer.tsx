@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
-import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
+import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, ACTUAL_LEVEL_THRESHOLDS as LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { usePomodoro, type PomodoroMode } from '@/hooks/use-pomodoro';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';

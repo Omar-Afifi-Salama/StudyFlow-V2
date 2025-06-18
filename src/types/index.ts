@@ -42,7 +42,7 @@ export interface Skin {
   imageUrl: string;
   dataAiHint: string;
   isTheme?: boolean;
-  themeClass?: 'dark' | 'sepia';
+  themeClass?: string; // Changed from specific 'dark' | 'sepia' to string
 }
 
 export interface CapitalistOffer {
@@ -132,19 +132,16 @@ export interface NotepadCountdownEvent {
 }
 
 export interface EisenhowerMatrixQuadrant {
-  // For now, these will store IDs of tasks or goals
-  // In a future update, these could be enriched objects
-  taskIds: string[]; 
+  taskIds: string[];
   goalIds: string[];
 }
 
 export interface NotepadEisenhowerMatrix {
-  urgentImportant: string[]; // Store item IDs (task or goal)
+  urgentImportant: string[];
   notUrgentImportant: string[];
   urgentNotImportant: string[];
   notUrgentNotImportant: string[];
 }
-
 
 export interface NotepadData {
   tasks: NotepadTask[];
@@ -154,9 +151,8 @@ export interface NotepadData {
   revisionConcepts: RevisionConcept[];
   habits: Habit[];
   countdownEvents: NotepadCountdownEvent[];
-  eisenhowerMatrix: NotepadEisenhowerMatrix; // Added
+  eisenhowerMatrix: NotepadEisenhowerMatrix;
 }
-
 
 export interface DailyChallenge {
   id: string;
@@ -200,30 +196,41 @@ export interface AmbientSound {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-export type FeatureKey = 
-  | 'stats' 
-  | 'ambiance' 
-  | 'notepad' 
-  | 'challenges' 
-  | 'shop' 
-  | 'capitalist' 
-  | 'countdown' 
-  | 'achievements' 
-  | 'about';
+export type FeatureKey =
+  | 'timers' // Always available
+  | 'skill-tree' // Always available
+  | 'stats'
+  | 'ambiance'
+  | 'notepad' // Unlocks the main Notepad page
+  | 'challenges'
+  | 'shop'
+  | 'capitalist'
+  | 'countdown'
+  | 'achievements'
+  | 'about'
+  | 'notepadChecklist'
+  | 'notepadNotes'
+  | 'notepadGoals'
+  | 'notepadLinks'
+  | 'notepadRevision'
+  | 'notepadHabits'
+  | 'notepadEvents'
+  | 'notepadEisenhower';
 
 export interface Skill {
   id: string;
   name: string;
   description: string;
-  cost: number; 
-  iconName: string; 
+  cost: number;
+  iconName: string;
   prerequisiteLevel?: number;
   prerequisiteSkillIds?: string[];
-  unlocksFeature?: FeatureKey; 
-  xpBoostPercent?: number; 
-  cashBoostPercent?: number; 
+  unlocksFeature?: FeatureKey;
+  xpBoostPercent?: number;
+  cashBoostPercent?: number;
   shopDiscountPercent?: number;
-  otherEffect?: string; 
+  otherEffect?: string;
+  category?: 'Core Feature' | 'Notepad Feature' | 'Passive Boost' | 'Utility';
 }
 
 export interface FloatingGain {

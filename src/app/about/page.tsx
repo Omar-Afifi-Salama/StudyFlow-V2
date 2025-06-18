@@ -1,10 +1,11 @@
 
 "use client";
 
-import { useSessions } from '@/contexts/SessionContext'; // Import for feature check
+import { useSessions } from '@/contexts/SessionContext'; 
 import AboutPageContent from '@/components/about/AboutPage';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Info } from 'lucide-react';
 
 export default function AboutRoute() {
   const { isFeatureUnlocked } = useSessions();
@@ -12,6 +13,7 @@ export default function AboutRoute() {
   if (!isFeatureUnlocked('about')) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <Info className="h-16 w-16 text-muted-foreground mb-4" />
         <h1 className="text-2xl font-semibold mb-4">About Page Locked</h1>
         <p className="text-muted-foreground mb-6">
           Unlock this feature through the Skill Tree to learn more about StudyFlow.

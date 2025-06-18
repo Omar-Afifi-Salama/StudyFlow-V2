@@ -2,37 +2,37 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, ShoppingBag, Briefcase, NotebookText, Info, UserCircle, ShieldCheck, CalendarCheck, DollarSign, Flame, Sparkles, Wind, Timer as CountdownIcon, Sun, Moon, Palette, MoreVertical, Network, Settings, HelpCircle, Star } from 'lucide-react'; // Added Star
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Star, DollarSign, Flame, MoreVertical, Sparkles, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, Grid as GridLucide } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, PREDEFINED_SKINS, ALL_SKILLS } from '@/contexts/SessionContext';
+import { useSessions, ACTUAL_LEVEL_THRESHOLDS as LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { formatTime } from '@/lib/utils';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
   hotkey: string;
-  featureKey?: FeatureKey;
-  alwaysVisible?: boolean;
+  featureKey: FeatureKey;
+  alwaysVisible?: boolean; // For Timer and Skill Tree
 }
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, equipSkin, isFeatureUnlocked } = useSessions();
+  const { userProfile, isFeatureUnlocked } = useSessions();
 
   const allPossibleNavItems: NavItem[] = [
-    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', alwaysVisible: true },
-    { href: '/skill-tree', label: 'Skill Tree', icon: <Network className="h-5 w-5" />, hotkey: 'k', alwaysVisible: true },
+    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
+    { href: '/skill-tree', label: 'Skill Tree', icon: <Network className="h-5 w-5" />, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
     { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's', featureKey: 'stats' },
     { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm', featureKey: 'ambiance' },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n', featureKey: 'notepad' },
@@ -44,10 +44,9 @@ export default function Header() {
     { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a', featureKey: 'about' },
   ];
 
-  const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey)) );
+  const visibleNavItems = allPossibleNavItems.filter(item => item.alwaysVisible || isFeatureUnlocked(item.featureKey));
 
-  // Define which items always stay in the main bar vs. dropdown
-  const mainBarItemHrefs = ['/', '/skill-tree']; 
+  const mainBarItemHrefs = ['/', '/skill-tree'];
   const mainNavItems: NavItem[] = visibleNavItems.filter(item => mainBarItemHrefs.includes(item.href));
   const dropdownNavItems: NavItem[] = visibleNavItems.filter(item => !mainBarItemHrefs.includes(item.href));
 
@@ -55,21 +54,17 @@ export default function Header() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useHotkeys(item.hotkey, (e) => {
       e.preventDefault();
-      if (item.alwaysVisible || (item.featureKey && isFeatureUnlocked(item.featureKey))) {
+      if (item.alwaysVisible || isFeatureUnlocked(item.featureKey)) {
         router.push(item.href);
       }
     }, { preventDefault: true }, [isFeatureUnlocked, router, item.alwaysVisible, item.featureKey, item.href]);
   });
 
-
   const currentLevelXpStart = LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
-  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length
-                             ? LEVEL_THRESHOLDS[userProfile.level]
-                             : userProfile.xp;
+  const nextLevelXpTarget = userProfile.level < LEVEL_THRESHOLDS.length ? LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
-  const xpForNextLevelRaw = nextLevelXpTarget - currentLevelXpStart;
-  
-  const xpProgressPercent = xpForNextLevelRaw > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelRaw) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
+  const xpForNextLevelSegment = nextLevelXpTarget - currentLevelXpStart;
+  const xpProgressPercent = xpForNextLevelSegment > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelSegment) * 100)) : (userProfile.level >= LEVEL_THRESHOLDS.length ? 100 : 0);
   const userTitle = TITLES[userProfile.level - 1] || TITLES[TITLES.length - 1];
 
   return (
@@ -83,7 +78,7 @@ export default function Header() {
         </Link>
 
         <div className="flex-1 min-w-0">
-          <nav className="flex items-center space-x-1 overflow-x-auto pb-2 -mb-2">
+          <nav className="flex items-center space-x-1">
             {mainNavItems.map((item) => (
               <TooltipProvider key={item.href} delayDuration={300}>
                 <Tooltip>
@@ -108,11 +103,7 @@ export default function Header() {
                       {(() => {
                         const hotkeyVal = item?.hotkey;
                         if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                          return (
-                            <span className="text-xs p-1 bg-muted rounded-sm ml-1">
-                              {hotkeyVal.toUpperCase()}
-                            </span>
-                          );
+                          return <span className="text-xs p-1 bg-muted rounded-sm ml-1">{hotkeyVal.toUpperCase()}</span>;
                         }
                         return null;
                       })()}
@@ -148,11 +139,7 @@ export default function Header() {
                         {(() => {
                             const hotkeyVal = item?.hotkey;
                             if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                              return (
-                                <span className="text-xs p-1 bg-muted rounded-sm ml-auto">
-                                  {hotkeyVal.toUpperCase()}
-                                </span>
-                              );
+                              return <span className="text-xs p-1 bg-muted rounded-sm ml-auto">{hotkeyVal.toUpperCase()}</span>;
                             }
                             return null;
                           })()}
@@ -165,46 +152,44 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center space-x-2 md:space-x-3 ml-auto pl-1">
-          <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md">
-            <Star className="h-4 w-4 text-yellow-400" /> 
-            <span>{userProfile.skillPoints || 0}</span>
-          </div>
-          <TooltipProvider>
+        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
+          <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center space-x-1 text-xs cursor-default bg-muted/50 px-2 py-1 rounded-md">
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
-                  <span>Lvl {userProfile.level}</span>
-                </div>
+                 <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
+                    <Star className="h-4 w-4 text-yellow-400" />
+                    <span>{userProfile.skillPoints || 0}</span>
+                  </div>
               </TooltipTrigger>
-              <TooltipContent className="p-0">
-                <ScrollArea className="h-[250px] w-72 p-2 bg-popover">
-                    <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
-                    {TITLES.map((title, index) => {
-                        const levelReq = index + 1;
-                        const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
-                        let totalHoursForLevel = '0.0';
-                        if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) {
-                            totalHoursForLevel = (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1);
-                        }
-
-                        return (
-                            <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground bg-muted/50'}`}>
-                                <p>{title}</p>
-                                <p className="text-muted-foreground text-[0.7rem]">
-                                  Requires: Level {levelReq}
-                                  (Approx. {xpReq.toLocaleString()} XP / {totalHoursForLevel} hrs total focus)
-                                </p>
-                            </div>
-                        );
-                    })}
-                </ScrollArea>
-              </TooltipContent>
+              <TooltipContent side="bottom"><p>Skill Points</p></TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
-           <TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="flex items-center space-x-1.5 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-pointer h-auto btn-animated">
+                <ShieldCheck className="h-4 w-4 text-accent" />
+                <span className="text-accent font-medium text-xs">{userTitle}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-3">
+                <div className="space-y-1">
+                    <p className="text-sm font-semibold">Level {userProfile.level}: {userTitle}</p>
+                    <Progress value={xpProgressPercent} className="h-1.5" />
+                    <p className="text-xs text-muted-foreground">
+                        {xpIntoCurrentLevel.toLocaleString()} / {xpForNextLevelSegment > 0 ? xpForNextLevelSegment.toLocaleString() : userProfile.xp.toLocaleString()} XP
+                    </p>
+                    {userProfile.level < LEVEL_THRESHOLDS.length && xpForNextLevelSegment > 0 && (
+                        <p className="text-xs text-primary">
+                            Approx. {formatTime(((LEVEL_THRESHOLDS[userProfile.level] - userProfile.xp) / (XP_PER_MINUTE_FOCUS || 1)) * 60, true)} focus to next level
+                        </p>
+                    )}
+                </div>
+            </PopoverContent>
+          </Popover>
+
+
+           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center space-x-1 text-xs cursor-default bg-muted/50 px-2 py-1 rounded-md">
@@ -212,53 +197,25 @@ export default function Header() {
                   <span>{userProfile.currentStreak}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>Current Study Streak: {userProfile.currentStreak} days</p>
-                <p>Longest Study Streak: {userProfile.longestStreak} days</p>
+              <TooltipContent side="bottom">
+                <p>Study Streak: {userProfile.currentStreak} days</p>
+                <p>Longest: {userProfile.longestStreak} days</p>
                 {userProfile.currentStreak > 0 && <p>Bonus: +{(Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0)}% XP/Cash</p>}
-                 <p className="mt-1">Daily Login Streak: {userProfile.dailyLoginStreak} days</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
-          <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md">
-            <DollarSign className="h-4 w-4 text-green-500" />
-            <span>{userProfile.cash.toLocaleString()}</span>
-          </div>
-
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" className="hidden md:flex items-center space-x-1 text-xs bg-accent/20 px-2 py-1 rounded-md cursor-pointer btn-animated">
-                        <ShieldCheck className="h-4 w-4 text-accent" />
-                        <span className="text-accent font-medium">{userTitle}</span>
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-0">
-                    <ScrollArea className="h-[250px] p-2 bg-popover"> {/* Added bg-popover */}
-                        <div className="text-sm font-medium mb-2 px-2 sticky top-0 bg-popover py-1 z-10">All Titles</div>
-                        {TITLES.map((title, index) => {
-                            const levelReq = index + 1;
-                            const xpReq = LEVEL_THRESHOLDS[index] ?? (index > 0 ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length-1] : 0) ;
-                            let totalHoursForLevel = '0.0';
-                             if (XP_PER_MINUTE_FOCUS > 0 && xpReq > 0) { // Ensure XP_PER_MINUTE_FOCUS is positive to avoid division by zero or negative results
-                                totalHoursForLevel = (xpReq / (XP_PER_MINUTE_FOCUS * 60)).toFixed(1);
-                            } else if (xpReq === 0) { // For level 1 where XP req is 0
-                                totalHoursForLevel = '0.0';
-                            }
-
-                            return (
-                                <div key={title} className={`p-2 rounded-md text-xs mb-1 ${userProfile.level >= levelReq ? 'bg-primary/20 text-primary-foreground font-semibold' : 'text-foreground bg-muted/50'}`}>
-                                    <p>{title}</p>
-                                    <p className="text-muted-foreground text-[0.7rem]">
-                                      Requires: Level {levelReq}
-                                      (Approx. {xpReq.toLocaleString()} XP / {totalHoursForLevel} hrs total focus)
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </ScrollArea>
-                </PopoverContent>
-            </Popover>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                  <span>{userProfile.cash.toLocaleString()}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p>Cash Balance</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </header>

@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
-import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
+import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, ACTUAL_LEVEL_THRESHOLDS as LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { useStopwatch } from '@/hooks/use-stopwatch';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';

@@ -4,6 +4,7 @@ import { useSessions } from '@/contexts/SessionContext';
 import AchievementsPageClient from '@/components/achievements/AchievementsPageClient';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Award } from 'lucide-react';
 
 export default function AchievementsRoute() {
   const { isFeatureUnlocked } = useSessions();
@@ -11,6 +12,7 @@ export default function AchievementsRoute() {
   if (!isFeatureUnlocked('achievements')) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <Award className="h-16 w-16 text-muted-foreground mb-4" />
         <h1 className="text-2xl font-semibold mb-4">Achievements Locked</h1>
         <p className="text-muted-foreground mb-6">
           Unlock this feature through the Skill Tree to view your accomplishments.

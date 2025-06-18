@@ -1,22 +1,19 @@
 
 "use client"
 
-// Inspired by react-hot-toast library
 import * as React from "react"
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
-
-const TOAST_LIMIT = 5 // Increased from 3
-const TOAST_REMOVE_DELAY = 5000 
+const TOAST_LIMIT = 5
+const TOAST_REMOVE_DELAY = 4000 // Reduced delay slightly
+const TOAST_STAGGER_DELAY = 250; // Delay between showing multiple toasts
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  icon?: React.ReactNode; // Added icon
 }
 
 const actionTypes = {
@@ -58,10 +55,13 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const toastQueue: Array<Omit<ToasterToast, "id">> = [];
+let isProcessingQueue = false;
+
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    clearTimeout(toastTimeouts.get(toastId)); // Clear existing timeout if any
+    clearTimeout(toastTimeouts.get(toastId)!);
   }
 
   const timeout = setTimeout(() => {
@@ -93,9 +93,6 @@ export const reducer = (state: State, action: Action): State => {
 
     case "DISMISS_TOAST": {
       const { toastId } = action
-
-      // If toastId is provided, dismiss that specific toast.
-      // If not, dismiss all toasts.
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -103,25 +100,18 @@ export const reducer = (state: State, action: Action): State => {
           addToRemoveQueue(toast.id)
         })
       }
-
       return {
         ...state,
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false, // Trigger exit animation
-              }
+            ? { ...t, open: false }
             : t
         ),
       }
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        }
+        return { ...state, toasts: [] }
       }
       return {
         ...state,
@@ -131,7 +121,6 @@ export const reducer = (state: State, action: Action): State => {
 }
 
 const listeners: Array<(state: State) => void> = []
-
 let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
@@ -141,40 +130,46 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type Toast = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
-  const id = genId()
-
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
-    },
-  })
-
-  // Automatically dismiss after a delay
-  addToRemoveQueue(id);
-
-
-  return {
-    id: id,
-    dismiss,
-    update,
+async function processToastQueue() {
+  if (isProcessingQueue || toastQueue.length === 0) {
+    return;
   }
+  isProcessingQueue = true;
+
+  const toastProps = toastQueue.shift();
+  if (toastProps) {
+    const id = genId();
+    const update = (props: ToasterToast) => dispatch({ type: "UPDATE_TOAST", toast: { ...props, id } });
+    const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
+
+    dispatch({
+      type: "ADD_TOAST",
+      toast: {
+        ...toastProps,
+        id,
+        open: true,
+        onOpenChange: (open) => { if (!open) dismiss(); },
+      },
+    });
+    addToRemoveQueue(id);
+  }
+  
+  await new Promise(resolve => setTimeout(resolve, TOAST_STAGGER_DELAY));
+  isProcessingQueue = false;
+  processToastQueue(); // Process next in queue
 }
+
+
+function toast(props: Toast) {
+  toastQueue.push(props);
+  processToastQueue();
+  // We can't return dismiss/update reliably here as the toast might not have been dispatched yet.
+  // For simplicity, we'll omit returning them from the direct toast() call.
+  // Advanced usage requiring update/dismiss can be handled differently if needed.
+}
+
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

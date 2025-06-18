@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from '@/contexts/SessionContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Footer from '@/components/layout/Footer';
-import FloatingGainIndicator from '@/components/FloatingGainIndicator'; // New import
+import FloatingGainIndicator from '@/components/FloatingGainIndicator';
 
 export const metadata: Metadata = {
   title: 'StudyFlow',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#E5F1FC', // Default theme color, will be overridden by dark/sepia if active
+  themeColor: '#E5F1FC',
 };
 
 export default function RootLayout({
@@ -37,7 +37,7 @@ export default function RootLayout({
           </AppLayout>
           <Footer />
           <Toaster />
-          <FloatingGainIndicator /> {/* Added FloatingGainIndicator */}
+          <FloatingGainIndicator />
         </SessionProvider>
       </body>
     </html>
