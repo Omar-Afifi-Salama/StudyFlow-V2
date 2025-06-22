@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings } from '@/types';
+import type { StudySession, UserProfile, Skin, Business, BusinessType, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
@@ -84,6 +84,13 @@ const DEFAULT_STOPWATCH_STATE: StopwatchState = {
     sessionStartTime: 0,
 };
 
+const DEFAULT_BUSINESSES: Record<BusinessType, Business> = {
+  startup: { id: 'startup', name: 'Tech Startup', description: 'High-risk, high-reward venture. Can boom or bust.', gimmick: 'Volatility', level: 0, unlocked: false, unlockCost: 20000, upgradeCost: 15000, baseIncome: 500, lastCollected: 0, volatility: 0.4, bonusChance: 0.1, bonusMultiplier: 5 },
+  farm: { id: 'farm', name: 'Organic Farm', description: 'Reliable income, but subject to occasional bad harvests.', gimmick: 'Seasons', level: 0, unlocked: false, unlockCost: 10000, upgradeCost: 7500, baseIncome: 300, lastCollected: 0, lowYieldMultiplier: 0.25 },
+  mine: { id: 'mine', name: 'Crystal Mine', description: 'Starts with high returns that deplete over time. Upgrading finds new veins.', gimmick: 'Depletion', level: 0, unlocked: false, unlockCost: 50000, upgradeCost: 40000, baseIncome: 1200, lastCollected: 0, currentIncome: 1200, depletionRate: 0.02 },
+  industry: { id: 'industry', name: 'Factory', description: 'Steady, high output but requires hourly maintenance fees to operate.', gimmick: 'Maintenance', level: 0, unlocked: false, unlockCost: 100000, upgradeCost: 75000, baseIncome: 2500, lastCollected: 0, maintenanceCost: 250 },
+};
+
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0, cash: 1000, level: 1, title: TITLES[0],
   ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], equippedSkinId: 'classic',
@@ -91,6 +98,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], 
+  businesses: DEFAULT_BUSINESSES,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -149,10 +157,9 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 10 daily challenges in total.', iconName: 'Gift', cashReward: 2000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 10, category: 'Streaks & Challenges' },
   { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 25 daily challenges in total.', iconName: 'Edit', cashReward: 5000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 25, category: 'Streaks & Challenges' },
   { id: 'challengeLegend', name: 'Challenge Legend', description: 'Complete 50 daily challenges in total.', iconName: 'Edit', cashReward: 10000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 50, category: 'Streaks & Challenges' },
-  { id: 'capitalistInitiate', name: 'Capitalist Initiate', description: 'Make your first investment.', iconName: 'TrendingUp', cashReward: 1000, criteria: (p,s,c,inv) => inv.firstInvestmentMade, category: 'Capitalist' },
-  { id: 'profitPioneer', name: 'Profit Pioneer', description: 'Earn a total of $10,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 1500, criteria: (p,s,c,inv) => inv.totalProfit >= 10000, category: 'Capitalist' },
-  { id: 'investmentGuru', name: 'Investment Guru', description: 'Earn a total of $50,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 7000, criteria: (p,s,c,inv) => inv.totalProfit >= 50000, category: 'Capitalist' },
-  { id: 'marketMagnate', name: 'Market Magnate', description: 'Earn a total of $250,000 profit from Capitalist Corner.', iconName: 'DollarSign', cashReward: 20000, criteria: (p,s,c,inv) => inv.totalProfit >= 250000, category: 'Capitalist' },
+  { id: 'capitalistInitiate', name: 'Capitalist Initiate', description: 'Unlock your first business.', iconName: 'TrendingUp', cashReward: 1000, criteria: (p) => Object.values(p.businesses).some(b => b.unlocked), category: 'Capitalist' },
+  { id: 'businessMogul', name: 'Business Mogul', description: 'Unlock all 4 businesses.', iconName: 'Briefcase', cashReward: 10000, criteria: (p) => Object.values(p.businesses).every(b => b.unlocked), category: 'Capitalist' },
+  { id: 'level10Tycoon', name: 'Level 10 Tycoon', description: 'Upgrade any business to level 10.', iconName: 'ArrowUpCircle', cashReward: 5000, criteria: (p) => Object.values(p.businesses).some(b => b.level >= 10), category: 'Capitalist' },
   { id: 'cashCollector', name: 'Cash Collector', description: 'Accumulate $50,000 cash in total.', iconName: 'TrendingDown', cashReward: 2500, criteria: (p) => p.cash >= 50000, category: 'Capitalist' },
   { id: 'wealthyScholar', name: 'Wealthy Scholar', description: 'Accumulate $250,000 cash in total.', iconName: 'TrendingDown', cashReward: 10000, criteria: (p) => p.cash >= 250000, category: 'Capitalist' },
   { id: 'studyTycoon', name: 'Study Tycoon', description: 'Accumulate $1,000,000 cash in total.', iconName: 'TrendingDown', cashReward: 50000, criteria: (p) => p.cash >= 1000000, category: 'Capitalist' },
@@ -167,7 +174,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'dailyDiscipliner', name: 'Daily Discipliner', description: 'Maintain a 7-day streak on any daily habit.', iconName: 'Repeat', cashReward: 1500, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'daily' && h.currentStreak >= 7), category: 'Habits' },
   { id: 'weeklyWarrior', name: 'Weekly Warrior', description: 'Maintain a 4-week streak on any weekly habit.', iconName: 'Repeat', cashReward: 2000, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'weekly' && h.currentStreak >= 4), category: 'Habits' },
   { id: 'habitualAchiever', name: 'Habitual Achiever', description: 'Complete 50 habit instances in total.', iconName: 'ListChecks', cashReward: 3000, criteria: (p) => (p.notepadData.habits?.reduce((sum, hab) => sum + Object.values(hab.log).filter(l => l.completed).length, 0) || 0) >= 50, category: 'Habits'},
-  { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s,c,inv) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1, category: 'General' },
+  { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Award', cashReward: 100000, criteria: (p,s) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length -1, category: 'General' },
 ];
 
 export const ALL_SKILLS: Skill[] = [
@@ -223,7 +230,7 @@ export const ALL_SKILLS: Skill[] = [
 ];
 
 const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; 
-const defaultAchievementPayload: AchievementCriteriaInvestmentPayload = { firstInvestmentMade: false, totalProfit: 0 };
+const INCOME_COLLECTION_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 
 interface SessionContextType {
   sessions: StudySession[];
@@ -275,15 +282,16 @@ interface SessionContextType {
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
   isSkinOwned: (skinId: string) => boolean;
-  capitalistOffers: CapitalistOffer[];
-  ensureCapitalistOffers: () => void;
-  investInOffer: (offerId: string, investmentAmount: number) => Promise<{ success: boolean; message: string; profit?: number }>;
-  lastOfferGenerationTime: number | null;
+
+  unlockBusiness: (type: BusinessType) => boolean;
+  upgradeBusiness: (type: BusinessType) => boolean;
+  collectAllIncome: () => { totalGains: number, messages: string[] };
+
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
   updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void;
   getUnlockedAchievements: () => Achievement[];
-  checkAndUnlockAchievements: (investmentPayload?: Partial<AchievementCriteriaInvestmentPayload>) => void;
+  checkAndUnlockAchievements: () => void;
   isLoaded: boolean;
   updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
 
@@ -304,12 +312,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
-  const [capitalistOffers, setCapitalistOffers] = useState<CapitalistOffer[]>([]);
-  const [lastOfferGenerationTime, setLastOfferGenerationTime] = useState<number | null>(null);
   const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([]);
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
 
   // Timer States
@@ -784,79 +789,112 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
   }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
 
-  const ensureCapitalistOffers = useCallback(() => {
-    if(!isFeatureUnlocked('capitalist')) return;
+  const unlockBusiness = useCallback((type: BusinessType) => {
+    if(!isFeatureUnlocked('capitalist')) return false;
+    const business = userProfile.businesses[type];
+    if (userProfile.cash >= business.unlockCost && !business.unlocked) {
+      setUserProfile(prev => {
+        const newBusinesses = { ...prev.businesses };
+        newBusinesses[type] = { ...newBusinesses[type], unlocked: true, lastCollected: Date.now() };
+        return { ...prev, cash: prev.cash - business.unlockCost, businesses: newBusinesses };
+      });
+      addFloatingGain('cash', -business.unlockCost);
+      return true;
+    }
+    return false;
+  }, [isFeatureUnlocked, userProfile.cash, userProfile.businesses, addFloatingGain]);
+
+  const upgradeBusiness = useCallback((type: BusinessType) => {
+    if(!isFeatureUnlocked('capitalist')) return false;
+    const business = userProfile.businesses[type];
+    if (userProfile.cash >= business.upgradeCost && business.unlocked) {
+      setUserProfile(prev => {
+        const newBusiness = { ...prev.businesses[type] };
+        newBusiness.level += 1;
+        newBusiness.baseIncome = Math.round(newBusiness.baseIncome * 1.25);
+        newBusiness.upgradeCost = Math.round(newBusiness.upgradeCost * 1.5);
+        if (newBusiness.maintenanceCost) {
+            newBusiness.maintenanceCost = Math.round(newBusiness.maintenanceCost * 1.15);
+        }
+        if (newBusiness.id === 'mine' && newBusiness.currentIncome !== undefined) {
+          newBusiness.currentIncome = newBusiness.baseIncome; // Reset depletion
+        }
+
+        const newBusinesses = { ...prev.businesses, [type]: newBusiness };
+        return { ...prev, cash: prev.cash - business.upgradeCost, businesses: newBusinesses };
+      });
+      addFloatingGain('cash', -business.upgradeCost);
+      return true;
+    }
+    return false;
+  }, [isFeatureUnlocked, userProfile.cash, userProfile.businesses, addFloatingGain]);
+
+  const collectAllIncome = useCallback(() => {
+    if(!isFeatureUnlocked('capitalist')) return { totalGains: 0, messages: [] };
+
+    let totalGains = 0;
+    const messages: string[] = [];
     const now = Date.now();
-    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
-    let offerDurationMultiplier = 1; 
-    
-    if (!lastOfferGenerationTime || now - lastOfferGenerationTime > 24 * 60 * 60 * 1000 * offerDurationMultiplier || capitalistOffers.some(o => o.expiresAt && o.expiresAt < now)) {
-      const generateOffers = (): CapitalistOffer[] => {
-        const baseOffersData: Omit<CapitalistOffer, 'id' | 'expiresAt'>[] = [
-            { name: "Safe Bet Startup", description: "Low risk, low reward tech investment.", minInvestmentAmount: 5000, maxInvestmentAmount: 20000, minRoiPercent: 5, maxRoiPercent: 20, volatilityFactor: 0.2, durationHours: 24, completionBonusCash: 1000 },
-            { name: "Crypto Gamble", description: "High risk, high reward digital currency.", minInvestmentAmount: 10000, maxInvestmentAmount: 50000, minRoiPercent: -80, maxRoiPercent: 200, volatilityFactor: 0.8, durationHours: 24 },
-            { name: "Real Estate Flip", description: "Moderate risk, steady gains.", minInvestmentAmount: 20000, maxInvestmentAmount: 100000, minRoiPercent: -10, maxRoiPercent: 50, volatilityFactor: 0.4, durationHours: 24, completionBonusCash: 5000 },
-            { name: "Meme Stock Madness", description: "To the moon or bust!", minInvestmentAmount: 7500, maxInvestmentAmount: 30000,  minRoiPercent: -95, maxRoiPercent: 500, volatilityFactor: 0.95, durationHours: 24 },
-            { name: "Blue Chip Bonds", description: "Slow and steady wins the race.", minInvestmentAmount: 30000,maxInvestmentAmount: 150000, minRoiPercent: 1, maxRoiPercent: 10, volatilityFactor: 0.1, durationHours: 24, completionBonusCash: 2500 },
-            { name: "Emerging Market Fund", description: "Potential for growth, with some uncertainty.", minInvestmentAmount: 15000, maxInvestmentAmount: 75000,  minRoiPercent: -30, maxRoiPercent: 70, volatilityFactor: 0.6, durationHours: 24, completionBonusCash: 3000 },
-        ];
-        const shuffled = [...baseOffersData].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 3).map(offer => ({
-          ...offer,
-          id: crypto.randomUUID(),
-          expiresAt: Date.now() + offer.durationHours * 60 * 60 * 1000,
-        }));
-      };
-      const newOffers = generateOffers();
-      setCapitalistOffers(newOffers);
-      setLastOfferGenerationTime(now);
-    }
-  }, [isFeatureUnlocked, lastOfferGenerationTime, capitalistOffers, isSkillUnlocked]);
-
-  const investInOffer = useCallback(async (offerId: string, investmentAmount: number): Promise<{ success: boolean; message: string; profit?: number }> => {
-    if(!isFeatureUnlocked('capitalist')) return { success: false, message: "Capitalist Corner locked."};
-    const offer = capitalistOffers.find(o => o.id === offerId);
-    if (!offer) return { success: false, message: "Offer not found." };
-    if (userProfile.cash < investmentAmount) return { success: false, message: "Not enough cash." };
-    if (investmentAmount < offer.minInvestmentAmount) return { success: false, message: `Minimum investment is $${offer.minInvestmentAmount.toLocaleString()}.` };
-    if (offer.maxInvestmentAmount && investmentAmount > offer.maxInvestmentAmount) return { success: false, message: `Maximum investment is $${offer.maxInvestmentAmount.toLocaleString()}.`};
-    
-    let actualMinRoi = offer.minRoiPercent;
-    let bonusChanceMultiplier = 1; 
-    const investmentBoostSkill = ALL_SKILLS.find(s => s.id === 'investmentInsight');
-    if(investmentBoostSkill && isSkillUnlocked(investmentBoostSkill.id)) { 
-        actualMinRoi = Math.min(offer.maxRoiPercent, offer.minRoiPercent + 5); 
-        bonusChanceMultiplier = 1.1; 
-    }
-
-    const randomFactor = Math.random();
-    
-    let actualRoiPercent = actualMinRoi + (offer.maxRoiPercent - actualMinRoi) * randomFactor;
-    if (Math.random() > offer.volatilityFactor * (1/bonusChanceMultiplier)) { 
-      actualRoiPercent = Math.max(actualRoiPercent, (actualMinRoi + offer.maxRoiPercent) / 2 * randomFactor * bonusChanceMultiplier); 
-    } else { 
-      actualRoiPercent = Math.min(actualRoiPercent, actualMinRoi + ( (actualMinRoi + offer.maxRoiPercent) / 2 - actualMinRoi ) * randomFactor ); 
-    }
-
-
-    let profit = Math.round(investmentAmount * (actualRoiPercent / 100));
-    let finalCashChange = profit;
-    let message = profit >= 0 ? `Investment success! You gained $${profit.toLocaleString()}.` : `Investment risky... You lost $${Math.abs(profit).toLocaleString()}.`;
-    
-    if (profit >= 0 && offer.completionBonusCash && Math.random() < (0.2 * bonusChanceMultiplier) ) { 
-        finalCashChange += offer.completionBonusCash; 
-        message += ` Bonus: $${offer.completionBonusCash.toLocaleString()}!`; 
-    }
 
     setUserProfile(prev => {
-        const newCash = prev.cash + finalCashChange;
-        addFloatingGain('cash', finalCashChange);
-        setCapitalistStatsForAchievements(cs => ({ firstInvestmentMade: true, totalProfit: cs.totalProfit + (finalCashChange > 0 ? finalCashChange : 0) })); 
-        return { ...prev, cash: newCash };
+      const newBusinesses = { ...prev.businesses };
+      let profileCash = prev.cash;
+
+      for (const type in newBusinesses) {
+        const business = newBusinesses[type as BusinessType];
+        if (!business.unlocked) continue;
+
+        const hoursPassed = (now - business.lastCollected) / INCOME_COLLECTION_INTERVAL;
+        if (hoursPassed < 1) continue;
+        
+        const hoursToCollect = Math.floor(hoursPassed);
+        let hourlyGain = 0;
+
+        for (let i = 0; i < hoursToCollect; i++) {
+          let currentHourGain = 0;
+          switch(business.id) {
+            case 'startup':
+              if (Math.random() > (business.volatility || 0.5)) {
+                currentHourGain = business.baseIncome;
+                if (Math.random() < (business.bonusChance || 0)) {
+                  currentHourGain *= (business.bonusMultiplier || 1);
+                }
+              }
+              break;
+            case 'farm':
+               currentHourGain = business.baseIncome;
+               if (new Date(business.lastCollected + i * INCOME_COLLECTION_INTERVAL).getHours() % 4 === 0) { // Gimmick for 'seasonal' low yield
+                   currentHourGain *= (business.lowYieldMultiplier || 0.25);
+               }
+              break;
+            case 'mine':
+              currentHourGain = business.currentIncome || business.baseIncome;
+              business.currentIncome = Math.max(0, currentHourGain * (1-(business.depletionRate || 0)));
+              break;
+            case 'industry':
+              if (profileCash >= (business.maintenanceCost || 0)) {
+                profileCash -= (business.maintenanceCost || 0);
+                currentHourGain = business.baseIncome;
+              }
+              break;
+            default:
+              currentHourGain = business.baseIncome;
+          }
+          hourlyGain += Math.round(currentHourGain);
+        }
+        
+        if (hourlyGain > 0) {
+            messages.push(`${business.name}: +$${hourlyGain.toLocaleString()}`);
+            totalGains += hourlyGain;
+        }
+        business.lastCollected += hoursToCollect * INCOME_COLLECTION_INTERVAL;
+      }
+      addFloatingGain('cash', totalGains);
+      return { ...prev, cash: profileCash + totalGains, businesses: newBusinesses };
     });
-    setCapitalistOffers(prevOffers => prevOffers.filter(o => o.id !== offerId)); 
-    return { success: true, message, profit: finalCashChange };
-  }, [isFeatureUnlocked, capitalistOffers, userProfile.cash, isSkillUnlocked, addFloatingGain]);
+
+    return { totalGains, messages };
+  }, [isFeatureUnlocked, addFloatingGain]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     if(!isFeatureUnlocked('challenges')) return;
@@ -889,13 +927,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const checkAndUnlockAchievements = useCallback(() => {
     if(!isFeatureUnlocked('achievements')) return;
     setUserProfile(prevUserProfile => {
-        const currentInvestmentStats = capitalistStatsForAchievements;
         const currentSessions = sessions; 
         const currentDailyChallenges = dailyChallenges; 
         const newlyUnlocked: string[] = [];
         let totalCashRewardFromAchievements = 0;
         ALL_ACHIEVEMENTS.forEach(ach => {
-          if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions, currentDailyChallenges, currentInvestmentStats)) {
+          if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions)) {
             newlyUnlocked.push(ach.id);
             totalCashRewardFromAchievements += ach.cashReward;
             toast({ title: "Achievement Unlocked!", description: `${ach.name} (+$${ach.cashReward.toLocaleString()})`, icon: <Trophy/> });
@@ -907,7 +944,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         return prevUserProfile;
     });
-  }, [isFeatureUnlocked, capitalistStatsForAchievements, sessions, dailyChallenges, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, sessions, dailyChallenges, toast, addFloatingGain]);
   
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
 
@@ -1114,6 +1151,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             countdownEvents: Array.isArray(tempProfile.notepadData?.countdownEvents) ? tempProfile.notepadData.countdownEvents : DEFAULT_NOTEPAD_DATA.countdownEvents,
             eisenhowerMatrix: tempProfile.notepadData?.eisenhowerMatrix || DEFAULT_NOTEPAD_DATA.eisenhowerMatrix,
         };
+        const businesses = tempProfile.businesses || DEFAULT_BUSINESSES;
+        // Ensure all default businesses are present, adding any new ones from an update
+        const ensuredBusinesses = (Object.keys(DEFAULT_BUSINESSES) as BusinessType[]).reduce((acc, key) => {
+            acc[key] = { ...DEFAULT_BUSINESSES[key], ...(businesses[key] || {}) };
+            return acc;
+        }, {} as Record<BusinessType, Business>);
+
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
             ...tempProfile,
@@ -1122,6 +1166,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
             unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
             notepadData: ensuredNotepadData,
+            businesses: ensuredBusinesses,
             skillPoints: typeof tempProfile.skillPoints === 'number' ? tempProfile.skillPoints : DEFAULT_USER_PROFILE.skillPoints,
             unlockedSkillIds: Array.isArray(tempProfile.unlockedSkillIds) ? tempProfile.unlockedSkillIds : DEFAULT_USER_PROFILE.unlockedSkillIds,
         };
@@ -1141,11 +1186,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setPomodoroState(p => ({...p, settings, timeLeft: getDurationForMode(p.mode, settings) }));
       }
 
-      const storedOffers = localStorage.getItem('capitalistOffers');
-      if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
-      const storedOfferTime = localStorage.getItem('lastOfferGenerationTime');
-      if (storedOfferTime) setLastOfferGenerationTime(parseInt(storedOfferTime, 10));
-
       const storedChallenges = localStorage.getItem('dailyChallenges');
       const storedResetDate = localStorage.getItem('lastChallengeResetDate');
       const todayDateString = format(new Date(), 'yyyy-MM-dd');
@@ -1161,8 +1201,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
         localStorage.setItem('lastChallengeResetDate', todayDateString);
       }
-      const storedCapitalistStats = localStorage.getItem('capitalistStatsForAchievements');
-      if (storedCapitalistStats) setCapitalistStatsForAchievements(JSON.parse(storedCapitalistStats));
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       setUserProfile(DEFAULT_USER_PROFILE); 
@@ -1198,19 +1236,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('studySessions', JSON.stringify(sessions));
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         localStorage.setItem('pomodoroSettings', JSON.stringify(pomodoroState.settings));
-        localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
-        if (lastOfferGenerationTime) localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
-        else localStorage.removeItem('lastOfferGenerationTime');
         localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
         if (lastChallengeResetDate) localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
-        localStorage.setItem('capitalistStatsForAchievements', JSON.stringify(capitalistStatsForAchievements));
       } catch (error) { console.error("Failed to save data to localStorage:", error); }
     }
-  }, [sessions, userProfile, pomodoroState.settings, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
+  }, [sessions, userProfile, pomodoroState.settings, dailyChallenges, lastChallengeResetDate, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) { checkAndUnlockAchievements(); }
-  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, capitalistStatsForAchievements, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length]);
+  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length, userProfile.businesses]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -1218,6 +1252,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         applyThemePreference(equippedSkin?.isTheme ? equippedSkin.themeClass : null);
     }
   }, [userProfile.equippedSkinId, isLoaded, applyThemePreference, getSkinById]);
+
+  useEffect(() => {
+    const incomeTimer = setInterval(() => {
+      collectAllIncome();
+    }, 60 * 1000 * 5); // Check every 5 minutes for hourly income
+    return () => clearInterval(incomeTimer);
+  }, [collectAllIncome]);
 
 
   if (!isLoaded) { return null; }
@@ -1233,7 +1274,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
       getSkinById, buySkin, equipSkin, isSkinOwned,
-      capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime,
+      unlockBusiness, upgradeBusiness, collectAllIncome,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, checkAndUnlockAchievements,
       isLoaded,

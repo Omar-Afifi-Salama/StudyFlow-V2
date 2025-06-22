@@ -12,6 +12,32 @@ export interface StudySession {
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
 
+export type BusinessType = 'startup' | 'farm' | 'mine' | 'industry';
+
+export interface Business {
+  id: BusinessType;
+  name: string;
+  description: string;
+  gimmick: string;
+  level: number;
+  unlocked: boolean;
+  unlockCost: number;
+  upgradeCost: number;
+  baseIncome: number; // Income per hour
+  lastCollected: number; // timestamp
+  // For mine gimmick
+  currentIncome?: number;
+  depletionRate?: number;
+  // For industry gimmick
+  maintenanceCost?: number;
+  // For farm gimmick
+  lowYieldMultiplier?: number;
+  // For startup gimmick
+  volatility?: number; // 0 to 1
+  bonusChance?: number; // 0 to 1
+  bonusMultiplier?: number;
+}
+
 export interface UserProfile {
   xp: number;
   cash: number;
@@ -31,6 +57,7 @@ export interface UserProfile {
   notepadData: NotepadData;
   skillPoints: number;
   unlockedSkillIds: string[];
+  businesses: Record<BusinessType, Business>;
 }
 
 export interface Skin {
@@ -43,20 +70,6 @@ export interface Skin {
   dataAiHint: string;
   isTheme?: boolean;
   themeClass?: string;
-}
-
-export interface CapitalistOffer {
-  id: string;
-  name: string;
-  description: string;
-  minInvestmentAmount: number;
-  maxInvestmentAmount?: number;
-  minRoiPercent: number;
-  maxRoiPercent: number;
-  volatilityFactor: number;
-  durationHours: number;
-  expiresAt?: number;
-  completionBonusCash?: number;
 }
 
 export interface NotepadTask {
@@ -169,11 +182,6 @@ export interface DailyChallenge {
   lastProgressUpdate?: number;
 }
 
-export interface AchievementCriteriaInvestmentPayload {
-  firstInvestmentMade: boolean;
-  totalProfit: number;
-}
-
 export interface Achievement {
   id: string;
   name: string;
@@ -183,8 +191,6 @@ export interface Achievement {
   criteria: (
     profile: UserProfile,
     sessions: StudySession[],
-    challenges: DailyChallenge[],
-    investmentStats: AchievementCriteriaInvestmentPayload
   ) => boolean;
   category?: 'General' | 'Study Time' | 'Pomodoro' | 'Progression' | 'Collection' | 'Streaks & Challenges' | 'Capitalist' | 'Notepad & Revision' | 'Habits';
 }

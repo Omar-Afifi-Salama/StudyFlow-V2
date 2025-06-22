@@ -1,38 +1,78 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
-import OfferCard from './OfferCard';
+import BusinessCard from './BusinessCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, RefreshCw, DollarSign } from 'lucide-react';
 import { Button } from '../ui/button';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useToast } from '@/hooks/use-toast';
+import type { BusinessType } from '@/types';
+
+const INCOME_COLLECTION_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 
 export default function CapitalistPage() {
-  const { userProfile, capitalistOffers, ensureCapitalistOffers, investInOffer, lastOfferGenerationTime } = useSessions();
-  const { toast } = useToast(); // Get toast function
+  const { userProfile, collectAllIncome, unlockBusiness, upgradeBusiness } = useSessions();
+  const { toast } = useToast();
+  const [lastCollected, setLastCollected] = useState(Date.now());
+  const [timeToNext, setTimeToNext] = useState(INCOME_COLLECTION_INTERVAL);
+  
+  const businesses = userProfile.businesses ? Object.values(userProfile.businesses) : [];
 
   useEffect(() => {
-    ensureCapitalistOffers();
-  }, [ensureCapitalistOffers]);
+    const timer = setInterval(() => {
+      const timeSinceLast = Date.now() - lastCollected;
+      const remainingTime = INCOME_COLLECTION_INTERVAL - timeSinceLast;
+      if (remainingTime <= 0) {
+        handleCollectIncome(); // Auto-collect
+      } else {
+        setTimeToNext(remainingTime);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lastCollected]);
 
-  const handleRefreshOffers = () => {
-    ensureCapitalistOffers(); 
+  const handleCollectIncome = () => {
+    const { totalGains, messages } = collectAllIncome();
+    if (totalGains > 0) {
+      toast({
+        title: "Income Collected!",
+        description: `Total gain of $${totalGains.toLocaleString()}. ${messages.join(' ')}`,
+      });
+    } else {
+       toast({
+        title: "Income Collected",
+        description: `No new income this cycle. ${messages.join(' ')}`,
+      });
+    }
+    setLastCollected(Date.now());
+    setTimeToNext(INCOME_COLLECTION_INTERVAL);
+  };
+  
+  const handleUnlock = (type: BusinessType) => {
+    if (unlockBusiness(type)) {
+      toast({ title: "Business Unlocked!", description: "It will now start generating income." });
+    } else {
+      toast({ title: "Unlock Failed", description: "Not enough cash to unlock.", variant: "destructive" });
+    }
   };
 
-  const handleInvestment = async (offerId: string, investmentAmount: number) => {
-    // investInOffer now returns a promise that resolves with the result for toast
-    const result = await investInOffer(offerId, investmentAmount);
-    toast({
-        title: result.success ? "Investment Result" : "Investment Failed",
-        description: result.message,
-        variant: result.success ? "default" : "destructive",
-    });
-    // No need to return anything specific here for OfferCard if toast is handled here
+  const handleUpgrade = (type: BusinessType) => {
+    if (upgradeBusiness(type)) {
+      toast({ title: "Business Upgraded!", description: "Income potential has increased." });
+    } else {
+      toast({ title: "Upgrade Failed", description: "Not enough cash to upgrade.", variant: "destructive" });
+    }
   };
 
-  const nextRefreshTime = lastOfferGenerationTime ? new Date(lastOfferGenerationTime + 24 * 60 * 60 * 1000) : null;
+  const formatTime = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -43,37 +83,35 @@ export default function CapitalistPage() {
                 <TrendingUp className="h-8 w-8 text-primary" />
                 <div>
                     <CardTitle className="text-3xl font-headline">Capitalist Corner</CardTitle>
-                    <CardDescription>Invest your hard-earned cash for potential returns. High risk, high reward!</CardDescription>
+                    <CardDescription>Unlock and upgrade businesses to generate passive income.</CardDescription>
                 </div>
             </div>
-            <Button onClick={handleRefreshOffers} variant="outline" size="sm">
-                <RefreshCw className="mr-2 h-4 w-4" /> Refresh Offers
+            <Button onClick={handleCollectIncome} variant="outline" size="sm" className="btn-animated">
+                <RefreshCw className="mr-2 h-4 w-4" /> Collect Now
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6 p-4 bg-secondary/30 rounded-lg">
             <p className="text-lg">Your Cash: <span className="font-semibold text-green-500 flex items-center"><DollarSign className="h-5 w-5 mr-1"/>{userProfile.cash.toLocaleString()}</span></p>
-            {nextRefreshTime && (
-              <p className="text-sm text-muted-foreground">
-                Next offer refresh: {nextRefreshTime.toLocaleTimeString()}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Next collection in: {formatTime(timeToNext)}
+            </p>
           </div>
           
-          {capitalistOffers.length === 0 ? (
+          {businesses.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-muted-foreground text-xl">No investment offers available right now.</p>
-              <p className="text-muted-foreground">Check back later or try refreshing!</p>
+              <p className="text-muted-foreground text-xl">Loading businesses...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {capitalistOffers.map(offer => (
-                <OfferCard
-                  key={offer.id}
-                  offer={offer}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {businesses.map(biz => (
+                <BusinessCard
+                  key={biz.id}
+                  business={biz}
                   userCash={userProfile.cash}
-                  onInvest={(investmentAmount) => handleInvestment(offer.id, investmentAmount)} // Pass updated handler
+                  onUnlock={() => handleUnlock(biz.id)}
+                  onUpgrade={() => handleUpgrade(biz.id)}
                 />
               ))}
             </div>
@@ -83,5 +121,3 @@ export default function CapitalistPage() {
     </div>
   );
 }
-
-    

@@ -41,7 +41,19 @@ export default function GuidePage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6 text-base leading-relaxed">
-        <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
+        <Accordion type="single" collapsible className="w-full" defaultValue="item-intro">
+           <AccordionItem value="item-intro">
+            <AccordionTrigger className="text-xl font-semibold">What is StudyFlow?</AccordionTrigger>
+            <AccordionContent>
+                <p className="text-muted-foreground">
+                    StudyFlow is a gamified productivity application designed to make studying more engaging and rewarding. By tracking your focus time with our built-in timers (Pomodoro and Stopwatch), you earn Experience Points (XP) and Cash.
+                </p>
+                <br/>
+                <p className="text-muted-foreground">
+                    As you gain XP, you'll level up, unlocking new titles, features, and passive bonuses through the Skill Tree. Use your earned Cash to buy cosmetic skins, invest in the Capitalist Corner, and more. The goal is to provide a structured, motivating environment that helps you build consistent study habits and achieve your academic goals. Happy studying!
+                </p>
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="item-1">
             <AccordionTrigger className="text-xl font-semibold">Levels, Titles & Hours</AccordionTrigger>
             <AccordionContent>
