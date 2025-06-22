@@ -8,7 +8,7 @@ import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as Tim
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import React, { useMemo } from 'react';
-import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 
 interface HeatmapDataPoint {
