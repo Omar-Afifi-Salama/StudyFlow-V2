@@ -1027,32 +1027,50 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [pausePomodoro, getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
 
+  // Stable timer logic using refs to prevent re-renders
+  const pomodoroStateRef = useRef(pomodoroState);
+  pomodoroStateRef.current = pomodoroState;
+  const stopwatchStateRef = useRef(stopwatchState);
+  stopwatchStateRef.current = stopwatchState;
+  const addSessionRef = useRef(addSession);
+  addSessionRef.current = addSession;
+  const checkAndUnlockAchievementsRef = useRef(checkAndUnlockAchievements);
+  checkAndUnlockAchievementsRef.current = checkAndUnlockAchievements;
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  const switchPomodoroModeRef = useRef(switchPomodoroMode);
+  switchPomodoroModeRef.current = switchPomodoroMode;
+  const getDurationForModeRef = useRef(getDurationForMode);
+  getDurationForModeRef.current = getDurationForMode;
+
   useEffect(() => {
     if (!isLoaded) return;
+
     const timerWorker = () => {
-      // Pomodoro
-      if (pomodoroState.isRunning) {
-        if (pomodoroState.timeLeft <= 1) {
-          const sessionType: StudySession['type'] = pomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-          const duration = getDurationForMode(pomodoroState.mode, pomodoroState.settings);
-          addSession({ type: sessionType, startTime: pomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: pomodoroState.mode === 'work' });
-          checkAndUnlockAchievements();
-          toast({ title: `Time's up!`, description: `Your ${pomodoroState.mode} session has ended.` });
-          switchPomodoroMode(); 
+      const currentPomodoroState = pomodoroStateRef.current;
+      if (currentPomodoroState.isRunning) {
+        if (currentPomodoroState.timeLeft <= 1) {
+          const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
+          const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
+          addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
+          checkAndUnlockAchievementsRef.current();
+          toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
+          switchPomodoroModeRef.current(); 
         } else {
           setPomodoroState(p => ({ ...p, timeLeft: p.timeLeft - 1 }));
         }
       }
-      // Stopwatch
-      if (stopwatchState.isRunning) {
+      
+      const currentStopwatchState = stopwatchStateRef.current;
+      if (currentStopwatchState.isRunning) {
         setStopwatchState(s => ({ ...s, timeElapsed: Math.floor((Date.now() - s.sessionStartTime) / 1000) }));
       }
     };
     
     const intervalId = setInterval(timerWorker, 1000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, pomodoroState, stopwatchState.isRunning, addSession, checkAndUnlockAchievements, getDurationForMode, switchPomodoroMode, toast]);
-  
+  }, [isLoaded]); // Stable dependency array
+
   const startPomodoro = useCallback(() => {
       setPomodoroState(prev => {
         if (prev.isRunning) return prev;
@@ -1358,3 +1376,5 @@ export const useSessions = () => {
   }
   return context;
 };
+
+    
