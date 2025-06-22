@@ -12,19 +12,20 @@ export interface StudySession {
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
 
-export type DailyOfferEffectType = 'xp' | 'cash' | 'timer_speed';
-
-export interface DailyOffer {
-  id: string;
-  title: string;
+export interface Business {
+  id: 'startup' | 'farm' | 'mine' | 'industry';
+  name: string;
   description: string;
-  type: 'buff' | 'debuff';
-  effect: {
-    type: DailyOfferEffectType;
-    modifier: number; // e.g., 1.1 for +10% XP, 0.9 for -10% timer duration
-    description: string;
-  };
-  durationMinutes: number;
+  gimmickTitle: string;
+  gimmickDescription: string;
+  unlockCost: number;
+  unlocked: boolean;
+  level: number;
+  baseIncome: number; // per hour
+  lastCollected: number; // timestamp
+  currentCash: number;
+  depletionRate?: number;
+  maintenanceCost?: number;
 }
 
 export interface UserProfile {
@@ -46,12 +47,13 @@ export interface UserProfile {
   notepadData: NotepadData;
   skillPoints: number;
   unlockedSkillIds: string[];
-  dailyOffers: {
-    date: string; // YYYY-MM-DD
-    offers: DailyOffer[];
+  skillLevels: { [skillId: string]: number };
+  businesses: {
+    startup: Business;
+    farm: Business;
+    mine: Business;
+    industry: Business;
   };
-  activeOfferId: string | null;
-  activeOfferEndTime: number | null;
 }
 
 export interface Skin {
@@ -230,7 +232,7 @@ export interface Skill {
   cashBoostPercent?: number;
   shopDiscountPercent?: number;
   otherEffect?: string;
-  category?: 'Core Feature' | 'Notepad Feature' | 'Passive Boost' | 'Utility';
+  category?: 'Core Feature' | 'Notepad Feature' | 'Passive Boost' | 'Utility' | 'Infinite';
 }
 
 export interface FloatingGain {

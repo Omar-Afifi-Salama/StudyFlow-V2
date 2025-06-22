@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Sparkles as DailyOffersIcon, Timer as CountdownIcon, UserCircle, Info, Flame, MoreVertical, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, Award } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, Briefcase as CapitalistIcon, Timer as CountdownIcon, Award, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, MoreVertical, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -13,8 +13,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
 import { formatTime } from '@/lib/utils';
+import { useState } from 'react';
 
 interface NavItem {
   href: string;
@@ -28,7 +29,8 @@ interface NavItem {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userProfile, isFeatureUnlocked, getAllSkills, getAppliedBoost } = useSessions();
+  const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
@@ -38,7 +40,7 @@ export default function Header() {
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n', featureKey: 'notepad' },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h', featureKey: 'challenges' },
     { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
-    { href: '/capitalist', label: 'Daily Offers', icon: <DailyOffersIcon className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
+    { href: '/capitalist', label: 'Capitalist', icon: <CapitalistIcon className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
     { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
     { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
     { href: '/about', label: 'Guide', icon: <HelpCircle className="h-5 w-5" />, hotkey: 'g', featureKey: 'about' },
@@ -110,26 +112,21 @@ export default function Header() {
                   <TooltipContent>
                     <p>
                       {item.label}
-                      {(() => {
-                        const hotkeyVal = item?.hotkey;
-                        if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                          return <span className="text-xs p-1 bg-muted rounded-sm ml-1">{hotkeyVal.toUpperCase()}</span>;
-                        }
-                        return null;
-                      })()}
+                      <span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span>
                     </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ))}
             {dropdownNavItems.length > 0 && (
-              <DropdownMenu>
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                 <TooltipProvider delayDuration={300}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
+                          onMouseEnter={() => setIsDropdownOpen(true)}
                           className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
                         >
                           <MoreVertical className="h-5 w-5 md:mr-2" />
@@ -140,23 +137,23 @@ export default function Header() {
                     <TooltipContent><p>More Options</p></TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <DropdownMenuContent align="end">
-                  {dropdownNavItems.map((item) => (
-                    <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
-                      <Link href={item.href} className="flex items-center w-full">
-                        {item.icon}
-                        <span className="ml-2">{item.label}</span>
-                        {(() => {
-                            const hotkeyVal = item?.hotkey;
-                            if (typeof hotkeyVal === 'string' && hotkeyVal.length > 0) {
-                              return <span className="text-xs p-1 bg-muted rounded-sm ml-auto">{hotkeyVal.toUpperCase()}</span>;
-                            }
-                            return null;
-                          })()}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent 
+                    align="start" 
+                    className="mt-1" 
+                    onMouseLeave={() => setIsDropdownOpen(false)}
+                  >
+                    {dropdownNavItems.map((item) => (
+                      <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
+                        <Link href={item.href} className="flex items-center w-full">
+                          {item.icon}
+                          <span className="ml-2">{item.label}</span>
+                          <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground">{item.hotkey.toUpperCase()}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
               </DropdownMenu>
             )}
           </nav>
@@ -178,7 +175,7 @@ export default function Header() {
           <Popover>
             <PopoverTrigger asChild>
                <Button variant="ghost" className="flex items-center space-x-1.5 text-accent font-medium text-xs px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/20">
-                <ShieldCheck className="h-4 w-4 text-accent" />
+                <span className="font-bold text-primary">Lvl {userProfile.level}</span>
                 <span>{userTitle}</span>
                 <ChevronDown className="h-3 w-3" />
               </Button>

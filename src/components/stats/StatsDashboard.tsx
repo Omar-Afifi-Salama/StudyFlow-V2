@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatTime, cn } from '@/lib/utils';
-import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, CalendarDays, SunMedium, TargetIcon, Percent, CheckCircle, TrendingDown, HelpCircle, Activity } from 'lucide-react';
+import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, CalendarDays, SunMedium, TargetIcon, Percent, CheckCircle, TrendingDown, HelpCircle, Activity, Zap, DollarSign } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend, Cell } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { StudySession, UserProfile } from '@/types';
 import React, { useEffect, useState, useMemo } from 'react';
-import { format, startOfWeek, addDays, eachDayOfInterval, subDays, getDay, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval, parseISO } from 'date-fns';
+import { format, startOfWeek, addDays, eachDayOfInterval, subDays, getDay, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval, parseISO, endOfWeek } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 
 
@@ -33,134 +33,91 @@ interface HeatmapDataPoint {
 
 export default function StatsDashboard() {
   const { sessions, userProfile, isLoaded } = useSessions();
-  const [dailyData, setDailyData] = useState<DailyStat[]>([]);
-
-  const { wakingHours, studyTargetHours, todayStudyTimeSeconds, studyTargetCompletionPercent } = useMemo(() => {
-    if (!userProfile.wakeUpTime || !userProfile.sleepTime) return { wakingHours: 0, studyTargetHours: 0, todayStudyTimeSeconds: 0, studyTargetCompletionPercent: 0 };
-
-    const convertTo24Hour = (hour: number, period: 'AM' | 'PM') => {
-      if (period === 'PM' && hour !== 12) return hour + 12;
-      if (period === 'AM' && hour === 12) return 0; // Midnight
-      return hour;
-    };
-
-    const wakeHour24 = convertTo24Hour(userProfile.wakeUpTime.hour, userProfile.wakeUpTime.period);
-    const sleepHour24 = convertTo24Hour(userProfile.sleepTime.hour, userProfile.sleepTime.period);
-    
-    let diffHours;
-    if (sleepHour24 >= wakeHour24) {
-      diffHours = sleepHour24 - wakeHour24;
-    } else { // Sleep time is on the next day
-      diffHours = (24 - wakeHour24) + sleepHour24;
-    }
-    const wh = diffHours > 0 ? diffHours : 0;
-    const sth = wh * 0.6;
-
+  
+  const dailyData = useMemo(() => {
+    if (!isLoaded) return [];
     const today = new Date();
-    const tsts = sessions
-      .filter(session => isSameDay(new Date(session.startTime), today))
-      .reduce((acc, session) => acc + session.duration, 0);
-    
-    const stcp = sth > 0 ? Math.min(100, (tsts / (sth * 3600)) * 100) : 0;
+    const last7Days = eachDayOfInterval({
+      start: subDays(today, 6),
+      end: today,
+    });
 
-    return { 
-      wakingHours: wh, 
-      studyTargetHours: sth,
-      todayStudyTimeSeconds: tsts,
-      studyTargetCompletionPercent: stcp
-    };
-  }, [userProfile.wakeUpTime, userProfile.sleepTime, sessions]);
+    const statsByDay: { [key: string]: { totalTime: number; pomodoros: number } } = {};
 
+    last7Days.forEach(day => {
+      const dateKey = format(day, 'yyyy-MM-dd');
+      statsByDay[dateKey] = { totalTime: 0, pomodoros: 0 };
+    });
 
-  useEffect(() => {
-    const calculateDailyData = () => {
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      const statsByDay: { [key: string]: { totalTime: number; pomodoros: number } } = {};
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateKey = format(d, 'yyyy-MM-dd'); // Use yyyy-MM-dd for reliable key
-        statsByDay[dateKey] = { totalTime: 0, pomodoros: 0 };
-      }
+    sessions.forEach(session => {
+      const sessionDate = new Date(session.startTime);
+      const dateKey = format(sessionDate, 'yyyy-MM-dd');
       
-      sessions.forEach(session => {
-        const sessionDate = new Date(session.startTime);
-        const dateKey = format(sessionDate, 'yyyy-MM-dd'); // Use yyyy-MM-dd for matching
-        
-        if (statsByDay[dateKey]) {
-          statsByDay[dateKey].totalTime += session.duration;
-          if (session.type === 'Pomodoro Focus' && session.isFullPomodoroCycle) { 
-            statsByDay[dateKey].pomodoros += 1;
-          }
+      if (statsByDay[dateKey]) {
+        statsByDay[dateKey].totalTime += session.duration;
+        if (session.type === 'Pomodoro Focus' && session.isFullPomodoroCycle) { 
+          statsByDay[dateKey].pomodoros += 1;
         }
-      });
-      
-      const formattedData = Object.entries(statsByDay).map(([dateKey, data]) => {
-         const dateObj = parseISO(dateKey); // Parse YYYY-MM-DD string
-         return {
-          originalDate: dateObj,
-          date: format(dateObj, 'MMM d'), // Format for display
-          ...data,
-        };
-      }).sort((a,b) => a.originalDate.getTime() - b.originalDate.getTime());
-
-      setDailyData(formattedData);
-    };
-    if (isLoaded) calculateDailyData(); // Run only after initial data load
+      }
+    });
+    
+    return Object.entries(statsByDay).map(([dateKey, data]) => {
+       const dateObj = parseISO(dateKey);
+       return {
+        originalDate: dateObj,
+        date: format(dateObj, 'MMM d'),
+        ...data,
+      };
+    }).sort((a,b) => a.originalDate.getTime() - b.originalDate.getTime());
   }, [sessions, isLoaded]);
 
   const heatmapData = useMemo(() => {
     if (!isLoaded) return [];
-    const data: HeatmapDataPoint[] = [];
+    const dataByDate: Record<string, number> = {};
+
+    sessions.forEach(session => {
+        const dateKey = format(new Date(session.startTime), 'yyyy-MM-dd');
+        dataByDate[dateKey] = (dataByDate[dateKey] || 0) + session.duration / 60; // in minutes
+    });
+
     const endDate = new Date();
-    const startDate = subDays(endDate, 89); 
+    const startDate = subDays(endDate, 364); // Show a full year
     const dateArray = eachDayOfInterval({ start: startDate, end: endDate });
 
-    dateArray.forEach(day => {
-      const formattedDay = format(day, 'yyyy-MM-dd');
-      const studyTimeForDay = sessions
-        .filter(session => format(new Date(session.startTime), 'yyyy-MM-dd') === formattedDay)
-        .reduce((sum, session) => sum + session.duration, 0) / 60; 
+    return dateArray.map(day => {
+        const formattedDay = format(day, 'yyyy-MM-dd');
+        const studyTimeForDay = dataByDate[formattedDay] || 0;
 
-      let level = 0;
-      if (studyTimeForDay > 0 && studyTimeForDay < 30) level = 1;
-      else if (studyTimeForDay >= 30 && studyTimeForDay < 60) level = 2;
-      else if (studyTimeForDay >= 60 && studyTimeForDay < 120) level = 3;
-      else if (studyTimeForDay >= 120 && studyTimeForDay < 180) level = 4;
-      else if (studyTimeForDay >= 180) level = 5;
+        let level = 0;
+        if (studyTimeForDay > 0 && studyTimeForDay < 30) level = 1;
+        else if (studyTimeForDay >= 30 && studyTimeForDay < 60) level = 2;
+        else if (studyTimeForDay >= 60 && studyTimeForDay < 120) level = 3;
+        else if (studyTimeForDay >= 120 && studyTimeForDay < 180) level = 4;
+        else if (studyTimeForDay >= 180) level = 5;
 
-      data.push({ date: formattedDay, count: Math.round(studyTimeForDay), level });
+        return { date: formattedDay, count: Math.round(studyTimeForDay), level };
     });
-    return data;
   }, [sessions, isLoaded]);
-  
 
   const calendarHeatmapWeeks = useMemo(() => {
     if (!heatmapData.length) return [];
     const weeks: Array<Array<HeatmapDataPoint | null>> = [];
-    const today = new Date();
-    const endDate = today;
-    const startDate = startOfWeek(subDays(endDate, 12 * 7), { weekStartsOn: 0 }); // Roughly 12 weeks
+    const firstDate = parseISO(heatmapData[0].date);
+    const startDate = startOfWeek(firstDate, { weekStartsOn: 0 }); // Start on Sunday
+    const endDate = endOfWeek(new Date(), { weekStartsOn: 0 }); // End on Saturday
 
-    let currentDate = startDate;
-    while(currentDate <= endDate) {
+    let currentDay = startDate;
+    while (currentDay <= endDate) {
         const week: Array<HeatmapDataPoint | null> = [];
-        for(let i = 0; i < 7; i++) {
-            const dayKey = format(currentDate, 'yyyy-MM-dd');
-            if(currentDate <= endDate) {
-                 const dataPoint = heatmapData.find(p => p.date === dayKey);
-                 week.push(dataPoint || { date: dayKey, count: 0, level: 0});
-            } else {
-                 week.push(null); // For days beyond today if week extends
-            }
-            currentDate = addDays(currentDate, 1);
+        for (let i = 0; i < 7; i++) {
+            const dayKey = format(currentDay, 'yyyy-MM-dd');
+            const dataPoint = heatmapData.find(p => p.date === dayKey);
+            week.push(dataPoint || { date: dayKey, count: 0, level: 0});
+            currentDay = addDays(currentDay, 1);
         }
         weeks.push(week);
     }
-    return weeks.slice(-13); // Ensure max 13 weeks displayed
+    return weeks;
   }, [heatmapData]);
 
 
@@ -174,15 +131,6 @@ export default function StatsDashboard() {
 
   const pomodoroBreakSessions = sessions.filter(s => s.type === 'Pomodoro Break').length;
   const stopwatchSessions = sessions.filter(s => s.type === 'Stopwatch').length;
-
-  const totalStudyTimeThisMonth = useMemo(() => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    return sessions
-      .filter(s => new Date(s.startTime) >= monthStart && new Date(s.startTime) <= monthEnd)
-      .reduce((acc, s) => acc + s.duration, 0);
-  }, [sessions]);
 
 
   const chartConfig = {
@@ -230,63 +178,56 @@ export default function StatsDashboard() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Study Time" value={formatTime(totalStudyTime, true)} icon={<Sigma className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Total Study Time (This Month)" value={formatTime(totalStudyTimeThisMonth, true)} icon={<CalendarDays className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Total Sessions" value={totalSessions.toString()} icon={<ListChecks className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Total XP Earned" value={userProfile.xp.toLocaleString()} icon={<Zap className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Total Cash Earned" value={`$${userProfile.cash.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} />
+
             <StatCard title="Avg. Session Length" value={formatTime(averageSessionLength)} icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Completed Pomodoros" value={completedPomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} description={`${pomodoroCompletionRate.toFixed(1)}% completion rate`} />
             <StatCard title="Pomodoro Breaks Taken" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Stopwatch Sessions" value={stopwatchSessions.toString()} icon={<TimerIcon className="h-5 w-5 text-muted-foreground" />} />
-             <StatCard title="Daily Study Target" value={`${studyTargetHours.toFixed(1)}h`} icon={<TargetIcon className="h-5 w-5 text-muted-foreground" />} description={`Based on ${wakingHours.toFixed(1)} waking hours`} />
-            <StatCard title="Today's Progress" value={`${studyTargetCompletionPercent.toFixed(0)}%`} icon={<Percent className="h-5 w-5 text-muted-foreground" />} description={`${formatTime(todayStudyTimeSeconds)} / ${formatTime(studyTargetHours * 3600)} studied`} />
           </div>
           
           <Card className="shadow-md card-animated">
             <CardHeader>
-              <CardTitle>Study Activity Heatmap (Last ~3 Months)</CardTitle>
-              <CardDescription>Darker cells indicate more study time on that day. Hover for details.</CardDescription>
+              <CardTitle>Study Activity Heatmap</CardTitle>
+              <CardDescription>Each cell is a day in the last year. Darker cells mean more study time.</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto p-4">
-                <div className="grid grid-cols-7 gap-1 md:gap-1.5">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(dayLabel => (
-                        <div key={dayLabel} className="text-center text-xs font-medium text-muted-foreground pb-1">{dayLabel}</div>
-                    ))}
-                </div>
-                <div className="grid grid-cols-1 gap-1 md:gap-1.5">
-                    {calendarHeatmapWeeks.map((week, weekIndex) => (
-                        <div key={`week-${weekIndex}`} className="grid grid-cols-7 gap-1 md:gap-1.5 h-7 md:h-8">
-                            {week.map((day, dayIndex) => {
-                                if (!day) return <div key={`empty-${weekIndex}-${dayIndex}`} className="bg-muted/20 rounded-sm"></div>;
-                                
-                                let cellFill = 'bg-muted/30'; // Default for no study
-                                if (day.level === 1) cellFill = 'bg-primary/20';
-                                else if (day.level === 2) cellFill = 'bg-primary/40';
-                                else if (day.level === 3) cellFill = 'bg-primary/60';
-                                else if (day.level === 4) cellFill = 'bg-primary/80';
-                                else if (day.level === 5) cellFill = 'bg-primary';
+            <CardContent className="overflow-x-auto p-4 flex justify-center">
+              <div className="inline-flex flex-col gap-1.5">
+                  <div className="grid grid-cols-7 gap-1.5">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                        <div key={day} className="text-xs text-muted-foreground text-center w-8"></div>
+                      ))}
+                  </div>
+                  <div className="grid grid-flow-col grid-rows-7 gap-1.5">
+                    {calendarHeatmapWeeks.flat().map((day) => {
+                      if (!day) return <div key={Math.random()} className="w-4 h-4 bg-muted/20 rounded-sm"></div>;
 
-                                const todayFormatted = format(new Date(), 'yyyy-MM-dd');
-                                if(day.date > todayFormatted) cellFill = 'bg-muted/10';
+                      let cellFill = 'bg-muted/30';
+                      if (day.level === 1) cellFill = 'bg-primary/20';
+                      else if (day.level === 2) cellFill = 'bg-primary/40';
+                      else if (day.level === 3) cellFill = 'bg-primary/60';
+                      else if (day.level === 4) cellFill = 'bg-primary/80';
+                      else if (day.level === 5) cellFill = 'bg-primary';
 
-
-                                return (
-                                    <TooltipProvider key={day.date} delayDuration={100}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className={cn("rounded-sm w-full h-full", cellFill, "transition-colors duration-150")}></div>
-                                            </TooltipTrigger>
-                                            <ShadTooltipContent>
-                                                <p>{format(parseISO(day.date), 'MMM d, yyyy')}</p>
-                                                <p>Study Time: {formatTime(day.count * 60)}</p>
-                                            </ShadTooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                );
-                            })}
-                        </div>
-                    ))}
-                </div>
+                      return (
+                        <TooltipProvider key={day.date} delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className={cn("w-4 h-4 rounded-sm", cellFill, "transition-colors duration-150")} />
+                            </TooltipTrigger>
+                            <ShadTooltipContent>
+                              <p>{format(parseISO(day.date), 'PPP')}</p>
+                              <p>Study Time: {formatTime(day.count * 60)}</p>
+                            </ShadTooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
+                  </div>
                 <div className="flex justify-end items-center space-x-2 text-xs mt-2">
                     <span>Less</span>
                     <div className="w-3 h-3 rounded-sm bg-muted/30 border"></div>
@@ -295,6 +236,7 @@ export default function StatsDashboard() {
                     <div className="w-3 h-3 rounded-sm bg-primary"></div>
                     <span>More</span>
                 </div>
+              </div>
             </CardContent>
           </Card>
 

@@ -63,7 +63,7 @@ export default function NotepadPage() {
         <div className="flex items-center space-x-3">
           <NotebookPen className="h-8 w-8 text-primary" />
           <div>
-            <CardTitle className="text-3xl font-headline">Digital Notepad</CardTitle>
+            <CardTitle className="text-3xl font-headline">Productivity Hub</CardTitle>
             <CardDescription>Organize your thoughts, tasks, goals, resources, habits, revisions, events, and priorities. Unlock more tabs via the Skill Tree!</CardDescription>
           </div>
         </div>

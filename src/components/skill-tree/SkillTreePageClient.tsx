@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useSessions } from '@/contexts/SessionContext';
+import { useSessions, ALL_SKILLS } from '@/contexts/SessionContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import SkillNode from './SkillNode';
 import type { Skill } from '@/types';
@@ -17,16 +18,18 @@ const Connector = ({ vertical = false, horizontal = false, className = '' }) => 
 };
 
 export default function SkillTreePageClient() {
-  const { userProfile, getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill } = useSessions();
+  const { userProfile, isSkillUnlocked, canUnlockSkill, unlockSkill } = useSessions();
   
   const getSkill = useMemo(() => {
-    const allSkills = getAllSkills();
-    return (id: string): Skill | undefined => allSkills.find(s => s.id === id);
-  }, [getAllSkills]);
+    return (id: string): Skill | undefined => ALL_SKILLS.find(s => s.id === id);
+  }, []);
 
   const renderSkillNode = (skillId: string) => {
     const skill = getSkill(skillId);
     if (!skill) return <div className="w-24 h-24 rounded-full bg-muted/20 flex items-center justify-center text-xs text-muted-foreground card-animated">Skill Error</div>;
+    const isInfinite = skill.category === 'Infinite';
+    const currentLevel = isInfinite ? (userProfile.skillLevels?.[skillId] || 0) : 0;
+    
     return (
       <SkillNode
         key={skill.id}
@@ -34,31 +37,38 @@ export default function SkillTreePageClient() {
         isUnlocked={isSkillUnlocked(skill.id)}
         canUnlock={canUnlockSkill(skill.id)}
         onUnlock={() => unlockSkill(skill.id)}
+        isInfinite={isInfinite}
+        currentLevel={currentLevel}
       />
     );
   };
   
-  // Define tree structure based on the image and prerequisites
-  const tier0 = ['unlockAbout', 'unlockStats', 'unlockNotepadMain'];
+  // Define tree structure based on a more organized layout
+  const tier0 = ['unlockTimers', 'unlockSkillTree'];
+  const tier1 = ['unlockAbout', 'unlockStats', 'unlockNotepadMain'];
 
-  const branch1Tier1 = ['unlockAchievements', 'unlockShop'];
-  const branch1Tier2 = ['unlockChallenges', 'unlockCapitalist'];
-  const branch1Tier3 = ['streakShield', 'shopDiscount1', 'investmentInsight'];
-  const branch1Tier4 = ['skillPointRefund']; // Single ultimate
+  // Branch 1: App Features & Economy
+  const branch1Tier2 = ['unlockAchievements', 'unlockShop'];
+  const branch1Tier3 = ['unlockChallenges', 'unlockCapitalist'];
+  const branch1Tier4 = ['streakShield', 'shopDiscount1'];
 
-  const branch2Tier1 = ['unlockAmbiance', 'unlockCountdown'];
-  const branch2Tier2 = ['xpBoost1', 'cashBoost1'];
-  const branch2Tier3 = ['xpBoost2', 'cashBoost2'];
-  const branch2Tier4 = ['xpBoost3', 'cashBoost3'];
+  // Branch 2: Core Features & Boosts
+  const branch2Tier2 = ['unlockAmbiance', 'unlockCountdown'];
+  const branch2Tier3 = ['xpBoost1', 'cashBoost1'];
+  const branch2Tier4 = ['xpBoost2', 'cashBoost2'];
 
-  const branch3Tier1 = ['unlockNotepadChecklist', 'unlockNotepadNotes'];
-  const branch3Tier2 = ['unlockNotepadGoals', 'unlockNotepadLinks', 'unlockNotepadRevision'];
-  const branch3Tier3 = ['unlockNotepadHabits', 'unlockNotepadEvents', 'unlockNotepadEisenhower'];
-  const branch3Tier4 = ['revisionAccelerator']; // Single ultimate
+  // Branch 3: Notepad
+  const branch3Tier2 = ['unlockNotepadChecklist', 'unlockNotepadNotes'];
+  const branch3Tier3 = ['unlockNotepadGoals', 'unlockNotepadLinks'];
+  const branch3Tier4 = ['unlockNotepadRevision', 'unlockNotepadHabits'];
+  const branch3Tier5 = ['unlockNotepadEvents', 'unlockNotepadEisenhower'];
+
+  // Ultimate Skills
+  const ultimates = ['infiniteXpBoost', 'infiniteCashBoost'];
   
   return (
     <div className="w-full overflow-x-auto pb-8">
-      <Card className="shadow-lg w-full card-animated min-w-[1200px]">
+      <Card className="shadow-lg w-full card-animated min-w-[1400px]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -66,7 +76,7 @@ export default function SkillTreePageClient() {
               <div>
                 <CardTitle className="text-3xl font-headline">Skill Tree</CardTitle>
                 <CardDescription>
-                  Unlock app features and passive bonuses by spending Skill Points. Hover over skills for details.
+                  Unlock app features and passive bonuses by spending Skill Points.
                 </CardDescription>
               </div>
             </div>
@@ -78,12 +88,20 @@ export default function SkillTreePageClient() {
         </CardHeader>
         <CardContent className="pt-6 flex flex-col items-center space-y-2">
             
-            {/* TIER 0 - ROOT */}
-            <div className="flex justify-around w-full max-w-4xl">
+            {/* TIER 0 - ROOT (Always unlocked) */}
+            <div className="flex justify-center gap-8 w-full max-w-lg">
               {tier0.map(renderSkillNode)}
             </div>
 
-            {/* CONNECTORS to branches */}
+            {/* Connector to Tier 1 */}
+            <div className="flex justify-center w-full h-8"><Connector vertical className="h-full" /></div>
+            
+            {/* TIER 1 - CORE UNLOCKS */}
+            <div className="flex justify-around w-full max-w-4xl">
+              {tier1.map(renderSkillNode)}
+            </div>
+
+            {/* Connectors to the three main branches */}
             <div className="flex justify-around w-full max-w-4xl h-8">
               <Connector vertical className="h-full" />
               <Connector vertical className="h-full" />
@@ -92,44 +110,49 @@ export default function SkillTreePageClient() {
 
             {/* BRANCHES CONTAINER */}
             <div className="flex justify-around w-full max-w-6xl">
+
               {/* Branch 1: Gameplay/Economy */}
-              <div className="flex flex-col items-center space-y-2 w-1/3">
-                  <div className="flex justify-around w-full"> {branch1Tier1.map(renderSkillNode)} </div>
+              <div className="flex flex-col items-center space-y-2 w-1/3 px-4">
+                  <div className="flex justify-around w-full">{branch1Tier2.map(renderSkillNode)}</div>
                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
-                  <div className="flex justify-around w-full"> {branch1Tier2.map(renderSkillNode)} </div>
-                  <Connector vertical className="h-8" />
-                  <Connector horizontal className="w-full max-w-xs"/>
-                  <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
-                  <div className="flex justify-around w-full"> {branch1Tier3.map(renderSkillNode)} </div>
-                  <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
-                  <div className="flex justify-center w-full"> {branch1Tier4.map(renderSkillNode)} </div>
+                  <div className="flex justify-around w-full">{branch1Tier3.map(renderSkillNode)}</div>
+                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                  <div className="flex justify-around w-full">{branch1Tier4.map(renderSkillNode)}</div>
               </div>
 
               {/* Branch 2: Features & Boosts */}
-              <div className="flex flex-col items-center space-y-2 w-1/3">
-                  <div className="flex justify-around w-full">{branch2Tier1.map(renderSkillNode)}</div>
-                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+              <div className="flex flex-col items-center space-y-2 w-1/3 px-4 border-x">
                   <div className="flex justify-around w-full">{branch2Tier2.map(renderSkillNode)}</div>
                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
                   <div className="flex justify-around w-full">{branch2Tier3.map(renderSkillNode)}</div>
-                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
                   <div className="flex justify-around w-full">{branch2Tier4.map(renderSkillNode)}</div>
               </div>
               
               {/* Branch 3: Notepad */}
-              <div className="flex flex-col items-center space-y-2 w-1/3">
-                   <div className="flex justify-around w-full">{branch3Tier1.map(renderSkillNode)}</div>
-                   <Connector vertical className="h-8" />
-                   <Connector horizontal className="w-full max-w-xs"/>
-                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+              <div className="flex flex-col items-center space-y-2 w-1/3 px-4">
                    <div className="flex justify-around w-full">{branch3Tier2.map(renderSkillNode)}</div>
-                   <Connector vertical className="h-8" />
-                   <Connector horizontal className="w-full max-w-xs"/>
-                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
                    <div className="flex justify-around w-full">{branch3Tier3.map(renderSkillNode)}</div>
-                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
-                   <div className="flex justify-center w-full">{branch3Tier4.map(renderSkillNode)}</div>
+                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                   <div className="flex justify-around w-full">{branch3Tier4.map(renderSkillNode)}</div>
+                   <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                   <div className="flex justify-around w-full">{branch3Tier5.map(renderSkillNode)}</div>
               </div>
+            </div>
+
+            {/* Connector to Ultimates */}
+            <div className="flex justify-center w-full max-w-6xl h-12">
+                <div className="w-1/3 flex justify-center"><Connector vertical className="h-full" /></div>
+                <div className="w-1/3 flex justify-center"><Connector vertical className="h-full" /></div>
+                <div className="w-1/3 flex justify-center"><Connector vertical className="h-full" /></div>
+            </div>
+            <Connector horizontal className="w-full max-w-xl" />
+            <div className="flex justify-center w-full h-8"><Connector vertical className="h-full" /></div>
+
+            {/* ULTIMATE SKILLS */}
+            <div className="flex justify-center gap-8 w-full max-w-lg">
+              {ultimates.map(renderSkillNode)}
             </div>
 
         </CardContent>

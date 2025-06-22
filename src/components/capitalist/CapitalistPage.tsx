@@ -2,31 +2,41 @@
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
-import OfferCard from './OfferCard'; // Re-purposed BusinessCard to OfferCard
+import BusinessCard from './BusinessCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Clock } from 'lucide-react';
+import { Banknote, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
-export default function DailyOffersPage() {
-  const { dailyOffers, selectDailyOffer, userProfile } = useSessions();
-  const [timeToNext, setTimeToNext] = useState(0);
+export default function CapitalistPage() {
+  const { userProfile, unlockBusiness, upgradeBusiness, collectBusinessIncome } = useSessions();
+  const { businesses } = userProfile;
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const endOfDay = new Date(now);
-      endOfDay.setHours(23, 59, 59, 999);
-      const diff = endOfDay.getTime() - now.getTime();
-      setTimeToNext(diff);
-    };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const canSelectOffer = !userProfile.activeOfferId;
+  const totalIncomePerHour = useMemo(() => {
+    return Object.values(businesses).reduce((total, business) => {
+      if (business.unlocked) {
+        const income = business.baseIncome * Math.pow(1.15, business.level - 1) * (1 - (business.maintenanceCost || 0));
+        return total + income;
+      }
+      return total;
+    }, 0);
+  }, [businesses]);
+
+  const timeToNextCollection = useMemo(() => {
+    const earliestLastCollected = Math.min(...Object.values(businesses)
+      .filter(b => b.unlocked)
+      .map(b => b.lastCollected)
+    );
+    if (!isFinite(earliestLastCollected)) return 3600 * 1000;
+    const nextCollectionTime = earliestLastCollected + 3600 * 1000;
+    return Math.max(0, nextCollectionTime - now);
+  }, [businesses, now]);
 
   return (
     <div className="space-y-6">
@@ -34,36 +44,35 @@ export default function DailyOffersPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-                <Sparkles className="h-8 w-8 text-primary" />
+                <Banknote className="h-8 w-8 text-primary" />
                 <div>
-                    <CardTitle className="text-3xl font-headline">Daily Offers</CardTitle>
-                    <CardDescription>Choose one of these temporary modifiers for today!</CardDescription>
+                    <CardTitle className="text-3xl font-headline">Capitalist Corner</CardTitle>
+                    <CardDescription>Invest your study earnings to generate passive income.</CardDescription>
                 </div>
             </div>
-            <div className="text-sm text-muted-foreground flex items-center">
-              <Clock className="mr-2 h-4 w-4"/>
-              New offers in: {formatTime(timeToNext / 1000)}
+            <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total Income Potential</p>
+                <p className="font-bold text-lg text-green-500">${totalIncomePerHour.toFixed(0)} / hour</p>
+                <p className="text-xs text-muted-foreground flex items-center justify-end">
+                  <Clock className="mr-1 h-3 w-3"/>
+                  Next income accrual in: {formatTime(timeToNextCollection / 1000)}
+                </p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {dailyOffers.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground text-xl">Loading today's offers...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dailyOffers.map(offer => (
-                <OfferCard
-                  key={offer.id}
-                  offer={offer}
-                  onSelect={() => selectDailyOffer(offer.id)}
-                  isSelected={userProfile.activeOfferId === offer.id}
-                  canSelect={canSelectOffer}
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Object.values(businesses).map(business => (
+              <BusinessCard
+                key={business.id}
+                business={business}
+                userCash={userProfile.cash}
+                onUnlock={() => unlockBusiness(business.id)}
+                onUpgrade={() => upgradeBusiness(business.id)}
+                onCollect={() => collectBusinessIncome(business.id)}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>
