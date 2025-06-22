@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { cn } from '@/lib/utils';
-import type { FeatureKey } from '@/types';
+import type { FeatureKey, UserProfile } from '@/types';
 import * as LucideIcons from 'lucide-react';
+import React from 'react';
 
 import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, ALL_SKILLS } from '@/contexts/SessionContext';
 import { Button } from '@/components/ui/button';
@@ -47,11 +48,137 @@ const hotkeyNavMap = allPossibleNavItems.reduce((acc, item) => {
 const HOTKEY_STRING = Object.keys(hotkeyNavMap).join(',');
 
 
+// Memoized Navigation component to prevent re-renders unless skills change
+const Navigation = React.memo(({ unlockedSkillIds, pathname }: { unlockedSkillIds: readonly string[]; pathname: string }) => {
+    return (
+        <div className="flex-1 min-w-0">
+            <nav className="flex items-center space-x-1 overflow-x-auto pb-2">
+                {allPossibleNavItems.map((item) => {
+                    const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
+                    const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+
+                    if (!isUnlocked) {
+                        return null;
+                    }
+
+                    const Icon = item.icon;
+                    return (
+                        <TooltipProvider key={item.href} delayDuration={300}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" asChild className={cn("text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated", pathname === item.href ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground")}>
+                                        <Link href={item.href} className="flex items-center">
+                                            <Icon className="h-5 w-5" />
+                                            <span className="hidden md:inline-block ml-2">{item.label}</span>
+                                        </Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>{item.label}<span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )
+                })}
+            </nav>
+        </div>
+    );
+});
+Navigation.displayName = 'Navigation';
+
+// Memoized UserStats component to prevent re-renders unless profile data changes
+const UserStats = React.memo(({ userProfile, getAppliedBoost }: { userProfile: UserProfile, getAppliedBoost: (type: 'xp' | 'cash') => number }) => {
+    const { level, xp, skillPoints, cash, currentStreak, longestStreak, title } = userProfile;
+
+    const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[level - 1] ?? 0;
+    const nextLevelXpTarget = level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[level] : xp;
+    const xpIntoCurrentLevel = xp - currentLevelXpStart;
+    const xpForNextLevelSegment = nextLevelXpTarget - currentLevelXpStart;
+    const xpProgressPercent = xpForNextLevelSegment > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelSegment) * 100)) : (level >= ACTUAL_LEVEL_THRESHOLDS.length ? 100 : 0);
+    const userTitle = title || TITLES[TITLES.length - 1];
+    const xpToNextLevelRaw = nextLevelXpTarget - xp;
+    const baseStreakBonus = Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+    const skillXpBoost = getAppliedBoost('xp');
+    const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + baseStreakBonus + skillXpBoost);
+    const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
+
+    return (
+        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
+            <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
+                            <LucideIcons.Gem className="h-4 w-4 text-yellow-400" />
+                            <span>{skillPoints || 0}</span>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><p>Skill Points</p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-1.5 text-accent font-medium text-xs px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/20">
+                        <span className="font-bold text-primary">Lvl {level}</span>
+                        <span>{userTitle}</span>
+                        <LucideIcons.ChevronDown className="h-3 w-3" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-60 p-3 bg-popover text-popover-foreground">
+                    <div className="space-y-1">
+                        <p className="text-sm font-semibold">Level {level}: {userTitle}</p>
+                        <Progress value={xpProgressPercent} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground">
+                            {xpIntoCurrentLevel.toLocaleString()} / {(xpForNextLevelSegment > 0 ? xpForNextLevelSegment.toLocaleString() : 'Max')} XP
+                        </p>
+                        {level < ACTUAL_LEVEL_THRESHOLDS.length && xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
+                            <p className="text-xs text-primary">
+                                Approx. {formatTime(timeToLevelUpSeconds, true)} focus to next level
+                            </p>
+                        )}
+                        {level >= ACTUAL_LEVEL_THRESHOLDS.length && (
+                            <p className="text-xs text-primary">Max Level Reached!</p>
+                        )}
+                    </div>
+                </PopoverContent>
+            </Popover>
+
+            <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-1 text-xs cursor-default bg-muted/50 px-2 py-1 rounded-md">
+                            <LucideIcons.Flame className="h-4 w-4 text-orange-500" />
+                            <span>{currentStreak}</span>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                        <p>Study Streak: {currentStreak} days</p>
+                        <p>Longest: {longestStreak} days</p>
+                        {currentStreak > 0 && <p>Bonus: +{(Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0)}% XP/Cash</p>}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
+                            <LucideIcons.DollarSign className="h-4 w-4 text-green-500" />
+                            <span>{cash.toLocaleString()}</span>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><p>Cash Balance</p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
+    );
+});
+UserStats.displayName = 'UserStats';
+
+
 export default function Header() {
     const pathname = usePathname();
     const router = useRouter();
     const { userProfile, getAppliedBoost } = useSessions();
-    const { unlockedSkillIds, level, xp, skillPoints, cash, currentStreak, longestStreak, title } = userProfile;
+    const { unlockedSkillIds } = userProfile;
     
     useHotkeys(
         HOTKEY_STRING,
@@ -70,18 +197,6 @@ export default function Header() {
         [router, unlockedSkillIds]
     );
 
-    const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[level - 1] ?? 0;
-    const nextLevelXpTarget = level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[level] : xp;
-    const xpIntoCurrentLevel = xp - currentLevelXpStart;
-    const xpForNextLevelSegment = nextLevelXpTarget - currentLevelXpStart;
-    const xpProgressPercent = xpForNextLevelSegment > 0 ? Math.min(100, Math.floor((xpIntoCurrentLevel / xpForNextLevelSegment) * 100)) : (level >= ACTUAL_LEVEL_THRESHOLDS.length ? 100 : 0);
-    const userTitle = title || TITLES[TITLES.length - 1];
-    const xpToNextLevelRaw = nextLevelXpTarget - xp;
-    const baseStreakBonus = Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
-    const skillXpBoost = getAppliedBoost('xp');
-    const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + baseStreakBonus + skillXpBoost);
-    const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
-
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 max-w-screen-2xl items-center px-4 md:px-6">
@@ -92,104 +207,9 @@ export default function Header() {
                     <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
                 </Link>
 
-                <div className="flex-1 min-w-0">
-                    <nav className="flex items-center space-x-1 overflow-x-auto pb-2">
-                        {allPossibleNavItems.map((item) => {
-                             const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
-                             const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                <Navigation unlockedSkillIds={unlockedSkillIds} pathname={pathname} />
 
-                             if (!isUnlocked) {
-                                return null;
-                             }
-
-                            const Icon = item.icon;
-                            return (
-                                <TooltipProvider key={item.href} delayDuration={300}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" asChild className={cn("text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated", pathname === item.href ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground")}>
-                                                <Link href={item.href} className="flex items-center">
-                                                    <Icon className="h-5 w-5" />
-                                                    <span className="hidden md:inline-block ml-2">{item.label}</span>
-                                                </Link>
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>{item.label}<span className="text-xs p-1 bg-muted rounded-sm ml-1">{item.hotkey.toUpperCase()}</span></p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )
-                        })}
-                    </nav>
-                </div>
-
-                <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
-                    <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                                    <LucideIcons.Gem className="h-4 w-4 text-yellow-400" />
-                                    <span>{skillPoints || 0}</span>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom"><p>Skill Points</p></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" className="flex items-center space-x-1.5 text-accent font-medium text-xs px-2 py-1 rounded-md cursor-pointer h-auto btn-animated hover:bg-accent/20">
-                                <span className="font-bold text-primary">Lvl {level}</span>
-                                <span>{userTitle}</span>
-                                <LucideIcons.ChevronDown className="h-3 w-3" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-60 p-3 bg-popover text-popover-foreground">
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold">Level {level}: {userTitle}</p>
-                                <Progress value={xpProgressPercent} className="h-1.5" />
-                                <p className="text-xs text-muted-foreground">
-                                    {xpIntoCurrentLevel.toLocaleString()} / {(xpForNextLevelSegment > 0 ? xpForNextLevelSegment.toLocaleString() : 'Max')} XP
-                                </p>
-                                {level < ACTUAL_LEVEL_THRESHOLDS.length && xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
-                                    <p className="text-xs text-primary">
-                                        Approx. {formatTime(timeToLevelUpSeconds, true)} focus to next level
-                                    </p>
-                                )}
-                                {level >= ACTUAL_LEVEL_THRESHOLDS.length && (
-                                    <p className="text-xs text-primary">Max Level Reached!</p>
-                                )}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-
-                    <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center space-x-1 text-xs cursor-default bg-muted/50 px-2 py-1 rounded-md">
-                                    <LucideIcons.Flame className="h-4 w-4 text-orange-500" />
-                                    <span>{currentStreak}</span>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                                <p>Study Streak: {currentStreak} days</p>
-                                <p>Longest: {longestStreak} days</p>
-                                {currentStreak > 0 && <p>Bonus: +{(Math.min(currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) * 100).toFixed(0)}% XP/Cash</p>}
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center space-x-1 text-xs bg-muted/50 px-2 py-1 rounded-md cursor-default">
-                                    <LucideIcons.DollarSign className="h-4 w-4 text-green-500" />
-                                    <span>{cash.toLocaleString()}</span>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom"><p>Cash Balance</p></TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
+                <UserStats userProfile={userProfile} getAppliedBoost={getAppliedBoost} />
             </div>
         </header>
     );
