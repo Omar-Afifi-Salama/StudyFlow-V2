@@ -15,6 +15,7 @@ import EisenhowerMatrixTab from "./EisenhowerMatrixTab";
 import { useSessions } from "@/contexts/SessionContext";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import type { FeatureKey } from "@/types";
 
 interface NotepadTabInfo {
   value: string;

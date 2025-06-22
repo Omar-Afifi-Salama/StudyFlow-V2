@@ -124,4 +124,3 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
     </TooltipProvider>
   );
 }
-
