@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useSessions } from '@/contexts/SessionContext';
+import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatTime, cn } from '@/lib/utils';
-import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, Zap, DollarSign, Activity, Award } from 'lucide-react';
+import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, Zap, DollarSign, Activity, Award, Trophy, CalendarCheck, Calendar as CalendarIcon } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import React, { useMemo } from 'react';
-import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 
 interface HeatmapDataPoint {
@@ -82,8 +82,8 @@ export default function StatsDashboard() {
     if (!heatmapData.length) return [];
     const weeks: Array<Array<HeatmapDataPoint | null>> = [];
     const firstDate = parseISO(heatmapData[0].date);
-    const startDate = startOfWeek(firstDate, { weekStartsOn: 0 }); // Start on Sunday
-    const endDate = endOfWeek(new Date(), { weekStartsOn: 0 }); // End on Saturday
+    const startDate = startOfWeek(firstDate, { weekStartsOn: 1 }); // Start on Monday
+    const endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
     let currentDay = startDate;
     while (currentDay <= endDate) {
       const week: Array<HeatmapDataPoint | null> = [];
@@ -101,10 +101,14 @@ export default function StatsDashboard() {
   const totalStudyTime = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').reduce((acc, s) => acc + s.duration, 0);
   const totalFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').length;
   const averageSessionLength = totalFocusSessions > 0 ? totalStudyTime / totalFocusSessions : 0;
-  const allPomodoroFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus');
-  const completedPomodoroFocusSessions = allPomodoroFocusSessions.filter(s => s.isFullPomodoroCycle).length;
+  const completedPomodoroFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' && s.isFullPomodoroCycle).length;
   const pomodoroBreakSessions = sessions.filter(s => s.type === 'Pomodoro Break').length;
   const stopwatchSessions = sessions.filter(s => s.type === 'Stopwatch').length;
+  const longestSession = Math.max(0, ...sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').map(s => s.duration));
+  const studyDaysThisYear = heatmapData.filter(d => d.count > 0).length;
+  const todayStudyTime = sessions.filter(s => isToday(new Date(s.startTime)) && (s.type === 'Pomodoro Focus' || s.type === 'Stopwatch')).reduce((acc, s) => acc + s.duration, 0);
+  const achievementsTotal = ALL_ACHIEVEMENTS.length;
+
 
   const chartConfig = {
     totalTime: { label: "Study Time (min)", color: "hsl(var(--chart-1))" },
@@ -149,57 +153,60 @@ export default function StatsDashboard() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
             <StatCard title="Total Study Time" value={formatTime(totalStudyTime, true)} icon={<Sigma className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Total Focus Sessions" value={totalFocusSessions.toString()} icon={<ListChecks className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Today's Study Time" value={formatTime(todayStudyTime)} icon={<CalendarIcon className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Avg. Session Length" value={formatTime(averageSessionLength)} icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Completed Pomodoros" value={completedPomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Longest Session" value={formatTime(longestSession)} icon={<Award className="h-5 w-5 text-muted-foreground" />} />
+            
+            <StatCard title="Total Focus Sessions" value={totalFocusSessions.toString()} icon={<ListChecks className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Full Pomodoro Cycles" value={completedPomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Stopwatch Sessions" value={stopwatchSessions.toString()} icon={<TimerIcon className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Pomodoro Breaks Taken" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} />
+            
             <StatCard title="Total XP Earned" value={userProfile.xp.toLocaleString()} icon={<Zap className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Total Cash Earned" value={`$${userProfile.cash.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Pomodoro Breaks Taken" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Achievements Unlocked" value={`${userProfile.unlockedAchievementIds.length} / ${56}`} icon={<Award className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Study Days (Year)" value={studyDaysThisYear.toString()} icon={<CalendarCheck className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Achievements Unlocked" value={`${userProfile.unlockedAchievementIds.length} / ${achievementsTotal}`} icon={<Trophy className="h-5 w-5 text-muted-foreground" />} />
           </div>
           
           <Card className="shadow-md card-animated">
             <CardHeader>
               <CardTitle>Study Activity Heatmap</CardTitle>
-              <CardDescription>Each cell is a day in the last year. Darker cells mean more study time.</CardDescription>
+              <CardDescription>Each cell represents a day's total study time in the last year. Weeks start on Monday.</CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto p-4 flex justify-center">
-              <div className="inline-flex flex-col gap-1.5">
-                <div className="grid grid-flow-col grid-rows-7 gap-1.5">
-                  {calendarHeatmapWeeks.flat().map((day) => {
-                    if (!day) return <div key={Math.random()} className="w-4 h-4 bg-muted/20 rounded-sm"></div>;
-                    let cellFill = 'bg-muted/30';
-                    if (day.level === 1) cellFill = 'bg-primary/20';
-                    else if (day.level === 2) cellFill = 'bg-primary/40';
-                    else if (day.level === 3) cellFill = 'bg-primary/60';
-                    else if (day.level === 4) cellFill = 'bg-primary/80';
-                    else if (day.level === 5) cellFill = 'bg-primary';
+            <CardContent className="flex justify-center p-4">
+              <div className="flex gap-3">
+                <div className="flex flex-col text-xs text-muted-foreground mt-1.5" style={{ gap: '0.625rem' }}>
+                  <span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span></span>
+                </div>
+                <div className="overflow-x-auto">
+                    <div className="grid grid-flow-col grid-rows-7 gap-1">
+                      {calendarHeatmapWeeks.flat().map((day) => {
+                        if (!day) return <div key={Math.random()} className="w-3.5 h-3.5 bg-muted/20 rounded-sm"></div>;
+                        let cellFill = 'bg-muted/30';
+                        if (day.level === 1) cellFill = 'bg-primary/20';
+                        else if (day.level === 2) cellFill = 'bg-primary/40';
+                        else if (day.level === 3) cellFill = 'bg-primary/60';
+                        else if (day.level === 4) cellFill = 'bg-primary/80';
+                        else if (day.level === 5) cellFill = 'bg-primary';
 
-                    return (
-                      <TooltipProvider key={day.date} delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className={cn("w-4 h-4 rounded-sm", cellFill, "transition-colors duration-150")} />
-                          </TooltipTrigger>
-                          <ShadTooltipContent>
-                            <p>{format(parseISO(day.date), 'PPP')}</p>
-                            <p>Study Time: {formatTime(day.count * 60)}</p>
-                          </ShadTooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-end items-center space-x-2 text-xs mt-2">
-                  <span>Less</span>
-                  <div className="w-3 h-3 rounded-sm bg-muted/30 border"></div>
-                  <div className="w-3 h-3 rounded-sm bg-primary/20"></div>
-                  <div className="w-3 h-3 rounded-sm bg-primary/60"></div>
-                  <div className="w-3 h-3 rounded-sm bg-primary"></div>
-                  <span>More</span>
-                </div>
+                        return (
+                          <TooltipProvider key={day.date} delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className={cn("w-3.5 h-3.5 rounded-sm", cellFill, "transition-colors duration-150")} />
+                              </TooltipTrigger>
+                              <ShadTooltipContent>
+                                <p>{format(parseISO(day.date), 'PPP')}</p>
+                                <p>Study Time: {formatTime(day.count * 60)}</p>
+                              </ShadTooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      })}
+                    </div>
+                  </div>
               </div>
             </CardContent>
           </Card>
