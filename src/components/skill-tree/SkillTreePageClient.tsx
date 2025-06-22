@@ -1,24 +1,19 @@
-
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import SkillNode from './SkillNode';
 import type { Skill } from '@/types';
-import { Network, Gem } from 'lucide-react'; 
-import { cn } from '@/lib/utils';
+import { Network, Gem } from 'lucide-react';
 import { useMemo } from 'react';
 
 // Connector component for drawing lines
-const Connector = ({ type = 'vertical', length = 'h-8', className = '' }: { type?: 'vertical' | 'horizontal' | 'elbow-br' | 'elbow-bl' | 'elbow-tr' | 'elbow-tl', length?: string, className?: string }) => {
-  const baseClass = "bg-border shrink-0";
-  let sizeClass = '';
-  if (type === 'vertical') sizeClass = `w-0.5 ${length}`;
-  else if (type === 'horizontal') sizeClass = `h-0.5 ${length}`;
-  // For this simplified version, elbows will just be straight lines too
-  else sizeClass = type.startsWith('elbow-b') || type.startsWith('elbow-t') ? `w-0.5 ${length}` : `h-0.5 ${length}`;
-  
-  return <div className={cn(baseClass, sizeClass, className)}></div>;
+const Connector = ({ vertical = false, horizontal = false, className = '' }) => {
+  return (
+    <div
+      className={`bg-border ${vertical ? 'w-0.5' : ''} ${horizontal ? 'h-0.5' : ''} ${className}`}
+    ></div>
+  );
 };
 
 export default function SkillTreePageClient() {
@@ -31,7 +26,7 @@ export default function SkillTreePageClient() {
 
   const renderSkillNode = (skillId: string) => {
     const skill = getSkill(skillId);
-    if (!skill) return <div className="w-20 h-20 rounded-full bg-muted/20 flex items-center justify-center text-xs text-muted-foreground card-animated">Skill Error</div>;
+    if (!skill) return <div className="w-24 h-24 rounded-full bg-muted/20 flex items-center justify-center text-xs text-muted-foreground card-animated">Skill Error</div>;
     return (
       <SkillNode
         key={skill.id}
@@ -43,24 +38,24 @@ export default function SkillTreePageClient() {
     );
   };
   
-  // Manually define tree structure for layout
-  const tier1_Core = ['unlockAbout', 'unlockStats', 'unlockNotepadMain'];
+  // Define tree structure based on the image and prerequisites
+  const tier0 = ['unlockAbout', 'unlockStats', 'unlockNotepadMain'];
+
+  const branch1Tier1 = ['unlockAchievements', 'unlockShop'];
+  const branch1Tier2 = ['unlockChallenges', 'unlockCapitalist'];
+  const branch1Tier3 = ['streakShield', 'shopDiscount1', 'investmentInsight'];
+  const branch1Tier4 = ['skillPointRefund']; // Single ultimate
+
+  const branch2Tier1 = ['unlockAmbiance', 'unlockCountdown'];
+  const branch2Tier2 = ['xpBoost1', 'cashBoost1'];
+  const branch2Tier3 = ['xpBoost2', 'cashBoost2'];
+  const branch2Tier4 = ['xpBoost3', 'cashBoost3'];
+
+  const branch3Tier1 = ['unlockNotepadChecklist', 'unlockNotepadNotes'];
+  const branch3Tier2 = ['unlockNotepadGoals', 'unlockNotepadLinks', 'unlockNotepadRevision'];
+  const branch3Tier3 = ['unlockNotepadHabits', 'unlockNotepadEvents', 'unlockNotepadEisenhower'];
+  const branch3Tier4 = ['revisionAccelerator']; // Single ultimate
   
-  const tier2_Features_Branch1 = ['unlockAchievements', 'unlockShop'];
-  const tier2_Features_Branch2 = ['unlockAmbiance', 'unlockCountdown'];
-  const tier2_Notepad_Branch = ['unlockNotepadChecklist', 'unlockNotepadNotes'];
-
-  const tier3_Gameplay_Branch = ['unlockChallenges', 'unlockCapitalist'];
-  const tier3_Utility_Branch1 = ['xpBoost1', 'cashBoost1'];
-  const tier3_Notepad_Branch = ['unlockNotepadGoals', 'unlockNotepadLinks', 'unlockNotepadRevision'];
-
-  const tier4_Advanced_Utility_Branch = ['streakShield', 'shopDiscount1', 'investmentInsight'];
-  const tier4_Advanced_Boosts = ['xpBoost2', 'cashBoost2'];
-  const tier4_Notepad_Branch = ['unlockNotepadHabits', 'unlockNotepadEvents', 'unlockNotepadEisenhower'];
-  
-  const tier5_Ultimate_Boosts = ['xpBoost3', 'cashBoost3'];
-  const tier5_Ultimate_Utility = ['revisionAccelerator', 'skillPointRefund'];
-
   return (
     <div className="w-full overflow-x-auto pb-8">
       <Card className="shadow-lg w-full card-animated min-w-[1200px]">
@@ -72,8 +67,6 @@ export default function SkillTreePageClient() {
                 <CardTitle className="text-3xl font-headline">Skill Tree</CardTitle>
                 <CardDescription>
                   Unlock app features and passive bonuses by spending Skill Points. Hover over skills for details.
-                  <br />
-                  <span className="text-sm italic font-semibold text-primary mt-1 block">A more dynamic, organic visual tree is planned for the future!</span>
                 </CardDescription>
               </div>
             </div>
@@ -83,87 +76,61 @@ export default function SkillTreePageClient() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6 flex flex-col items-center space-y-4 overflow-visible">
-          {/* TIER 1 */}
-          <div className="flex justify-center items-center gap-x-12">
-            {tier1_Core.map(renderSkillNode)}
-          </div>
-          
-          {/* Connectors to Tier 2 */}
-          <div className="flex w-full justify-around max-w-2xl">
-            <Connector type="vertical" length="h-8" />
-            <Connector type="vertical" length="h-8" />
-            <Connector type="vertical" length="h-8" />
-          </div>
+        <CardContent className="pt-6 flex flex-col items-center space-y-2">
+            
+            {/* TIER 0 - ROOT */}
+            <div className="flex justify-around w-full max-w-4xl">
+              {tier0.map(renderSkillNode)}
+            </div>
 
-          {/* TIER 2 */}
-          <div className="flex w-full justify-around max-w-5xl">
-            {/* Branch 1 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier2_Features_Branch1.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
+            {/* CONNECTORS to branches */}
+            <div className="flex justify-around w-full max-w-4xl h-8">
+              <Connector vertical className="h-full" />
+              <Connector vertical className="h-full" />
+              <Connector vertical className="h-full" />
             </div>
-            {/* Branch 2 */}
-             <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier2_Features_Branch2.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-            {/* Branch 3 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier2_Notepad_Branch.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-          </div>
-          
-           {/* TIER 3 */}
-          <div className="flex w-full justify-around max-w-6xl">
-            {/* Branch 1 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier3_Gameplay_Branch.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-            {/* Branch 2 */}
-             <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier3_Utility_Branch1.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-            {/* Branch 3 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier3_Notepad_Branch.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-          </div>
 
-           {/* TIER 4 */}
-          <div className="flex w-full justify-around max-w-6xl">
-            {/* Branch 1 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier4_Advanced_Utility_Branch.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-            {/* Branch 2 */}
-             <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier4_Advanced_Boosts.map(renderSkillNode)}</div>
-              <Connector type="vertical" length="h-8" />
-            </div>
-            {/* Branch 3 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier4_Notepad_Branch.map(renderSkillNode)}</div>
-               <Connector type="vertical" length="h-8" className="opacity-0"/>
-            </div>
-          </div>
+            {/* BRANCHES CONTAINER */}
+            <div className="flex justify-around w-full max-w-6xl">
+              {/* Branch 1: Gameplay/Economy */}
+              <div className="flex flex-col items-center space-y-2 w-1/3">
+                  <div className="flex justify-around w-full"> {branch1Tier1.map(renderSkillNode)} </div>
+                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                  <div className="flex justify-around w-full"> {branch1Tier2.map(renderSkillNode)} </div>
+                  <Connector vertical className="h-8" />
+                  <Connector horizontal className="w-full max-w-xs"/>
+                  <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                  <div className="flex justify-around w-full"> {branch1Tier3.map(renderSkillNode)} </div>
+                  <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                  <div className="flex justify-center w-full"> {branch1Tier4.map(renderSkillNode)} </div>
+              </div>
 
-           {/* TIER 5 */}
-          <div className="flex w-full justify-around max-w-6xl">
-            {/* Branch 1 */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier5_Ultimate_Utility.map(renderSkillNode)}</div>
+              {/* Branch 2: Features & Boosts */}
+              <div className="flex flex-col items-center space-y-2 w-1/3">
+                  <div className="flex justify-around w-full">{branch2Tier1.map(renderSkillNode)}</div>
+                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                  <div className="flex justify-around w-full">{branch2Tier2.map(renderSkillNode)}</div>
+                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                  <div className="flex justify-around w-full">{branch2Tier3.map(renderSkillNode)}</div>
+                  <div className="flex justify-around w-full h-8"><Connector vertical className="h-full" /><Connector vertical className="h-full" /></div>
+                  <div className="flex justify-around w-full">{branch2Tier4.map(renderSkillNode)}</div>
+              </div>
+              
+              {/* Branch 3: Notepad */}
+              <div className="flex flex-col items-center space-y-2 w-1/3">
+                   <div className="flex justify-around w-full">{branch3Tier1.map(renderSkillNode)}</div>
+                   <Connector vertical className="h-8" />
+                   <Connector horizontal className="w-full max-w-xs"/>
+                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                   <div className="flex justify-around w-full">{branch3Tier2.map(renderSkillNode)}</div>
+                   <Connector vertical className="h-8" />
+                   <Connector horizontal className="w-full max-w-xs"/>
+                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                   <div className="flex justify-around w-full">{branch3Tier3.map(renderSkillNode)}</div>
+                   <div className="flex justify-center w-full h-8"><Connector vertical className="h-full"/></div>
+                   <div className="flex justify-center w-full">{branch3Tier4.map(renderSkillNode)}</div>
+              </div>
             </div>
-            {/* Branch 2 */}
-             <div className="flex flex-col items-center space-y-4">
-              <div className="flex gap-x-6">{tier5_Ultimate_Boosts.map(renderSkillNode)}</div>
-            </div>
-          </div>
 
         </CardContent>
         <CardFooter className="mt-6 border-t pt-4">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Skill } from '@/types';
@@ -62,28 +61,30 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              'relative w-20 h-20 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg border-2 p-1',
-              bgColor,
-              borderColor,
-              'group' 
-            )}
-            onClick={() => { if (canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
-            tabIndex={0}
-            onKeyPress={(e) => { if (e.key === 'Enter' && canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
-            aria-label={`Skill: ${skill.name}`}
-          >
-            <Icon className={cn('w-7 h-7 mb-0.5', iconColor)} /> {/* Icon size reduced */}
-            <span className={cn('text-[10px] font-medium text-center truncate w-full px-0.5', textColor)}> {/* Text size reduced */}
-              {skill.name}
+          <div className="flex flex-col items-center gap-1.5 w-24">
+            <div
+              className={cn(
+                'relative w-24 h-24 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg border-2 p-1',
+                bgColor,
+                borderColor,
+                'group' 
+              )}
+              onClick={() => { if (canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
+              tabIndex={0}
+              onKeyPress={(e) => { if (e.key === 'Enter' && canUnlock.can && !isUnlocked) onUnlock(skill.id); }}
+              aria-label={`Skill: ${skill.name}`}
+            >
+              <Icon className={cn('w-8 h-8 mb-0.5', iconColor)} />
+              {isUnlocked && (
+                <Check className="absolute top-1 right-1 h-4 w-4 text-green-600 dark:text-green-400 bg-background rounded-full p-0.5" />
+              )}
+              {!isUnlocked && !canUnlock.can && (
+                 <Lock className="absolute top-1 right-1 h-4 w-4 text-destructive bg-background/70 rounded-full p-0.5" />
+              )}
+            </div>
+             <span className={cn('text-xs font-medium text-center w-full', textColor)}>
+                {skill.name}
             </span>
-            {isUnlocked && (
-              <Check className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-green-600 dark:text-green-400 bg-background rounded-full p-0.5" />
-            )}
-            {!isUnlocked && !canUnlock.can && (
-               <Lock className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-destructive bg-background/70 rounded-full p-0.5" />
-            )}
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs bg-popover text-popover-foreground p-3 rounded-md shadow-lg">
@@ -100,13 +101,19 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
                   <p>Requires Skills:</p>
                   <ul className="list-disc list-inside pl-3">
                     {skill.prerequisiteSkillIds.map(id => {
-                      return <li key={id} className="text-muted-foreground/80">{id.replace('unlock','').replace(/([A-Z])/g, ' $1').trim()}</li>;
+                      // A simple formatter to make skill IDs more readable.
+                      const formattedId = id
+                        .replace(/^unlock/, '') // Remove 'unlock' prefix
+                        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+                        .replace(/Main$/, '') // Remove 'Main' suffix
+                        .trim();
+                      return <li key={id} className="text-muted-foreground/80">{formattedId}</li>;
                     })}
                   </ul>
                 </div>
               )}
               {!isUnlocked && !canUnlock.can && canUnlock.reason && (
-                <p className="text-destructive mt-1">{canUnlock.reason}</p>
+                <p className="text-destructive mt-1 font-semibold">{canUnlock.reason}</p>
               )}
             </div>
             {canUnlock.can && !isUnlocked && (
@@ -115,7 +122,7 @@ export default function SkillNode({ skill, isUnlocked, canUnlock, onUnlock, isRo
                 size="sm"
                 className="w-full mt-2 btn-animated"
               >
-                <Lock className="mr-1.5 h-3.5 w-3.5" /> Unlock ({skill.cost} SP)
+                <Lock className="mr-1.5 h-3.5 w-3.5" /> Unlock for {skill.cost} SP
               </Button>
             )}
           </div>
