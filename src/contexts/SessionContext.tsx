@@ -29,11 +29,12 @@ export const TITLES = [
   "Zenith Scholar", "Apex Sage", "Omega Mind", "Alpha Learner", "The Final Word", "Unending Query", "Silent Savant", "Void Thinker", "The Librarian", "One Who Knows"
 ];
 
+// New leveling curve: Level 1->2 takes 25 min. Each subsequent level takes 15 more minutes than the last.
 const generateArithmeticLevelThresholds = (numLevels: number, xpPerMinute: number): number[] => {
   const thresholds: number[] = [0]; // Level 1 is 0 XP
   let totalMinutes = 0;
-  for (let i = 1; i < numLevels; i++) {
-    const minutesForThisLevel = 25 + (i - 1) * 15;
+  for (let level = 2; level <= numLevels; level++) {
+    const minutesForThisLevel = 25 + (level - 2) * 15;
     totalMinutes += minutesForThisLevel;
     thresholds.push(Math.round(totalMinutes * xpPerMinute));
   }
@@ -101,8 +102,8 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], skillLevels: {},
-  dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null,
   businesses: DEFAULT_BUSINESSES,
+  dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -1181,7 +1182,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
-      if (storedSessions) setSessions(JSON.parse(storedSessions));
+      if (storedSessions) {
+        // Sort sessions after loading from storage
+        const parsedSessions = JSON.parse(storedSessions) as StudySession[];
+        setSessions(parsedSessions.sort((a, b) => b.startTime - a.startTime));
+      }
 
       const storedProfile = localStorage.getItem('userProfile');
       let parsedProfile = DEFAULT_USER_PROFILE;
@@ -1353,4 +1358,3 @@ export const useSessions = () => {
   }
   return context;
 };
-

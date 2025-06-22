@@ -26,7 +26,7 @@ interface NavItem {
   alwaysVisible?: boolean;
 }
 
-// Moved OUTSIDE the component to prevent re-creation on every render. This is the fix.
+// Moved OUTSIDE the component to prevent re-creation on every render. This is a critical fix.
 const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: BookOpen, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
     { href: '/skill-tree', label: 'Skill Tree', icon: Network, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
@@ -54,31 +54,34 @@ export default function Header() {
     []
   );
 
+  // Using primitive values in dependency arrays is more stable than functions.
   useHotkeys(
     Object.keys(hotkeyMap).join(','),
     (event, handler) => {
       const navItem = hotkeyMap[handler.key];
       if (navItem) {
+        // We re-check the unlock status inside the callback to ensure it's always fresh
         if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
           router.push(navItem.href);
         }
       }
     },
     { preventDefault: true },
-    [isFeatureUnlocked, router, hotkeyMap]
+    [userProfile.unlockedSkillIds, router, hotkeyMap, isFeatureUnlocked] // Depend on the raw IDs
   );
   
   const mainBarItemHrefs = ['/', '/skill-tree'];
 
+  // Memoizing based on the raw skill IDs ensures this only recalculates when skills actually change.
   const mainNavItems = useMemo(() => allPossibleNavItems.filter(item => 
     mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey))
-  ), [isFeatureUnlocked]);
+  ), [isFeatureUnlocked, userProfile.unlockedSkillIds]);
   
   const dropdownNavItems = useMemo(() => allPossibleNavItems.filter(item => {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
     return !isMainItem && isUnlockedOrAlwaysVisible;
-  }), [isFeatureUnlocked]);
+  }), [isFeatureUnlocked, userProfile.unlockedSkillIds]);
 
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;

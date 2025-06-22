@@ -21,12 +21,21 @@ export default function GuidePage() {
     const level = index + 1;
     const xpRequired = ACTUAL_LEVEL_THRESHOLDS[index];
     
+    // Correctly calculate total minutes based on the arithmetic progression
     let totalMinutes = 0;
     if (index > 0) {
       for (let i = 1; i <= index; i++) {
-          totalMinutes += 25 + (i - 1) * 15;
+        // Minutes to get from level `i` to `i+1` is `25 + (i-1)*15`
+        const minutesForLevel = 25 + (i - 1) * 15;
+        totalMinutes += minutesForLevel;
       }
+    } else {
+      // Level 1 requires 0 minutes, but the first focus session starts the journey.
+      // The time to reach level 2 is 25 minutes.
+      // So to be precise, time to reach level 1 is 0.
+      totalMinutes = 0;
     }
+
     const hoursToReach = totalMinutes / 60;
     
     return {
