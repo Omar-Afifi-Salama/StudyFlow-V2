@@ -37,7 +37,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <Header />
       <div className="flex flex-1 container max-w-screen-2xl mx-auto py-6 px-4 md:px-6">
         {showSleepSidebar && (
-           <aside className="w-64 mr-6 hidden lg:block sticky top-20 h-[calc(100vh-10rem)]">
+           <aside className="w-64 mr-6 hidden md:block sticky top-20 h-[calc(100vh-10rem)]">
               <SleepCountdownSidebar />
            </aside>
         )}
@@ -45,7 +45,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {children}
         </main>
         {showSidebarLog && (
-          <aside className="w-80 ml-6 hidden lg:block sticky top-20 h-[calc(100vh-10rem)]">
+          <aside className="w-80 ml-6 hidden md:block sticky top-20 h-[calc(100vh-10rem)]">
             <SessionLog />
           </aside>
         )}
