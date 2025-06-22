@@ -62,8 +62,14 @@ export default function Header() {
         });
     }, [unlockedSkillIds]);
 
-    const mainBarItems = visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree');
-    const dropdownItems = visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree');
+    const mainBarItems = useMemo(() => 
+        visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree'), 
+        [visibleNavItems]
+    );
+    const dropdownItems = useMemo(() => 
+        visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree'), 
+        [visibleNavItems]
+    );
 
     // Hotkey handler using stable dependencies
     useHotkeys(
