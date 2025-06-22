@@ -6,7 +6,7 @@ import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, B
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
+import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS, ALL_SKILLS } from '@/contexts/SessionContext';
 import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -26,7 +26,6 @@ interface NavItem {
   alwaysVisible?: boolean;
 }
 
-// Moved OUTSIDE the component to prevent re-creation on every render. This is a critical fix.
 const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: BookOpen, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
     { href: '/skill-tree', label: 'Skill Tree', icon: Network, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
@@ -41,42 +40,37 @@ const allPossibleNavItems: NavItem[] = [
     { href: '/about', label: 'Guide', icon: HelpCircle, hotkey: 'g', featureKey: 'about' },
 ];
 
+const hotkeyMap = allPossibleNavItems.reduce((acc, item) => {
+    acc[item.hotkey] = item;
+    return acc;
+}, {} as Record<string, Omit<NavItem, 'icon'>>);
+
+const mainBarItemHrefs = ['/', '/skill-tree'];
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
+  const unlockedSkills = userProfile.unlockedSkillIds;
 
-  const hotkeyMap = useMemo(
-    () => allPossibleNavItems.reduce((acc, item) => {
-        acc[item.hotkey] = item;
-        return acc;
-    }, {} as Record<string, Omit<NavItem, 'icon'>>),
-    []
-  );
-
-  // Using primitive values in dependency arrays is more stable than functions.
   useHotkeys(
     Object.keys(hotkeyMap).join(','),
     (event, handler) => {
       const navItem = hotkeyMap[handler.key];
       if (navItem) {
-        // We re-check the unlock status inside the callback to ensure it's always fresh
-        if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
+        // Replicate isFeatureUnlocked logic here with stable dependencies
+        const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
+        const isUnlocked = skill ? unlockedSkills.includes(skill.id) : false;
+
+        if (navItem.alwaysVisible || isUnlocked) {
           router.push(navItem.href);
         }
       }
     },
     { preventDefault: true },
-    [userProfile.unlockedSkillIds, router, hotkeyMap, isFeatureUnlocked] // Depend on the raw IDs
+    [router, unlockedSkills] // Use stable dependencies
   );
-  
-  const mainBarItemHrefs = ['/', '/skill-tree'];
 
-  // Memoizing based on the raw skill IDs ensures this only recalculates when skills actually change.
-  const mainNavItems = useMemo(() => allPossibleNavItems.filter(item => 
-    mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey))
-  ), [isFeatureUnlocked, userProfile.unlockedSkillIds]);
-  
   const dropdownNavItems = useMemo(() => allPossibleNavItems.filter(item => {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
@@ -94,7 +88,7 @@ export default function Header() {
   const xpToNextLevelRaw = nextLevelXpTarget - userProfile.xp;
   const baseStreakBonus = Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
   const skillXpBoost = getAppliedBoost('xp');
-  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + baseStreakBonus + skillXpBoost); 
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + baseStreakBonus + skillXpBoost);
   const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
 
   return (
@@ -109,7 +103,12 @@ export default function Header() {
 
         <div className="flex-1 min-w-0">
           <nav className="flex items-center space-x-1">
-            {mainNavItems.map((item) => {
+            {allPossibleNavItems.map((item) => {
+              if (!mainBarItemHrefs.includes(item.href)) return null;
+
+              const isVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
+              if (!isVisible) return null;
+
               const Icon = item.icon;
               return (
               <TooltipProvider key={item.href} delayDuration={300}>
@@ -156,8 +155,8 @@ export default function Header() {
                         <TooltipContent><p>More Options</p></TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-                <DropdownMenuContent 
-                  align="start" 
+                <DropdownMenuContent
+                  align="start"
                   className="mt-1"
                 >
                   {dropdownNavItems.map((item) => {
@@ -179,7 +178,7 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1"> {/* User Stats Block */}
+        <div className="flex items-center space-x-1 md:space-x-2 ml-auto pl-1">
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
