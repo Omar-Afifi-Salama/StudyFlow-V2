@@ -17,7 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTime } from '@/lib/utils';
 
-// Define NavItem type and constant data structure OUTSIDE the component
+// Define NavItem type and constant data structure OUTSIDE the component for stability
 interface NavItem {
   href: string;
   label: string;
