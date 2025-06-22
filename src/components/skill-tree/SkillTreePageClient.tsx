@@ -68,7 +68,7 @@ export default function SkillTreePageClient() {
   
   return (
     <div className="w-full overflow-x-auto pb-8">
-      <Card className="shadow-lg w-full card-animated min-w-[1400px]">
+      <Card className="shadow-lg w-full card-animated">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">

@@ -50,8 +50,6 @@ const HOTKEY_STRING = Object.keys(hotkeyNavMap).join(',');
 
 // Memoized Navigation component to prevent re-renders unless skills change
 const Navigation = React.memo(({ unlockedSkillIds, pathname }: { unlockedSkillIds: readonly string[]; pathname: string }) => {
-    const isCompact = pathname === '/stats';
-
     return (
         <div className="flex-1 min-w-0">
             <nav className="flex items-center space-x-1 overflow-x-auto pb-2">
@@ -71,7 +69,6 @@ const Navigation = React.memo(({ unlockedSkillIds, pathname }: { unlockedSkillId
                                     <Button variant="ghost" asChild className={cn("text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated", pathname === item.href ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-foreground")}>
                                         <Link href={item.href} className="flex items-center">
                                             <Icon className="h-5 w-5" />
-                                            <span className={cn("ml-2", isCompact ? "hidden" : "hidden md:inline-block")}>{item.label}</span>
                                         </Link>
                                     </Button>
                                 </TooltipTrigger>
