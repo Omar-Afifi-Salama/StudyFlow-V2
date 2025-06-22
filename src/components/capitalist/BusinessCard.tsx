@@ -29,8 +29,16 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade }
                         <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p className="font-bold">Gimmick: {business.gimmick}</p>
-                        <p className="max-w-xs">{business.description}</p>
+                        <div className="max-w-xs p-1">
+                          <p className="font-bold mb-1">Gimmick: {business.gimmick}</p>
+                          <p className="text-sm">{business.description}</p>
+                          {business.id === 'startup' && (
+                            <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">{(business.volatility || 0) * 100}% chance of no income each hour.</p>
+                          )}
+                          {business.id === 'mine' && (
+                             <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">Income depletes by {(business.depletionRate || 0) * 100}% each hour.</p>
+                          )}
+                        </div>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

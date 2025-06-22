@@ -20,7 +20,15 @@ export default function GuidePage() {
   const levelData = TITLES.map((title, index) => {
     const level = index + 1;
     const xpRequired = ACTUAL_LEVEL_THRESHOLDS[index];
-    const hoursToReach = xpRequired > 0 ? (xpRequired / XP_PER_MINUTE_FOCUS) / 60 : 0;
+    
+    let totalMinutes = 0;
+    if (index > 0) {
+      for (let i = 1; i <= index; i++) {
+          totalMinutes += 25 + (i - 1) * 15;
+      }
+    }
+    const hoursToReach = totalMinutes / 60;
+    
     return {
       level,
       title,

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
 import BusinessCard from './BusinessCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,20 @@ export default function CapitalistPage() {
   const [lastCollected, setLastCollected] = useState(Date.now());
   const [timeToNext, setTimeToNext] = useState(INCOME_COLLECTION_INTERVAL);
   
-  const businesses = userProfile.businesses ? Object.values(userProfile.businesses) : [];
+  const businessOrder: BusinessType[] = ['farm', 'startup', 'mine', 'industry'];
+  const businesses = userProfile.businesses ? businessOrder.map(id => userProfile.businesses[id]).filter(b => b) : [];
+
+  const totalHourlyIncome = useMemo(() => {
+    if (!userProfile.businesses) return 0;
+    return Object.values(userProfile.businesses)
+      .filter(b => b.unlocked)
+      .reduce((sum, b) => {
+          let income = b.baseIncome;
+          if (b.maintenanceCost) income -= b.maintenanceCost;
+          // Note: This is a simplified display and doesn't account for volatility/depletion gimmicks
+          return sum + income;
+      }, 0);
+  }, [userProfile.businesses]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -92,11 +105,12 @@ export default function CapitalistPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-6 p-4 bg-secondary/30 rounded-lg">
-            <p className="text-lg">Your Cash: <span className="font-semibold text-green-500 flex items-center"><DollarSign className="h-5 w-5 mr-1"/>{userProfile.cash.toLocaleString()}</span></p>
-            <p className="text-sm text-muted-foreground">
-              Next collection in: {formatTime(timeToNext)}
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 p-4 bg-secondary/30 rounded-lg">
+            <div className="text-lg">Your Cash: <span className="font-semibold text-green-500 flex items-center"><DollarSign className="h-5 w-5 mr-1"/>{userProfile.cash.toLocaleString()}</span></div>
+            <div className="text-lg">Total Income/hr: <span className="font-semibold text-primary">${totalHourlyIncome.toLocaleString()}</span></div>
+            <div className="text-sm text-muted-foreground">
+              Next income accrual in: {formatTime(timeToNext)}
+            </div>
           </div>
           
           {businesses.length === 0 ? (

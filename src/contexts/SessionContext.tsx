@@ -29,21 +29,20 @@ export const TITLES = [
   "Zenith Scholar", "Apex Sage", "Omega Mind", "Alpha Learner", "The Final Word", "Unending Query", "Silent Savant", "Void Thinker", "The Librarian", "One Who Knows" // 91-100
 ];
 
-
-const generateLevelThresholds = (numLevels: number, maxXp: number): number[] => {
+const generateArithmeticLevelThresholds = (numLevels: number, xpPerMinute: number): number[] => {
   const thresholds: number[] = [0]; // Level 1 is 0 XP
+  let totalMinutes = 0;
   for (let i = 1; i < numLevels; i++) {
-    const progress = i / (numLevels - 1);
-    const xp = Math.floor(maxXp * Math.pow(progress, 2.5)); // Exponential scaling
-    thresholds.push(xp);
+    // Minutes to get from level i to i+1
+    const minutesForThisLevel = 25 + (i - 1) * 15;
+    totalMinutes += minutesForThisLevel;
+    thresholds.push(Math.round(totalMinutes * xpPerMinute));
   }
-  if (thresholds.length >= numLevels) {
-    thresholds[numLevels - 1] = maxXp; // Ensure max level hits exact maxXp
-  }
-  return thresholds.slice(0, numLevels);
+  return thresholds;
 };
 
-export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds(100, 300000); 
+export const ACTUAL_LEVEL_THRESHOLDS = generateArithmeticLevelThresholds(100, XP_PER_MINUTE_FOCUS);
+
 
 export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png?text=Classic+Blue', dataAiHint: 'study app classic blue theme', isTheme: true, themeClass: 'classic' },
