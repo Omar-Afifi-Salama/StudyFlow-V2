@@ -13,9 +13,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useHotkeys, type HotkeyCallback } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatTime } from '@/lib/utils';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 
 interface NavItem {
   href: string;
@@ -44,25 +44,26 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Correctly implement hotkeys with a single top-level hook call.
   const hotkeys = useMemo(
-    () => allPossibleNavItems.map((item) => item.hotkey),
+    () => allPossibleNavItems.map(item => ({ hotkey: item.hotkey, href: item.href, featureKey: item.featureKey, alwaysVisible: item.alwaysVisible })),
     []
   );
 
-  const onHotkey: HotkeyCallback = (event, handler) => {
-    const navItem = allPossibleNavItems.find((item) => item.hotkey === handler.key);
-    if (navItem) {
-      if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
-        router.push(navItem.href);
+  useHotkeys(
+    hotkeys.map(h => h.hotkey).join(','),
+    (event, handler) => {
+      const navItem = hotkeys.find((item) => item.hotkey === handler.key);
+      if (navItem) {
+        if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
+          router.push(navItem.href);
+        }
       }
-    }
-  };
-
-  useHotkeys(hotkeys.join(','), onHotkey, { preventDefault: true }, [isFeatureUnlocked, router]);
-
+    },
+    { preventDefault: true },
+    [isFeatureUnlocked, router, hotkeys]
+  );
+  
   const mainBarItemHrefs = ['/', '/skill-tree'];
   const mainNavItems: NavItem[] = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
   
@@ -125,41 +126,39 @@ export default function Header() {
               </TooltipProvider>
             ))}
             {dropdownNavItems.length > 0 && (
-              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+              <DropdownMenu>
                 <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          onMouseEnter={() => setIsDropdownOpen(true)}
-                          className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
-                        >
-                          <MoreVertical className="h-5 w-5 md:mr-2" />
-                          <span className="hidden md:inline-block">More</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent><p>More Options</p></TooltipContent>
-                  </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                variant="ghost"
+                                className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground"
+                                >
+                                <MoreVertical className="h-5 w-5 md:mr-2" />
+                                <span className="hidden md:inline-block">More</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent><p>More Options</p></TooltipContent>
+                    </Tooltip>
                 </TooltipProvider>
-                <DropdownMenuPortal>
-                  <DropdownMenuContent 
-                    align="start" 
-                    className="mt-1" 
-                    onMouseLeave={() => setIsDropdownOpen(false)}
-                  >
-                    {dropdownNavItems.map((item) => (
-                      <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer">
-                        <Link href={item.href} className="flex items-center w-full">
-                          {item.icon}
-                          <span className="ml-2">{item.label}</span>
-                          <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground">{item.hotkey.toUpperCase()}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenuPortal>
+                <DropdownMenuContent 
+                  align="start" 
+                  className="mt-1"
+                >
+                  {dropdownNavItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
+                      <Link href={item.href} className="flex items-center w-full">
+                        {item.icon}
+                        <span className="ml-2">{item.label}</span>
+                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground">
+                          {item.hotkey.toUpperCase()}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
               </DropdownMenu>
             )}
           </nav>
