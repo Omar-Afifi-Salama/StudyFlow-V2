@@ -11,12 +11,6 @@ import { useEffect, useState, useMemo } from 'react';
 export default function CapitalistPage() {
   const { userProfile, unlockBusiness, upgradeBusiness, collectBusinessIncome } = useSessions();
   const { businesses } = userProfile;
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const totalIncomePerHour = useMemo(() => {
     return Object.values(businesses).reduce((total, business) => {
@@ -28,15 +22,7 @@ export default function CapitalistPage() {
     }, 0);
   }, [businesses]);
 
-  const timeToNextCollection = useMemo(() => {
-    const earliestLastCollected = Math.min(...Object.values(businesses)
-      .filter(b => b.unlocked)
-      .map(b => b.lastCollected)
-    );
-    if (!isFinite(earliestLastCollected)) return 3600 * 1000;
-    const nextCollectionTime = earliestLastCollected + 3600 * 1000;
-    return Math.max(0, nextCollectionTime - now);
-  }, [businesses, now]);
+  const businessOrder: (keyof typeof businesses)[] = ['farm', 'startup', 'mine', 'industry'];
 
   return (
     <div className="space-y-6">
@@ -53,23 +39,19 @@ export default function CapitalistPage() {
             <div className="text-right">
                 <p className="text-sm text-muted-foreground">Total Income Potential</p>
                 <p className="font-bold text-lg text-green-500">${totalIncomePerHour.toFixed(0)} / hour</p>
-                <p className="text-xs text-muted-foreground flex items-center justify-end">
-                  <Clock className="mr-1 h-3 w-3"/>
-                  Next income accrual in: {formatTime(timeToNextCollection / 1000)}
-                </p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Object.values(businesses).map(business => (
+            {businessOrder.map(businessId => (
               <BusinessCard
-                key={business.id}
-                business={business}
+                key={businessId}
+                business={businesses[businessId]}
                 userCash={userProfile.cash}
-                onUnlock={() => unlockBusiness(business.id)}
-                onUpgrade={() => upgradeBusiness(business.id)}
-                onCollect={() => collectBusinessIncome(business.id)}
+                onUnlock={() => unlockBusiness(businessId)}
+                onUpgrade={() => upgradeBusiness(businessId)}
+                onCollect={(amount) => collectBusinessIncome(businessId, amount)}
               />
             ))}
           </div>

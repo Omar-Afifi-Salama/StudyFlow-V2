@@ -66,7 +66,7 @@ export default function AchievementsPageClient() {
                             {IconComponent ? <IconComponent className="h-10 w-10" /> : <Award className="h-10 w-10" />}
                           </div>
                           <h3 className={`text-xl font-semibold mb-1 ${isUnlocked ? 'text-primary' : 'text-foreground'}`}>{achievement.name}</h3>
-                          <p className={`text-sm mb-2 ${isUnlocked ? 'text-muted-foreground' : 'text-foreground/70'}`}>{achievement.description}</p>
+                          <p className={`text-sm mb-2 h-10 ${isUnlocked ? 'text-muted-foreground' : 'text-foreground/70'}`}>{achievement.description}</p>
                           <p className={`text-xs font-medium flex items-center mb-3 ${isUnlocked ? 'text-green-500' : 'text-muted-foreground'}`}>
                             <DollarSign className="h-3 w-3 mr-1" /> Reward: {achievement.cashReward.toLocaleString()}
                           </p>

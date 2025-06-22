@@ -7,21 +7,59 @@ import { Button } from '@/components/ui/button';
 import { DollarSign, Zap, ArrowUpCircle, Info, Lock } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import { useState, useEffect, useMemo } from 'react';
 
 interface BusinessCardProps {
   business: Business;
   userCash: number;
   onUnlock: () => void;
   onUpgrade: () => void;
-  onCollect: () => void;
+  onCollect: (incomeToCollect: number) => void;
 }
 
 export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, onCollect }: BusinessCardProps) {
   const isLocked = !business.unlocked;
   const upgradeCost = business.level * 1000 * Math.pow(1.2, business.level);
   const canAffordUpgrade = userCash >= upgradeCost;
-  
-  const incomePerHour = business.baseIncome * Math.pow(1.15, business.level - 1) * (1 - (business.maintenanceCost || 0));
+
+  const incomePerHour = useMemo(() => {
+    return business.baseIncome * Math.pow(1.15, business.level - 1);
+  }, [business.baseIncome, business.level]);
+
+  const [accruedCash, setAccruedCash] = useState(0);
+
+  useEffect(() => {
+    if (isLocked) {
+      setAccruedCash(0);
+      return;
+    }
+
+    const calculateAccrued = () => {
+      const secondsPassed = (Date.now() - business.lastCollected) / 1000;
+      let incomeThisCycle = (incomePerHour / 3600) * secondsPassed;
+      
+      // Apply gimmicks to income calculation dynamically
+      if (business.id === 'mine' && business.depletionRate) {
+        const hoursPassed = secondsPassed / 3600;
+        incomeThisCycle *= Math.pow(1 - business.depletionRate, hoursPassed);
+      }
+      if (business.maintenanceCost) {
+        incomeThisCycle *= (1 - business.maintenanceCost);
+      }
+      
+      setAccruedCash(incomeThisCycle);
+    };
+
+    calculateAccrued();
+    const interval = setInterval(calculateAccrued, 1000);
+    return () => clearInterval(interval);
+
+  }, [business.lastCollected, incomePerHour, isLocked, business.id, business.depletionRate, business.maintenanceCost]);
+
+  const handleCollect = () => {
+    onCollect(accruedCash);
+    setAccruedCash(0);
+  }
 
   return (
     <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow card-animated">
@@ -46,7 +84,7 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
         <div className="space-y-1">
           <p className="flex items-center text-sm">
             <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-            Income: ≈ ${incomePerHour.toFixed(0)} / hour
+            Base Income: ≈ ${incomePerHour.toFixed(0)} / hour
           </p>
           <p className="flex items-center text-sm text-muted-foreground">
             <Zap className="h-4 w-4 mr-2 text-yellow-500" />
@@ -59,11 +97,11 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
              <p className="text-xs text-destructive/80">Depletion: Income reduces over time.</p>
            )}
         </div>
-        {business.unlocked && typeof business.lastCollected === 'number' && (
+        {business.unlocked && (
           <div>
             <div className="text-xs text-muted-foreground mb-1 flex justify-between">
               <span>Next Income</span>
-              <span>Accrued: ${business.currentCash.toFixed(0)}</span>
+              <span>Accrued: ${accruedCash.toFixed(2)}</span>
             </div>
             <Progress value={(Date.now() - business.lastCollected) / (3600 * 1000) * 100} />
           </div>
@@ -76,8 +114,8 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
           </Button>
         ) : (
           <div className="w-full flex flex-col gap-2">
-             <Button onClick={onCollect} className="w-full btn-animated">
-                Collect ${business.currentCash.toFixed(0)}
+             <Button onClick={handleCollect} disabled={accruedCash < 1} className="w-full btn-animated">
+                Collect ${accruedCash.toFixed(0)}
              </Button>
             <Button onClick={onUpgrade} disabled={!canAffordUpgrade} variant="outline" className="w-full btn-animated">
               <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade for ${upgradeCost.toLocaleString()}

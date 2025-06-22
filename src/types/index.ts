@@ -175,7 +175,7 @@ export interface NotepadEisenhowerMatrix {
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
-  goals: NotepadLink[];
+  goals: NotepadGoal[];
   links: NotepadLink[];
   revisionConcepts: RevisionConcept[];
   habits: Habit[];
@@ -285,5 +285,3 @@ export interface StopwatchState {
   isRunning: boolean;
   sessionStartTime: number;
 }
-
-    

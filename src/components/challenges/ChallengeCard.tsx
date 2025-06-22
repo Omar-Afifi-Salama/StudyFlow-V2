@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { DailyChallenge } from '@/types';
@@ -30,12 +31,12 @@ export default function ChallengeCard({ challenge, onClaimReward }: ChallengeCar
         <div>
           <div className="flex justify-between text-sm mb-1">
             <span>Progress:</span>
-            <span>{challenge.currentValue} / {challenge.targetValue} {challenge.type === 'studyDurationMinutes' ? 'min' : ''}</span>
+            <span>{challenge.currentValue.toLocaleString()} / {challenge.targetValue.toLocaleString()} {challenge.type === 'studyDurationMinutes' ? 'min' : ''}</span>
           </div>
-          <Progress value={progressPercent} aria-label={`${challenge.title} progress ${progressPercent}%`} />
+          <Progress value={Math.min(100, progressPercent)} aria-label={`${challenge.title} progress ${progressPercent}%`} />
         </div>
         <div className="text-sm space-y-1">
-            <p className="flex items-center"><Zap className="h-4 w-4 mr-2 text-yellow-400" /> XP Reward: <span className="font-medium ml-1">{challenge.xpReward}</span></p>
+            <p className="flex items-center"><Zap className="h-4 w-4 mr-2 text-yellow-400" /> XP Reward: <span className="font-medium ml-1">{challenge.xpReward.toLocaleString()}</span></p>
             <p className="flex items-center"><DollarSign className="h-4 w-4 mr-2 text-green-500" /> Cash Reward: <span className="font-medium ml-1">${challenge.cashReward.toLocaleString()}</span></p>
         </div>
       </CardContent>
