@@ -31,59 +31,9 @@ interface HeatmapDataPoint {
 }
 
 
-const WakeSleepTimeSelector = ({ time, period, onTimeChange, onPeriodChange, label }: {
-  time: number, period: 'AM' | 'PM', onTimeChange: (hour: number) => void, onPeriodChange: (period: 'AM' | 'PM') => void, label: string
-}) => {
-  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  return (
-    <div className="flex items-center space-x-2">
-      <Label htmlFor={`${label}-hour`} className="min-w-[70px]">{label} Hour:</Label>
-      <Select value={time.toString()} onValueChange={(val) => onTimeChange(parseInt(val))}>
-        <SelectTrigger id={`${label}-hour`} className="w-[80px] btn-animated">
-          <SelectValue placeholder="Hour" />
-        </SelectTrigger>
-        <SelectContent>
-          {hours.map(h => <SelectItem key={h} value={h.toString()}>{h}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Select value={period} onValueChange={(val: 'AM' | 'PM') => onPeriodChange(val)}>
-        <SelectTrigger id={`${label}-period`} className="w-[90px] btn-animated">
-          <SelectValue placeholder="AM/PM" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="AM">AM</SelectItem>
-          <SelectItem value="PM">PM</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-};
-
-
 export default function StatsDashboard() {
-  const { sessions, userProfile, updateSleepWakeTimes, isLoaded } = useSessions(); // Added isLoaded
+  const { sessions, userProfile, isLoaded } = useSessions();
   const [dailyData, setDailyData] = useState<DailyStat[]>([]);
-
-  const [localWakeUpHour, setLocalWakeUpHour] = useState(userProfile.wakeUpTime?.hour || 8);
-  const [localWakeUpPeriod, setLocalWakeUpPeriod] = useState<'AM' | 'PM'>(userProfile.wakeUpTime?.period || 'AM');
-  const [localSleepHour, setLocalSleepHour] = useState(userProfile.sleepTime?.hour || 10);
-  const [localSleepPeriod, setLocalSleepPeriod] = useState<'AM' | 'PM'>(userProfile.sleepTime?.period || 'PM');
-
-  useEffect(() => {
-    if(isLoaded){ // Ensure profile is loaded before setting local state
-        setLocalWakeUpHour(userProfile.wakeUpTime?.hour || 8);
-        setLocalWakeUpPeriod(userProfile.wakeUpTime?.period || 'AM');
-        setLocalSleepHour(userProfile.sleepTime?.hour || 10);
-        setLocalSleepPeriod(userProfile.sleepTime?.period || 'PM');
-    }
-  }, [userProfile.wakeUpTime, userProfile.sleepTime, isLoaded]);
-
-  const handleSaveSleepWakeTimes = () => {
-    updateSleepWakeTimes(
-      { hour: localWakeUpHour, period: localWakeUpPeriod },
-      { hour: localSleepHour, period: localSleepPeriod }
-    );
-  };
 
   const { wakingHours, studyTargetHours, todayStudyTimeSeconds, studyTargetCompletionPercent } = useMemo(() => {
     if (!userProfile.wakeUpTime || !userProfile.sleepTime) return { wakingHours: 0, studyTargetHours: 0, todayStudyTimeSeconds: 0, studyTargetCompletionPercent: 0 };
@@ -288,26 +238,9 @@ export default function StatsDashboard() {
             <StatCard title="Completed Pomodoros" value={completedPomodoroFocusSessions.toString()} icon={<Clock className="h-5 w-5 text-muted-foreground" />} description={`${pomodoroCompletionRate.toFixed(1)}% completion rate`} />
             <StatCard title="Pomodoro Breaks Taken" value={pomodoroBreakSessions.toString()} icon={<Coffee className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Stopwatch Sessions" value={stopwatchSessions.toString()} icon={<TimerIcon className="h-5 w-5 text-muted-foreground" />} />
+             <StatCard title="Daily Study Target" value={`${studyTargetHours.toFixed(1)}h`} icon={<TargetIcon className="h-5 w-5 text-muted-foreground" />} description={`Based on ${wakingHours.toFixed(1)} waking hours`} />
+            <StatCard title="Today's Progress" value={`${studyTargetCompletionPercent.toFixed(0)}%`} icon={<Percent className="h-5 w-5 text-muted-foreground" />} description={`${formatTime(todayStudyTimeSeconds)} / ${formatTime(studyTargetHours * 3600)} studied`} />
           </div>
-
-          <Card className="shadow-md card-animated">
-            <CardHeader>
-              <CardTitle>Daily Study Goal & Preferences</CardTitle>
-              <CardDescription>Set your typical wake/sleep times to calculate a study target.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                <WakeSleepTimeSelector label="Wake Up" time={localWakeUpHour} period={localWakeUpPeriod} onTimeChange={setLocalWakeUpHour} onPeriodChange={setLocalWakeUpPeriod} />
-                <WakeSleepTimeSelector label="Sleep" time={localSleepHour} period={localSleepPeriod} onTimeChange={setLocalSleepHour} onPeriodChange={setLocalSleepPeriod} />
-              </div>
-              <Button onClick={handleSaveSleepWakeTimes} className="btn-animated">Save Preferences</Button>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard title="Your Waking Hours" value={`${wakingHours.toFixed(1)}h`} icon={<SunMedium className="h-5 w-5 text-muted-foreground" />} />
-                <StatCard title="Daily Study Target (60%)" value={`${studyTargetHours.toFixed(1)}h`} icon={<TargetIcon className="h-5 w-5 text-muted-foreground" />} description={`(${formatTime(studyTargetHours * 3600)})`} />
-                <StatCard title="Today's Progress" value={`${studyTargetCompletionPercent.toFixed(0)}%`} icon={<Percent className="h-5 w-5 text-muted-foreground" />} description={`${formatTime(todayStudyTimeSeconds)} / ${formatTime(studyTargetHours * 3600)} studied`} />
-              </div>
-            </CardContent>
-          </Card>
           
           <Card className="shadow-md card-animated">
             <CardHeader>
@@ -333,7 +266,6 @@ export default function StatsDashboard() {
                                 else if (day.level === 4) cellFill = 'bg-primary/80';
                                 else if (day.level === 5) cellFill = 'bg-primary';
 
-                                // If the day is in the future relative to 'today', make it even lighter or distinct
                                 const todayFormatted = format(new Date(), 'yyyy-MM-dd');
                                 if(day.date > todayFormatted) cellFill = 'bg-muted/10';
 
@@ -413,5 +345,3 @@ export default function StatsDashboard() {
     </div>
   );
 }
-
-```

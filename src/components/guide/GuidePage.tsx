@@ -2,11 +2,10 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, Zap, Users, Star, Award, HelpCircle } from "lucide-react";
-import Image from "next/image";
+import { HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { TITLES, ACTUAL_LEVEL_THRESHOLDS, XP_PER_MINUTE_FOCUS } from "@/contexts/SessionContext";
+import { TITLES, ACTUAL_LEVEL_THRESHOLDS, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS } from "@/contexts/SessionContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const CASH_REWARD_PER_LEVEL = 500;
@@ -79,7 +78,7 @@ export default function GuidePage() {
             <AccordionContent>
                  <ul className="list-disc list-inside space-y-2 pl-4">
                     <li><strong>XP from Study:</strong> You earn <span className="font-semibold text-primary">{XP_PER_MINUTE_FOCUS} XP per minute</span> of focused study (Pomodoro Focus & Stopwatch).</li>
-                    <li><strong>Cash from Study:</strong> You earn <span className="font-semibold text-primary">$100 Cash per 5 minutes</span> of focused study.</li>
+                    <li><strong>Cash from Study:</strong> You earn <span className="font-semibold text-primary">${CASH_PER_5_MINUTES_FOCUS.toLocaleString()} Cash per 5 minutes</span> of focused study.</li>
                     <li><strong>Level Up Bonus:</strong> Receive a cash reward equal to your <span className="font-semibold text-primary">New Level x ${CASH_REWARD_PER_LEVEL}</span>.</li>
                     <li><strong>Streak Bonus:</strong> For each consecutive day you study, you gain a +1% bonus to XP and Cash, up to a maximum of +20%.</li>
                     <li><strong>Daily Challenges:</strong> Complete daily challenges for significant XP and Cash rewards.</li>

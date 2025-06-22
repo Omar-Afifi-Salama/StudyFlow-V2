@@ -2,13 +2,14 @@
 "use client";
 
 import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings } from '@/types';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 export const XP_PER_MINUTE_FOCUS = 10;
 export const CASH_PER_5_MINUTES_FOCUS = 100;
+export const CASH_REWARD_PER_LEVEL = 500;
 export const STREAK_BONUS_PER_DAY = 0.01; // 1% bonus per day
 export const MAX_STREAK_BONUS = 0.20; // Max 20% bonus from streak
 export const DAILY_LOGIN_BASE_CASH = 200;
@@ -16,15 +17,18 @@ export const DAILY_LOGIN_STREAK_CASH_BONUS = 50; // Extra cash per consecutive l
 export const DAILY_LOGIN_MAX_STREAK_BONUS_CASH = 500; // Max bonus cash from login streak
 
 export const TITLES = [
-  "Newbie", "Learner", "Student", "Scholar", "Adept", "Prodigy", "Savant", "Sage", "Guru", "Master", // 1-10
-  "Grandmaster Learner", "Erudite Student", "Luminous Scholar", "Distinguished Adept", "Virtuoso Prodigy", // 11-15
-  "Enlightened Savant", "Venerable Sage", "Zenith Guru", "Ascendant Master", "Study God", // 16-20
-  "Celestial Thinker", "Cosmic Intellect", "Dimensional Analyst", "Ethereal Mind", "Transcendent Scholar", // 21-25
-  "Nova Learner", "Pulsar Student", "Quasar Scholar", "Nebula Adept", "Galactic Prodigy", // 26-30
-  "Universe Wanderer", "Star Forger", "Knowledge Weaver", "Time Bender", "Reality Shaper", // 31-35
-  "Thought Emperor", "Mind Overlord", "Wisdom Incarnate", // 36-38
-  "Apex Scholar" // Level 39 (Max Level)
+  "Newbie", "Aspirant", "Novice", "Apprentice", "Journeyman", "Adept", "Scholar", "Savant", "Mentor", "Sage", // 1-10
+  "Erudite", "Pundit", "Prodigy", "Luminary", "Virtuoso", "Master", "Grandmaster", "Enlightened", "Oracle", "Ascendant", // 11-20
+  "Transcendent", "Celestial", "Cosmic Voyager", "Stellar Scholar", "Nebula Navigator", "Galaxy Brain", "Quasar Quester", "Pulsar Pilgrim", "Event Horizon", "Singularity", // 21-30
+  "Dimension Drifter", "Time Weaver", "Reality Shaper", "Mind Architect", "Thought Emperor", "Knowledge Incarnate", "Wisdom Sovereign", "Concept King", "Idea God", "Apex Thinker", // 31-40
+  "Philosopher Queen", "Scribe of Ages", "Lorekeeper", "Eternal Student", "Patron of Progress", "Dean of Dedication", "Chancellor of Concentration", "Provost of Productivity", "Rector of Recall", "Headmaster of Habits", // 41-50
+  "Polymath", "Autodidact", "Bibliophile", "Logophile", "Sophist", "Renaissance Soul", "Universal Mind", "Noetic Nomad", "Cognitive Knight", "Cerebral Champion", // 51-60
+  "Synaptic Samurai", "Neural Ninja", "Dendrite Duke", "Myelin Marquess", "Axon Admiral", "Frontal Lobe Baron", "Parietal Lobe Prince", "Temporal Lobe Tetrarch", "Occipital Lobe Overlord", "Cerebellum Caesar", // 61-70
+  "Hippocampus Hero", "Amygdala Ace", "Thalamus Thane", "Hypothalamus Highness", "Pituitary Patrician", "Pineal Pioneer", "Corpus Callosum Captain", "Neocortex Commander", "Gray Matter General", "White Matter Warlord", // 71-80
+  "Quantum Learner", "Metaphysical Maven", "Epistemology Expert", "Ontology Officer", "Axiology Authority", "Logic Lord", "Reasoning Ruler", "Deduction Duke", "Induction Imperator", "Abduction Autocrat", // 81-90
+  "Zenith Scholar", "Apex Sage", "Omega Mind", "Alpha Learner", "The Final Word", "Unending Query", "Silent Savant", "Void Thinker", "The Librarian", "One Who Knows" // 91-100
 ];
+
 
 const generateLevelThresholds = (numLevels: number, maxXp: number): number[] => {
   const thresholds: number[] = [0]; // Level 1 is 0 XP
@@ -39,7 +43,7 @@ const generateLevelThresholds = (numLevels: number, maxXp: number): number[] => 
   return thresholds.slice(0, numLevels);
 };
 
-export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds(TITLES.length, 600000); 
+export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds(100, 300000); 
 
 export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png?text=Classic+Blue', dataAiHint: 'study app classic blue theme', isTheme: true, themeClass: 'classic' },
@@ -172,7 +176,7 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'unlockSkillTree', name: 'Path of Growth', description: 'Access the Skill Tree to unlock abilities.', cost: 0, iconName: 'Network', unlocksFeature: 'skill-tree', category: 'Core Feature' },
   
   // Core Feature Unlocks - Tier 1 (Logical progression from base)
-  { id: 'unlockAbout', name: 'Inquisitive Mind', description: 'Unlocks the "About" page to learn more about StudyFlow.', cost: 1, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, category: 'Core Feature' },
+  { id: 'unlockAbout', name: 'Guidance', description: 'Unlocks the "Guide" page to learn more about StudyFlow.', cost: 1, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, category: 'Core Feature' },
   { id: 'unlockStats', name: 'Data Analyst', description: 'Unlocks the "Statistics" page to monitor your study habits.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 2, category: 'Core Feature' },
   { id: 'unlockNotepadMain', name: 'Notekeeper', description: 'Unlocks the main "Digital Notepad" page. Essential for organizing studies.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 2, category: 'Core Feature' },
   
@@ -312,6 +316,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [pomodoroState, setPomodoroState] = useState<PomodoroState>(DEFAULT_POMODORO_STATE);
   const [stopwatchState, setStopwatchState] = useState<StopwatchState>(DEFAULT_STOPWATCH_STATE);
 
+  const lastGainTime = useRef({ xp: 0, cash: 0 });
+
   const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
@@ -326,6 +332,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
+    const now = Date.now();
+    if (now - lastGainTime.current[type] < 500) { // 500ms debounce window
+        return;
+    }
+    lastGainTime.current[type] = now;
+
     if (amount === 0) return;
     const newGain: FloatingGain = { id: crypto.randomUUID(), type, amount, timestamp: Date.now() };
     setFloatingGains(prev => [...prev, newGain]);
@@ -386,22 +398,33 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
-    let newTitle = TITLES[currentLevel -1] || TITLES[TITLES.length -1];
     let leveledUp = false;
     let skillPointsGained = 0;
+    let cashGained = 0;
+
     while (newLevel < ACTUAL_LEVEL_THRESHOLDS.length && currentXp >= ACTUAL_LEVEL_THRESHOLDS[newLevel]) {
       newLevel++;
       leveledUp = true;
       skillPointsGained++;
+      cashGained += newLevel * CASH_REWARD_PER_LEVEL;
     }
+    
     if (leveledUp) {
-      newTitle = TITLES[newLevel - 1] || TITLES[TITLES.length -1];
+      const newTitle = TITLES[newLevel - 1] || TITLES[TITLES.length - 1];
       let description = `You've reached Level ${newLevel}: ${newTitle}!`;
-      if (skillPointsGained > 0) description += ` You earned ${skillPointsGained} Skill Point(s)!`;
+      const rewards = [];
+      if (skillPointsGained > 0) rewards.push(`${skillPointsGained} Skill Point(s)`);
+      if (cashGained > 0) rewards.push(`$${cashGained.toLocaleString()}`);
+      if (rewards.length > 0) description += ` You earned ${rewards.join(' and ')}!`;
+      
       toast({ title: "Level Up!", description, icon: <Sparkles/> });
+      if (cashGained > 0) addFloatingGain('cash', cashGained);
+
+      return { newLevel, newTitle, leveledUp, skillPointsGained, cashGained };
     }
-    return { newLevel, newTitle, leveledUp, skillPointsGained };
-  }, [toast]);
+    
+    return { newLevel: currentLevel, newTitle: TITLES[currentLevel -1], leveledUp, skillPointsGained, cashGained };
+  }, [toast, addFloatingGain]);
 
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
     const today = new Date();
@@ -472,7 +495,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         
         const newXp = prevProfile.xp + awardedXp;
-        const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
+        const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newXp, prevProfile.level);
+        
+        const finalCash = prevProfile.cash + awardedCash + cashGained;
         const newSkillPoints = (prevProfile.skillPoints || 0) + skillPointsGained;
 
         if (awardedXp > 0) addFloatingGain('xp', awardedXp);
@@ -496,7 +521,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
 
         return {
-          ...prevProfile, xp: newXp, cash: prevProfile.cash + awardedCash, level: newLevel, title: newTitle,
+          ...prevProfile, xp: newXp, cash: finalCash, level: newLevel, title: newTitle,
           currentStreak: updatedCurrentStreak, longestStreak: updatedLongestStreak, lastStudyDate: updatedLastStudyDate,
           skillPoints: newSkillPoints,
         };
@@ -839,14 +864,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const updatedChallenges = prevChallenges.map(challenge => {
             if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
                 setUserProfile(prevProfile => {
-                    const newXp = prevProfile.xp + challenge.xpReward;
-                    const { newLevel, newTitle, skillPointsGained } = checkForLevelUp(newXp, prevProfile.level);
+                    const {newLevel, newTitle, leveledUp, skillPointsGained, cashGained} = checkForLevelUp(prevProfile.xp + challenge.xpReward, prevProfile.level);
+                    const finalCashReward = challenge.cashReward + cashGained;
+
                     toast({title: "Challenge Reward!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward.toLocaleString()} for '${challenge.title}'`, icon: <Gift/>});
                     addFloatingGain('xp', challenge.xpReward);
-                    addFloatingGain('cash', challenge.cashReward);
+                    addFloatingGain('cash', finalCashReward);
+
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
                     return {
-                        ...prevProfile, xp: newXp, cash: prevProfile.cash + challenge.cashReward,
+                        ...prevProfile, xp: prevProfile.xp + challenge.xpReward, cash: prevProfile.cash + finalCashReward,
                         level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
                         completedChallengeIds: updatedCompletedIds,
                     };

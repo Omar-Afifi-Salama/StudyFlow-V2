@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Flame, MoreVertical, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingBag, Briefcase, Timer as CountdownIcon, UserCircle, Info, Flame, MoreVertical, ShieldCheck, Settings, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -40,8 +40,8 @@ export default function Header() {
     { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
     { href: '/capitalist', label: 'Capitalist', icon: <Briefcase className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
     { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
-    { href: '/achievements', label: 'Achievements', icon: <UserCircle className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
-    { href: '/about', label: 'About', icon: <Info className="h-5 w-5" />, hotkey: 'a', featureKey: 'about' },
+    { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
+    { href: '/about', label: 'Guide', icon: <HelpCircle className="h-5 w-5" />, hotkey: 'g', featureKey: 'about' },
   ];
 
   const mainBarItemHrefs = ['/', '/skill-tree'];
