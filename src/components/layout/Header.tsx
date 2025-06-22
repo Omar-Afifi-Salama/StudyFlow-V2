@@ -46,42 +46,41 @@ const hotkeyNavMap = allPossibleNavItems.reduce((acc, item) => {
     return acc;
 }, {} as Record<string, NavItem>);
 
+// Define hotkey string as a constant outside the render cycle.
+const HOTKEY_STRING = Object.keys(hotkeyNavMap).join(',');
+
+
 export default function Header() {
     const pathname = usePathname();
     const router = useRouter();
     const { userProfile, getAppliedBoost } = useSessions();
     const { unlockedSkillIds, level, xp, skillPoints, cash, currentStreak, longestStreak, title } = userProfile;
 
-    // Memoize the visible nav items to prevent recalculation on every render.
-    // This is the core fix. It depends only on unlockedSkillIds.
-    const visibleNavItems = useMemo(() => {
-        return allPossibleNavItems.filter(item => {
+    // Memoize the navigation items to prevent recreation on every render.
+    // This is the core fix for the infinite loop.
+    const { mainBarItems, dropdownItems } = useMemo(() => {
+        const visibleNavItems = allPossibleNavItems.filter(item => {
             if (item.alwaysVisible) return true;
             const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
             return skill ? unlockedSkillIds.includes(skill.id) : false;
         });
+
+        const main = visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree');
+        const dropdown = visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree');
+        
+        return { mainBarItems: main, dropdownItems: dropdown };
     }, [unlockedSkillIds]);
 
-    const mainBarItems = useMemo(() => 
-        visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree'), 
-        [visibleNavItems]
-    );
-    const dropdownItems = useMemo(() => 
-        visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree'), 
-        [visibleNavItems]
-    );
 
     // Hotkey handler using stable dependencies
     useHotkeys(
-        Object.keys(hotkeyNavMap).join(','),
+        HOTKEY_STRING,
         (event, handler) => {
             const navItem = hotkeyNavMap[handler.key];
             if (navItem) {
                 // Check visibility inside the callback
-                const isVisible = navItem.alwaysVisible || (() => {
-                    const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
-                    return skill ? unlockedSkillIds.includes(skill.id) : false;
-                })();
+                const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
+                const isVisible = navItem.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
                 
                 if (isVisible) {
                     router.push(navItem.href);
