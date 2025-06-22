@@ -2,7 +2,7 @@
 "use client";
 
 import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
@@ -332,19 +332,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const sessionsRef = useRef(sessions);
   sessionsRef.current = sessions;
 
-  const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
-    if (typeof window === 'undefined') return;
-    const root = window.document.documentElement;
-    PREDEFINED_SKINS.forEach(skin => {
-        if (skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') {
-            root.classList.remove(skin.themeClass);
-        }
-    });
-    if (themeClassToApply && themeClassToApply !== 'classic') { 
-      root.classList.add(themeClassToApply);
-    }
-  }, []);
-  
   const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
     const now = Date.now();
     if (now - lastGainTime.current[type] < 500) { // 500ms debounce window
@@ -358,34 +345,36 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(() => setFloatingGains(prev => prev.filter(g => g.id !== newGain.id)), 2500);
   }, []);
 
-  const checkAndUnlockAchievements = useCallback(() => {
-      setUserProfile(prevUserProfile => {
-          if (!prevUserProfile.unlockedSkillIds.includes('unlockAchievements')) return prevUserProfile;
+  const checkAndUnlockAchievements = useCallback((profile: UserProfile, currentSessions: StudySession[]) => {
+      if (!profile.unlockedSkillIds.includes('unlockAchievements')) return;
+          
+      const newlyUnlockedIds: string[] = [];
+      let totalCashRewardFromAchievements = 0;
 
-          const currentSessions = sessionsRef.current; 
-          const newlyUnlocked: string[] = [];
-          let totalCashRewardFromAchievements = 0;
-
-          ALL_ACHIEVEMENTS.forEach(ach => {
-            if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions)) {
-              newlyUnlocked.push(ach.id);
-              totalCashRewardFromAchievements += ach.cashReward;
-              toast({ title: "Achievement Unlocked!", description: `${ach.name} (+$${ach.cashReward.toLocaleString()})`, icon: <Trophy/> });
-              addFloatingGain('cash', ach.cashReward);
-            }
-          });
-          if (newlyUnlocked.length > 0) {
-            return { ...prevUserProfile, unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked], cash: prevUserProfile.cash + totalCashRewardFromAchievements };
-          }
-          return prevUserProfile;
-      });
+      for (const ach of ALL_ACHIEVEMENTS) {
+        if (!profile.unlockedAchievementIds.includes(ach.id) && ach.criteria(profile, currentSessions)) {
+          newlyUnlockedIds.push(ach.id);
+          totalCashRewardFromAchievements += ach.cashReward;
+          toast({ title: "Achievement Unlocked!", description: `${ach.name} (+$${ach.cashReward.toLocaleString()})`, icon: <Trophy/> });
+          addFloatingGain('cash', ach.cashReward);
+        }
+      }
+      
+      if (newlyUnlockedIds.length > 0) {
+        setUserProfile(prev => ({ 
+            ...prev, 
+            unlockedAchievementIds: [...prev.unlockedAchievementIds, ...newlyUnlockedIds], 
+            cash: prev.cash + totalCashRewardFromAchievements 
+        }));
+      }
   }, [addFloatingGain, toast]);
 
 
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
-    setUserProfile(prev => ({...prev, ...updatedProfileData}));
-    checkAndUnlockAchievements();
-  }, [checkAndUnlockAchievements]);
+    const newProfile = {...userProfile, ...updatedProfileData};
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
+  }, [userProfile, checkAndUnlockAchievements]);
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -531,12 +520,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000, duration: sessionDetails.durationInSeconds,
       tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false, description: sessionDetails.description,
     };
-    setSessions(prevSessions => {
-      const updatedSessions = [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime);
-      sessionsRef.current = updatedSessions; // Update ref immediately
-      return updatedSessions;
-    });
     
+    let newProfile: UserProfile | null = null;
     setUserProfile(prevProfile => {
         const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
         let awardedXp = 0, awardedCash = 0;
@@ -582,16 +567,22 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
         }
         
-        const newProfile = {
+        newProfile = {
           ...prevProfile, xp: newXp, cash: finalCash, level: newLevel, title: newTitle,
           currentStreak: updatedCurrentStreak, longestStreak: updatedLongestStreak, lastStudyDate: updatedLastStudyDate,
           skillPoints: newSkillPoints,
         };
-        
-        // Final achievement check after all state is updated
-        checkAndUnlockAchievements();
         return newProfile;
       });
+
+    setSessions(prevSessions => {
+      const updatedSessions = [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime);
+      sessionsRef.current = updatedSessions;
+      if (newProfile) {
+        checkAndUnlockAchievements(newProfile, updatedSessions);
+      }
+      return updatedSessions;
+    });
   }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
   const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
@@ -633,9 +624,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
         ...updatedNotepadData,
       };
-      return {...prev, notepadData: newNotepadData };
+      const newProfile = {...prev, notepadData: newNotepadData };
+      checkAndUnlockAchievements(newProfile, sessionsRef.current);
+      return newProfile;
     });
-    checkAndUnlockAchievements();
   }, [checkAndUnlockAchievements]);
 
   const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
@@ -751,10 +743,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const logHabitCompletion = useCallback((habitId: string, date: Date, completed: boolean = true, countIncrement?: number) => {
     if(!isFeatureUnlocked('notepadHabits')) return;
+    
+    let habitCompletedForChallenge = false;
+    let newHabits: Habit[] = [];
     setUserProfile(prevProfile => {
         if (!prevProfile.notepadData?.habits) return prevProfile;
-        let habitCompletedForChallenge = false;
-        const updatedHabits = prevProfile.notepadData.habits.map(habit => {
+        
+        newHabits = prevProfile.notepadData.habits.map(habit => {
             if (habit.id === habitId) {
                 const logKey = habit.frequency === 'daily' ? format(date, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd');
                 const oldLogEntry = habit.log[logKey] || { date: logKey, completed: false, count: 0 };
@@ -790,12 +785,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             }
             return habit;
         });
-        if(habitCompletedForChallenge && isFeatureUnlocked('challenges')){ updateChallengeProgress('habitCompletions', 1); }
-        checkAndUnlockAchievements();
-        return { ...prevProfile, notepadData: { ...(prevProfile.notepadData), habits: updatedHabits } };
+        
+        return { ...prevProfile, notepadData: { ...(prevProfile.notepadData), habits: newHabits } };
     });
+    
+    if(habitCompletedForChallenge && isFeatureUnlocked('challenges')){ updateChallengeProgress('habitCompletions', 1); }
     toast({ title: "Habit Updated", description: "Progress logged.", icon: <CheckCircle/> });
-  }, [isFeatureUnlocked, toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey, checkAndUnlockAchievements]);
+  }, [isFeatureUnlocked, toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey]);
 
   const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
     if(!isFeatureUnlocked('notepadEvents')) { toast({ title: "Feature Locked", description: "Unlock Events Countdown in the Skill Tree.", icon: <XCircle/> }); return; }
@@ -836,12 +832,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (userProfile.cash < effectivePrice) { toast({ title: "Not Enough Cash", description: `Need $${effectivePrice.toLocaleString()}. You have $${userProfile.cash.toLocaleString()}.`, variant: "destructive", icon: <DollarSign/> }); return false; }
     if (userProfile.level < skin.levelRequirement) { toast({ title: "Level Too Low", description: `Need Level ${skin.levelRequirement}. You are Level ${userProfile.level}.`, variant: "destructive", icon: <TrendingDown/> }); return false; }
     
-    setUserProfile(prev => ({ ...prev, cash: prev.cash - effectivePrice, ownedSkinIds: [...prev.ownedSkinIds, skinId] }));
-    toast({ title: "Purchase Successful!", description: `Bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${(shopDiscount * 100).toFixed(0)}% discount!)` : ''}.`, icon: <ShoppingCart/> });
     addFloatingGain('cash', -effectivePrice);
-    checkAndUnlockAchievements();
+    const newProfile = { ...userProfile, cash: userProfile.cash - effectivePrice, ownedSkinIds: [...userProfile.ownedSkinIds, skinId] };
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
+    toast({ title: "Purchase Successful!", description: `Bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${(shopDiscount * 100).toFixed(0)}% discount!)` : ''}.`, icon: <ShoppingCart/> });
     return true;
-  }, [isFeatureUnlocked, userProfile.cash, userProfile.level, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain, checkAndUnlockAchievements]);
+  }, [isFeatureUnlocked, userProfile, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const equipSkin = useCallback((skinId: string) => {
     if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return; }
@@ -872,45 +869,57 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if(!isFeatureUnlocked('challenges')) return;
     let wasLastChallenge = false;
     
-    setDailyChallenges(prevChallenges => {
-        const updatedChallenges = prevChallenges.map(challenge => {
-            if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
-                setUserProfile(prevProfile => {
-                    const {newLevel, newTitle, leveledUp, skillPointsGained, cashGained} = checkForLevelUp(prevProfile.xp + challenge.xpReward, prevProfile.level);
-                    const finalCashReward = challenge.cashReward + cashGained;
+    let challengeToClaim: DailyChallenge | undefined;
+    
+    const updatedChallenges = dailyChallenges.map(challenge => {
+        if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
+            challengeToClaim = challenge;
+            return { ...challenge, rewardClaimed: true };
+        }
+        return challenge;
+    });
 
-                    toast({title: "Challenge Reward!", description: `+${challenge.xpReward} XP, +$${challenge.cashReward.toLocaleString()} for '${challenge.title}'`, icon: <Gift/>});
-                    addFloatingGain('xp', challenge.xpReward);
-                    addFloatingGain('cash', finalCashReward);
+    if (challengeToClaim) {
+        const { xpReward, cashReward, title } = challengeToClaim;
+        
+        let newProfile: UserProfile | null = null;
+        setUserProfile(prevProfile => {
+            const {newLevel, newTitle, leveledUp, skillPointsGained, cashGained} = checkForLevelUp(prevProfile.xp + xpReward, prevProfile.level);
+            const finalCashReward = cashReward + cashGained;
 
-                    const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
-                    checkAndUnlockAchievements();
-                    return {
-                        ...prevProfile, xp: prevProfile.xp + challenge.xpReward, cash: prevProfile.cash + finalCashReward,
-                        level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
-                        completedChallengeIds: updatedCompletedIds,
-                    };
-                });
-                return { ...challenge, rewardClaimed: true };
-            }
-            return challenge;
+            toast({title: "Challenge Reward!", description: `+${xpReward} XP, +$${cashReward.toLocaleString()} for '${title}'`, icon: <Gift/>});
+            addFloatingGain('xp', xpReward);
+            addFloatingGain('cash', finalCashReward);
+
+            const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
+            newProfile = {
+                ...prevProfile, xp: prevProfile.xp + xpReward, cash: prevProfile.cash + finalCashReward,
+                level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
+                completedChallengeIds: updatedCompletedIds,
+            };
+            return newProfile;
         });
+
+        setDailyChallenges(updatedChallenges);
+
+        if (newProfile) {
+            checkAndUnlockAchievements(newProfile, sessionsRef.current);
+        }
 
         const numClaimed = updatedChallenges.filter(c => c.rewardClaimed).length;
         const totalChallenges = updatedChallenges.length;
         if(totalChallenges > 0 && numClaimed === totalChallenges) {
              wasLastChallenge = true;
         }
-        
-        return updatedChallenges;
-    });
+    }
+    
 
     if (wasLastChallenge) {
         setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null}));
         toast({title: "Challenges Complete!", description: "Bonus: You can now select another Daily Offer!", icon: <Sparkles/>});
     }
 
-  }, [isFeatureUnlocked, toast, checkForLevelUp, addFloatingGain, checkAndUnlockAchievements]);
+  }, [isFeatureUnlocked, toast, dailyChallenges, checkForLevelUp, addFloatingGain, checkAndUnlockAchievements]);
   
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
 
@@ -965,29 +974,28 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     if (skill.id === 'skillPointRefund') { refundAllSkillPoints(); return true; } 
     
-    setUserProfile(prev => {
-        let newUnlockedSkills = prev.unlockedSkillIds;
-        let newSkillLevels = { ...(prev.skillLevels || {}) };
+    let newUnlockedSkills = userProfile.unlockedSkillIds;
+    let newSkillLevels = { ...(userProfile.skillLevels || {}) };
 
-        if(skill.category === 'Infinite') {
-            newSkillLevels[skillId] = (newSkillLevels[skillId] || 0) + 1;
-        } else {
-            if (!newUnlockedSkills.includes(skillId)) {
-                newUnlockedSkills = [...newUnlockedSkills, skillId];
-            }
+    if(skill.category === 'Infinite') {
+        newSkillLevels[skillId] = (newSkillLevels[skillId] || 0) + 1;
+    } else {
+        if (!newUnlockedSkills.includes(skillId)) {
+            newUnlockedSkills = [...newUnlockedSkills, skillId];
         }
-        
-        checkAndUnlockAchievements();
-        return {
-            ...prev,
-            skillPoints: prev.skillPoints - skill.cost,
-            unlockedSkillIds: newUnlockedSkills,
-            skillLevels: newSkillLevels,
-        };
-    });
+    }
+    
+    const newProfile = {
+        ...userProfile,
+        skillPoints: userProfile.skillPoints - skill.cost,
+        unlockedSkillIds: newUnlockedSkills,
+        skillLevels: newSkillLevels,
+    };
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
     toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
     return true;
-  }, [canUnlockSkill, toast, refundAllSkillPoints, checkAndUnlockAchievements]);
+  }, [canUnlockSkill, toast, refundAllSkillPoints, userProfile, checkAndUnlockAchievements]);
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     updateUserProfile({ wakeUpTime, sleepTime });
@@ -1039,41 +1047,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             mode: nextMode,
             cyclesCompleted: newCyclesCompleted,
+            sessionStartTime: 0,
             sessionEndTime: Date.now() + durationMs,
             isRunning: false,
         };
     });
   }, [pausePomodoro, getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
-
-  // Stable timer logic using refs to prevent re-renders
-  const pomodoroStateRef = useRef(pomodoroState);
-  pomodoroStateRef.current = pomodoroState;
-  const addSessionRef = useRef(addSession);
-  addSessionRef.current = addSession;
-  const toastRef = useRef(toast);
-  toastRef.current = toast;
-  const switchPomodoroModeRef = useRef(switchPomodoroMode);
-  switchPomodoroModeRef.current = switchPomodoroMode;
-  const getDurationForModeRef = useRef(getDurationForMode);
-  getDurationForModeRef.current = getDurationForMode;
-
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    const timerWorker = () => {
-      const currentPomodoroState = pomodoroStateRef.current;
-      if (currentPomodoroState.isRunning && Date.now() > currentPomodoroState.sessionEndTime) {
-        const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-        const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
-        addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
-        toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
-        switchPomodoroModeRef.current(); 
-      }
-    };
-    
-    const intervalId = setInterval(timerWorker, 1000);
-    return () => clearInterval(intervalId);
-  }, [isLoaded]);
 
   const startPomodoro = useCallback(() => {
       setPomodoroState(prev => {
@@ -1084,7 +1063,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return { 
           ...prev, 
           isRunning: true, 
-          sessionStartTime: now,
+          sessionStartTime: now - ((getDurationForMode(prev.mode, prev.settings) * 1000) - timeRemainingMs),
           sessionEndTime: now + timeRemainingMs
         };
       });
@@ -1096,6 +1075,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...prev,
         isRunning: false,
+        sessionStartTime: 0,
         sessionEndTime: Date.now() + durationMs,
       }
     });
@@ -1109,6 +1089,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           ...prev, 
           settings: updatedSettings, 
           isRunning: false,
+          sessionStartTime: 0,
           sessionEndTime: Date.now() + durationMs
         };
     });
@@ -1169,85 +1150,88 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch, toast]);
 
-  // Business Logic
   const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
     if(!isFeatureUnlocked('capitalist')) { toast({ title: "Capitalist Corner Locked", description: "Unlock this feature from the Skill Tree first.", icon: <XCircle/> }); return; }
-    setUserProfile(prev => {
-        const business = prev.businesses[businessId];
-        if(business.unlocked) { toast({ title: "Already Unlocked", description: "You already own this business." }); return prev; }
-        if(prev.cash < business.unlockCost) { toast({ title: "Not Enough Cash", description: `You need $${business.unlockCost.toLocaleString()}.`, icon: <DollarSign/> }); return prev; }
-        const newBusinesses = { ...prev.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() }};
-        addFloatingGain('cash', -business.unlockCost);
-        checkAndUnlockAchievements();
-        toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
-        return { ...prev, cash: prev.cash - business.unlockCost, businesses: newBusinesses };
-    });
-  }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
+    
+    const business = userProfile.businesses[businessId];
+    if(business.unlocked) { toast({ title: "Already Unlocked", description: "You already own this business." }); return; }
+    if(userProfile.cash < business.unlockCost) { toast({ title: "Not Enough Cash", description: `You need $${business.unlockCost.toLocaleString()}.`, icon: <DollarSign/> }); return; }
+    
+    addFloatingGain('cash', -business.unlockCost);
+    const newProfile = {
+      ...userProfile,
+      cash: userProfile.cash - business.unlockCost,
+      businesses: { ...userProfile.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() } }
+    };
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
+    toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
+
+  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const upgradeBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
     if(!isFeatureUnlocked('capitalist')) return;
-    setUserProfile(prev => {
-        const business = prev.businesses[businessId];
-        if(!business.unlocked) return prev;
-        const upgradeCost = business.level * 1000 * Math.pow(1.2, business.level);
-        if(prev.cash < upgradeCost) { toast({ title: "Not Enough Cash", description: `You need $${upgradeCost.toLocaleString()} to upgrade.`, icon: <DollarSign/> }); return prev; }
-        
-        let updatedBusiness = { ...business, level: business.level + 1 };
-        if (updatedBusiness.id === 'mine') { // Reset depletion on upgrade
-            updatedBusiness.lastCollected = Date.now();
-        }
-        
-        const newBusinesses = { ...prev.businesses, [businessId]: updatedBusiness };
-        addFloatingGain('cash', -upgradeCost);
-        checkAndUnlockAchievements();
-        toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
-        return { ...prev, cash: prev.cash - upgradeCost, businesses: newBusinesses };
-    });
-  }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
+    const business = userProfile.businesses[businessId];
+    if(!business.unlocked) return;
+    const upgradeCost = business.level * 1000 * Math.pow(1.2, business.level);
+    if(userProfile.cash < upgradeCost) { toast({ title: "Not Enough Cash", description: `You need $${upgradeCost.toLocaleString()} to upgrade.`, icon: <DollarSign/> }); return; }
+    
+    let updatedBusiness = { ...business, level: business.level + 1 };
+    if (updatedBusiness.id === 'mine') {
+        updatedBusiness.lastCollected = Date.now();
+    }
+    
+    addFloatingGain('cash', -upgradeCost);
+    const newProfile = {
+      ...userProfile,
+      cash: userProfile.cash - upgradeCost,
+      businesses: { ...userProfile.businesses, [businessId]: updatedBusiness }
+    };
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
+    toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
+
+  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
   
   const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], amount: number) => {
     if(!isFeatureUnlocked('capitalist')) return;
     if (amount < 1) return;
 
-    setUserProfile(prev => {
-        const business = prev.businesses[businessId];
-        if (!business.unlocked) return prev;
-        
-        let incomeToCollect = Math.floor(amount);
-        
-        // Apply final gimmicks at collection time
-        if (business.id === 'startup') {
-            const roll = Math.random();
-            if (roll < 0.4) {
-                toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'});
-                incomeToCollect = 0;
-            } else if (roll > 0.9) {
-                 toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>});
-                 incomeToCollect *= 5;
-            }
+    const business = userProfile.businesses[businessId];
+    if (!business.unlocked) return;
+    
+    let incomeToCollect = Math.floor(amount);
+    
+    if (business.id === 'startup') {
+        const roll = Math.random();
+        if (roll < 0.4) {
+            toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'});
+            incomeToCollect = 0;
+        } else if (roll > 0.9) {
+             toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>});
+             incomeToCollect *= 5;
         }
-        if (business.id === 'farm' && Math.random() < 0.15) {
-             toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'});
-             incomeToCollect *= 0.5;
-        }
+    }
+    if (business.id === 'farm' && Math.random() < 0.15) {
+         toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'});
+         incomeToCollect *= 0.5;
+    }
 
-        const newBusiness = { ...business, lastCollected: Date.now() };
-        const newBusinesses = { ...prev.businesses, [businessId]: newBusiness };
-        
-        if (incomeToCollect > 0) {
-            toast({ title: "Income Collected!", description: `You collected $${incomeToCollect.toLocaleString()} from ${business.name}.`, icon: <DollarSign/> });
-            addFloatingGain('cash', incomeToCollect);
-        }
+    const newBusiness = { ...business, lastCollected: Date.now() };
+    const newBusinesses = { ...userProfile.businesses, [businessId]: newBusiness };
+    
+    if (incomeToCollect > 0) {
+        toast({ title: "Income Collected!", description: `You collected $${incomeToCollect.toLocaleString()} from ${business.name}.`, icon: <DollarSign/> });
+        addFloatingGain('cash', incomeToCollect);
+    }
 
-        return { ...prev, cash: prev.cash + incomeToCollect, businesses: newBusinesses };
-    });
-  }, [isFeatureUnlocked, toast, addFloatingGain]);
+    setUserProfile(prev => ({ ...prev, cash: prev.cash + incomeToCollect, businesses: newBusinesses }));
+  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain]);
 
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
       if (storedSessions) {
-        // Sort sessions after loading from storage
         const parsedSessions = JSON.parse(storedSessions) as StudySession[];
         setSessions(parsedSessions.sort((a, b) => b.startTime - a.startTime));
       }
@@ -1312,12 +1296,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setLastChallengeResetDate(todayDateString);
       } else {
         const numChallenges = parsedProfile.level >= 50 ? 6 : 3;
+        const tempIsFeatureUnlocked = (featureKey: FeatureKey) => {
+            const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
+            return !skill || parsedProfile.unlockedSkillIds.includes(skill.id);
+        };
+
         const availableChallenges = INITIAL_DAILY_CHALLENGES_POOL.filter(challenge => {
             switch(challenge.type) {
-                case 'tasksCompleted': return isFeatureUnlocked('notepadChecklist');
-                case 'ambianceUsage': return isFeatureUnlocked('ambiance');
-                case 'notepadEntry': return isFeatureUnlocked('notepadNotes') || isFeatureUnlocked('notepadRevision');
-                case 'habitCompletions': return isFeatureUnlocked('notepadHabits');
+                case 'tasksCompleted': return tempIsFeatureUnlocked('notepadChecklist');
+                case 'ambianceUsage': return tempIsFeatureUnlocked('ambiance');
+                case 'notepadEntry': return tempIsFeatureUnlocked('notepadNotes') || tempIsFeatureUnlocked('notepadRevision');
+                case 'habitCompletions': return tempIsFeatureUnlocked('notepadHabits');
                 default: return true;
             }
         });
@@ -1348,10 +1337,37 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setIsLoaded(true);
     }
-  }, [getDurationForMode, isFeatureUnlocked]);
-
+  }, [getDurationForMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
+  
+  const pomodoroStateRef = useRef(pomodoroState);
+  pomodoroStateRef.current = pomodoroState;
+  const addSessionRef = useRef(addSession);
+  addSessionRef.current = addSession;
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  const switchPomodoroModeRef = useRef(switchPomodoroMode);
+  switchPomodoroModeRef.current = switchPomodoroMode;
+  const getDurationForModeRef = useRef(getDurationForMode);
+  getDurationForModeRef.current = getDurationForMode;
+  
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timerWorker = () => {
+      const currentPomodoroState = pomodoroStateRef.current;
+      if (currentPomodoroState.isRunning && Date.now() >= currentPomodoroState.sessionEndTime) {
+        const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
+        const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
+        addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
+        toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
+        switchPomodoroModeRef.current(); 
+      }
+    };
+    
+    const intervalId = setInterval(timerWorker, 1000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded]);
 
   useEffect(() => {
     if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) {
@@ -1367,6 +1383,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         addFloatingGain('cash', loginBonusAwarded);
     }
   }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain]);
+
+  const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
+    if (typeof window === 'undefined') return;
+    const root = window.document.documentElement;
+    PREDEFINED_SKINS.forEach(skin => {
+        if (skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') {
+            root.classList.remove(skin.themeClass);
+        }
+    });
+    if (themeClassToApply && themeClassToApply !== 'classic') { 
+      root.classList.add(themeClassToApply);
+    }
+  }, []);
 
   useEffect(() => {
     if (isLoaded) {
@@ -1387,10 +1416,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [userProfile.equippedSkinId, isLoaded, applyThemePreference, getSkinById]);
 
-  if (!isLoaded) { return null; }
-
-  return (
-    <SessionContext.Provider value={{
+  const contextValue = useMemo(() => ({
       sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
       pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
@@ -1407,7 +1433,29 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       isLoaded,
       getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, refundAllSkillPoints,
       floatingGains,
-    }}>
+  }), [
+      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
+      userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
+      pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
+      stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
+      addNotepadNote, updateNotepadNote, deleteNotepadNote,
+      addRevisionConcept, markConceptRevised, deleteRevisionConcept,
+      addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
+      addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
+      unlockBusiness, upgradeBusiness, collectBusinessIncome,
+      getSkinById, buySkin, equipSkin, isSkinOwned,
+      dailyOffers, selectDailyOffer,
+      dailyChallenges, claimChallengeReward, updateChallengeProgress,
+      getUnlockedAchievements, 
+      isLoaded,
+      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, refundAllSkillPoints,
+      floatingGains,
+  ]);
+
+  if (!isLoaded) { return null; }
+
+  return (
+    <SessionContext.Provider value={contextValue}>
       {children}
     </SessionContext.Provider>
   );
