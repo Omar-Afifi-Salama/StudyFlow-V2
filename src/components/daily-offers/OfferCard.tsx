@@ -16,14 +16,14 @@ interface OfferCardProps {
 
 export default function OfferCard({ offer, onSelect, isSelected, canSelect }: OfferCardProps) {
   const isBuff = offer.type === 'buff';
-  const isDisabled = !canSelect || isSelected;
+  const isDisabled = !canSelect && !isSelected;
 
   return (
     <Card 
       className={cn(
         "flex flex-col shadow-md card-animated transition-all duration-300",
         isSelected && "ring-2 ring-primary shadow-primary/30",
-        !canSelect && !isSelected && "opacity-60 bg-muted/30",
+        isDisabled && "opacity-60 bg-muted/30",
         canSelect && !isSelected && "hover:border-primary"
       )}
     >

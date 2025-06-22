@@ -125,26 +125,26 @@ body {
   }
 
   .theme-forest {
-    --background: 120 25% 92%; 
-    --foreground: 120 60% 10%; 
-    --card: 120 25% 95%; 
-    --card-foreground: 120 60% 10%;
-    --popover: 120 25% 95%;
-    --popover-foreground: 120 60% 10%;
-    --primary: 130 45% 45%; 
-    --primary-foreground: 90 50% 95%; 
+    --background: 120 15% 95%; 
+    --foreground: 110 40% 15%;
+    --card: 110 15% 98%; 
+    --card-foreground: 110 40% 15%;
+    --popover: 110 15% 98%;
+    --popover-foreground: 110 40% 15%;
+    --primary: 130 45% 40%;
+    --primary-foreground: 110 50% 95%; 
     --secondary: 100 20% 65%; 
-    --secondary-foreground: 120 60% 10%;
-    --muted: 110 25% 88%; 
+    --secondary-foreground: 110 40% 15%;
+    --muted: 110 20% 92%; 
     --muted-foreground: 110 30% 45%; 
     --accent: 90 40% 55%;  
-    --accent-foreground: 120 60% 10%;
+    --accent-foreground: 110 40% 15%;
     --destructive: 30 60% 50%; 
     --destructive-foreground: 30 30% 95%; 
-    --border: 120 30% 70%; 
-    --input: 120 30% 80%; 
-    --ring: 130 45% 45%; 
-    --chart-1: 130 45% 45%;
+    --border: 120 20% 80%; 
+    --input: 120 20% 88%; 
+    --ring: 130 45% 40%; 
+    --chart-1: 130 45% 40%;
     --chart-2: 90 40% 55%;
     --chart-3: 120 30% 30%; 
     --chart-4: 40 30% 50%; 
@@ -438,4 +438,3 @@ body {
     transform: translateY(-60px) scale(0.8);
   }
 }
-

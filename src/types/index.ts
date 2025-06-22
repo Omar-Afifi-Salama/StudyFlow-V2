@@ -12,30 +12,19 @@ export interface StudySession {
 
 export type TimerMode = 'stopwatch' | 'pomodoro';
 
-export type BusinessType = 'startup' | 'farm' | 'mine' | 'industry';
+export type DailyOfferEffectType = 'xp' | 'cash' | 'timer_speed';
 
-export interface Business {
-  id: BusinessType;
-  name: string;
+export interface DailyOffer {
+  id: string;
+  title: string;
   description: string;
-  gimmick: string;
-  level: number;
-  unlocked: boolean;
-  unlockCost: number;
-  upgradeCost: number;
-  baseIncome: number; // Income per hour
-  lastCollected: number; // timestamp
-  // For mine gimmick
-  currentIncome?: number;
-  depletionRate?: number;
-  // For industry gimmick
-  maintenanceCost?: number;
-  // For farm gimmick
-  lowYieldMultiplier?: number;
-  // For startup gimmick
-  volatility?: number; // 0 to 1
-  bonusChance?: number; // 0 to 1
-  bonusMultiplier?: number;
+  type: 'buff' | 'debuff';
+  effect: {
+    type: DailyOfferEffectType;
+    modifier: number; // e.g., 1.1 for +10% XP, 0.9 for -10% timer duration
+    description: string;
+  };
+  durationMinutes: number;
 }
 
 export interface UserProfile {
@@ -57,7 +46,12 @@ export interface UserProfile {
   notepadData: NotepadData;
   skillPoints: number;
   unlockedSkillIds: string[];
-  businesses: Record<BusinessType, Business>;
+  dailyOffers: {
+    date: string; // YYYY-MM-DD
+    offers: DailyOffer[];
+  };
+  activeOfferId: string | null;
+  activeOfferEndTime: number | null;
 }
 
 export interface Skin {
@@ -120,7 +114,7 @@ export type HabitFrequency = 'daily' | 'weekly';
 export interface HabitLogEntry {
   date: string; // YYYY-MM-DD for daily, or YYYY-WW (week number) for weekly
   completed: boolean;
-  count?: number; // For weekly habits that might have a target count
+  count?: number; // For weekly habits that have a target count
 }
 
 export interface Habit {
@@ -159,7 +153,7 @@ export interface NotepadEisenhowerMatrix {
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
-  goals: NotepadGoal[];
+  goals: NotepadLink[];
   links: NotepadLink[];
   revisionConcepts: RevisionConcept[];
   habits: Habit[];

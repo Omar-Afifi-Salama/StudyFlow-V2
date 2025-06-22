@@ -2,7 +2,7 @@
 "use client";
 
 import { useSessions } from '@/contexts/SessionContext';
-import OfferCard from './OfferCard'; // Re-purposed BusinessCard to OfferCard
+import OfferCard from './OfferCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
@@ -27,6 +27,9 @@ export default function DailyOffersPage() {
   }, []);
 
   const canSelectOffer = !userProfile.activeOfferId;
+  const activeOffer = userProfile.activeOfferId ? dailyOffers.find(o => o.id === userProfile.activeOfferId) || userProfile.dailyOffers.offers.find(o=> o.id === userProfile.activeOfferId) : null;
+  const timeLeftOnActiveOffer = userProfile.activeOfferEndTime ? Math.max(0, userProfile.activeOfferEndTime - Date.now()) : 0;
+
 
   return (
     <div className="space-y-6">
@@ -52,17 +55,26 @@ export default function DailyOffersPage() {
               <p className="text-muted-foreground text-xl">Loading today's offers...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dailyOffers.map(offer => (
-                <OfferCard
-                  key={offer.id}
-                  offer={offer}
-                  onSelect={() => selectDailyOffer(offer.id)}
-                  isSelected={userProfile.activeOfferId === offer.id}
-                  canSelect={canSelectOffer}
-                />
-              ))}
-            </div>
+             <>
+              {activeOffer && timeLeftOnActiveOffer > 0 && (
+                <div className="mb-6 p-4 bg-primary/10 rounded-lg text-center">
+                  <h3 className="font-semibold text-lg text-primary">Active Offer: {activeOffer.title}</h3>
+                  <p className="text-sm text-primary/80">{activeOffer.effect.description}</p>
+                   <p className="text-xs text-muted-foreground mt-1">Time Remaining: {formatTime(timeLeftOnActiveOffer / 1000)}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {dailyOffers.map(offer => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    onSelect={() => selectDailyOffer(offer.id)}
+                    isSelected={userProfile.activeOfferId === offer.id}
+                    canSelect={canSelectOffer}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
