@@ -6,7 +6,6 @@ import Header from './Header';
 import SessionLog from '@/components/sessions/SessionLog';
 import { usePathname } from 'next/navigation';
 import { useSessions } from '@/contexts/SessionContext';
-import SleepCountdownSidebar from './SleepCountdownSidebar';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -18,7 +17,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const showSidebarSessionLogOnPages = ['/stats']; 
   const showSidebarLog = showSidebarSessionLogOnPages.includes(pathname);
-  const showSleepSidebar = pathname === '/';
 
   if (!isLoaded) { 
     return (
@@ -36,11 +34,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <>
       <Header />
       <div className="flex flex-1 container max-w-screen-2xl mx-auto py-6 px-4 md:px-6">
-        {showSleepSidebar && (
-           <aside className="w-64 mr-6 hidden md:block sticky top-20 h-[calc(100vh-10rem)]">
-              <SleepCountdownSidebar />
-           </aside>
-        )}
         <main className="flex-1">
           {children}
         </main>

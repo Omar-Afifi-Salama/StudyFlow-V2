@@ -79,14 +79,14 @@ export default function SleepCountdownSidebar() {
   
   if (!isValid) {
     return (
-       <Card className="h-full flex flex-col shadow-lg card-animated">
+       <Card className="flex flex-col shadow-lg card-animated">
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Bed className="h-6 w-6 text-muted-foreground" />
               <CardTitle>Sleep Cycle</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center text-center flex-grow">
+          <CardContent className="flex flex-col items-center justify-center text-center py-6">
             <p className="text-muted-foreground mb-4">Set your wake-up and sleep times in the Stats page to activate this countdown.</p>
             <Button asChild>
                 <Link href="/stats">Go to Stats</Link>
@@ -97,7 +97,7 @@ export default function SleepCountdownSidebar() {
   }
 
   return (
-    <Card className="h-full flex flex-col shadow-lg card-animated">
+    <Card className="flex flex-col shadow-lg card-animated">
       <CardHeader>
         <div className="flex items-center justify-between">
            <div className="flex items-center space-x-2">
@@ -107,7 +107,7 @@ export default function SleepCountdownSidebar() {
             <Bed className="h-5 w-5 text-muted-foreground" />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center flex-grow space-y-4">
+      <CardContent className="flex flex-col items-center justify-center space-y-4 py-6">
         <p className="font-mono text-5xl font-bold text-center text-foreground">
           {formatTime(timeUntilSleep, true)}
         </p>
