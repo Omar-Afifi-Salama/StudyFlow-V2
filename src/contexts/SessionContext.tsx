@@ -477,12 +477,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       
       toast({ title: "Level Up!", description, icon: <Sparkles/> });
       if (cashGained > 0) addFloatingGain('cash', cashGained);
-      checkAndUnlockAchievements();
       return { newLevel, newTitle, leveledUp, skillPointsGained, cashGained };
     }
     
     return { newLevel: currentLevel, newTitle: TITLES[currentLevel -1], leveledUp, skillPointsGained, cashGained };
-  }, [toast, addFloatingGain, checkAndUnlockAchievements]);
+  }, [toast, addFloatingGain]);
 
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
     const today = new Date();
@@ -535,7 +534,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setSessions(prevSessions => {
       const updatedSessions = [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime);
       sessionsRef.current = updatedSessions; // Update ref immediately
-      checkAndUnlockAchievements();
       return updatedSessions;
     });
     
@@ -583,12 +581,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (rewardParts.length > 0) {
             toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
         }
-
-        return {
+        
+        const newProfile = {
           ...prevProfile, xp: newXp, cash: finalCash, level: newLevel, title: newTitle,
           currentStreak: updatedCurrentStreak, longestStreak: updatedLongestStreak, lastStudyDate: updatedLastStudyDate,
           skillPoints: newSkillPoints,
         };
+        
+        // Final achievement check after all state is updated
+        checkAndUnlockAchievements();
+        return newProfile;
       });
   }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
@@ -631,11 +633,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
         ...updatedNotepadData,
       };
-      if (JSON.stringify(prev.notepadData) !== JSON.stringify(newNotepadData)) {
-          checkAndUnlockAchievements();
-      }
       return {...prev, notepadData: newNotepadData };
     });
+    checkAndUnlockAchievements();
   }, [checkAndUnlockAchievements]);
 
   const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
@@ -1177,9 +1177,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if(business.unlocked) { toast({ title: "Already Unlocked", description: "You already own this business." }); return prev; }
         if(prev.cash < business.unlockCost) { toast({ title: "Not Enough Cash", description: `You need $${business.unlockCost.toLocaleString()}.`, icon: <DollarSign/> }); return prev; }
         const newBusinesses = { ...prev.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() }};
-        toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
         addFloatingGain('cash', -business.unlockCost);
         checkAndUnlockAchievements();
+        toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
         return { ...prev, cash: prev.cash - business.unlockCost, businesses: newBusinesses };
     });
   }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
@@ -1198,9 +1198,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         
         const newBusinesses = { ...prev.businesses, [businessId]: updatedBusiness };
-        toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
         addFloatingGain('cash', -upgradeCost);
         checkAndUnlockAchievements();
+        toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
         return { ...prev, cash: prev.cash - upgradeCost, businesses: newBusinesses };
     });
   }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
