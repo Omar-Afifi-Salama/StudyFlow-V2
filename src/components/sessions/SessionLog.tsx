@@ -25,13 +25,13 @@ export default function SessionLog() {
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0">
         {sessions.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6">
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6 min-h-[200px]">
             <ListX className="h-16 w-16 mb-4" />
             <p className="text-center">No sessions logged yet.</p>
             <p className="text-center text-sm">Start a timer or add one manually!</p>
           </div>
         ) : (
-          <ScrollArea className="h-full px-6 pb-2">
+          <ScrollArea className="max-h-[500px] h-full px-6 pb-2">
             {sessions.map((session) => (
               <SessionItem key={session.id} session={session} />
             ))}

@@ -3,8 +3,6 @@
 
 import React from 'react';
 import Header from './Header';
-import SessionLog from '@/components/sessions/SessionLog';
-import { usePathname } from 'next/navigation';
 import { useSessions } from '@/contexts/SessionContext';
 
 interface AppLayoutProps {
@@ -12,11 +10,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const pathname = usePathname();
   const { isLoaded } = useSessions(); 
-
-  const showSidebarSessionLogOnPages: string[] = []; // Removed '/stats' to handle it within the page itself
-  const showSidebarLog = showSidebarSessionLogOnPages.includes(pathname);
 
   if (!isLoaded) { 
     return (
@@ -37,11 +31,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <main className="flex-1">
           {children}
         </main>
-        {showSidebarLog && (
-          <aside className="w-80 ml-6 hidden md:block sticky top-20 h-[calc(100vh-10rem)]">
-            <SessionLog />
-          </aside>
-        )}
       </div>
     </>
   );
