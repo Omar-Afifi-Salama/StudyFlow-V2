@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
@@ -29,7 +29,8 @@ export default function PomodoroTimer() {
     logPomodoroSession
   } = useSessions();
 
-  const { timeLeft, mode, isRunning, settings } = pomodoroState;
+  const { mode, isRunning, settings, sessionEndTime, sessionStartTime } = pomodoroState;
+  const [timeLeft, setTimeLeft] = useState(0);
   
   const { toast } = useToast();
 
@@ -38,6 +39,24 @@ export default function PomodoroTimer() {
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+  
+  useEffect(() => {
+    const calculateTimeLeft = () => Math.max(0, Math.floor((sessionEndTime - Date.now()) / 1000));
+    
+    setTimeLeft(calculateTimeLeft());
+
+    if (isRunning) {
+      const interval = setInterval(() => {
+        const newTimeLeft = calculateTimeLeft();
+        setTimeLeft(newTimeLeft);
+        if (newTimeLeft <= 0) {
+          // The context handles the session logging and mode switching
+          clearInterval(interval);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isRunning, sessionEndTime]);
 
   const modeTextMap: Record<PomodoroMode, string> = {
     work: "Focus Time",
@@ -54,8 +73,10 @@ export default function PomodoroTimer() {
     toast({ title: "Settings Saved", description: "Pomodoro timer updated."});
   };
 
-  const currentSessionTotalDuration = (settings[mode === 'work' ? 'workDuration' : (mode === 'shortBreak' ? 'shortBreakDuration' : 'longBreakDuration')] || 0) * 60;
-  const currentSessionElapsedTime = currentSessionTotalDuration - timeLeft;
+  const currentSessionElapsedTime = useMemo(() => {
+    if (!sessionStartTime) return 0;
+    return (Date.now() - sessionStartTime) / 1000;
+  }, [sessionStartTime, timeLeft]); // Update when timeLeft changes to force re-calc
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp; 
@@ -71,7 +92,7 @@ export default function PomodoroTimer() {
   useHotkeys('p', () => { if (isRunning) pausePomodoro(); else startPomodoro(); }, { preventDefault: true }, [isRunning, startPomodoro, pausePomodoro]);
   useHotkeys('r', () => { resetPomodoro(); }, { preventDefault: true }, [resetPomodoro]);
   useHotkeys('s', () => switchPomodoroMode(), { preventDefault: true }, [switchPomodoroMode]); 
-  useHotkeys('l', logPomodoroSession, { preventDefault: true, enabled: currentSessionElapsedTime > 0 }, [logPomodoroSession, currentSessionElapsedTime]);
+  useHotkeys('l', logPomodoroSession, { preventDefault: true, enabled: !isRunning && currentSessionElapsedTime > 1 }, [logPomodoroSession, isRunning, currentSessionElapsedTime]);
 
   return (
     <Card className="shadow-lg card-animated">
@@ -188,7 +209,7 @@ export default function PomodoroTimer() {
         <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={logPomodoroSession} disabled={currentSessionElapsedTime === 0} size="lg" variant="secondary" aria-label="Log current pomodoro progress" className="btn-animated">
+                    <Button onClick={logPomodoroSession} disabled={isRunning || currentSessionElapsedTime < 1} size="lg" variant="secondary" aria-label="Log current pomodoro progress" className="btn-animated">
                         <ListPlus className="mr-2 h-5 w-5" /> Log Progress
                     </Button>
                 </TooltipTrigger>

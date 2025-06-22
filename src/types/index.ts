@@ -272,16 +272,16 @@ export interface PomodoroSettings {
 }
 
 export interface PomodoroState {
-  timeLeft: number;
   mode: PomodoroMode;
   isRunning: boolean;
   cyclesCompleted: number;
   settings: PomodoroSettings;
   sessionStartTime: number;
+  sessionEndTime: number;
 }
 
 export interface StopwatchState {
-  timeElapsed: number;
+  timeElapsedOnPause: number; // Time in ms accumulated before the current run.
   isRunning: boolean;
-  sessionStartTime: number;
+  sessionStartTime: number | null; // Timestamp in ms of when the current run started.
 }

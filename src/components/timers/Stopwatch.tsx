@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
@@ -21,7 +22,27 @@ export default function Stopwatch() {
       logStopwatchSession
    } = useSessions();
   
-  const { timeElapsed, isRunning } = stopwatchState;
+  const { timeElapsedOnPause, isRunning, sessionStartTime } = stopwatchState;
+  const [timeElapsed, setTimeElapsed] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (isRunning && sessionStartTime) {
+      interval = setInterval(() => {
+        const elapsed = timeElapsedOnPause + (Date.now() - sessionStartTime);
+        setTimeElapsed(Math.floor(elapsed / 1000));
+      }, 1000);
+    } else {
+      setTimeElapsed(Math.floor(timeElapsedOnPause / 1000));
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isRunning, sessionStartTime, timeElapsedOnPause]);
+
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;

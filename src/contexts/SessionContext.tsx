@@ -63,18 +63,18 @@ const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
 };
 
 const DEFAULT_POMODORO_STATE: PomodoroState = {
-    timeLeft: DEFAULT_POMODORO_SETTINGS.workDuration * 60,
     mode: 'work',
     isRunning: false,
     cyclesCompleted: 0,
     settings: DEFAULT_POMODORO_SETTINGS,
     sessionStartTime: 0,
+    sessionEndTime: 0,
 };
 
 const DEFAULT_STOPWATCH_STATE: StopwatchState = {
-    timeElapsed: 0,
+    timeElapsedOnPause: 0,
     isRunning: false,
-    sessionStartTime: 0,
+    sessionStartTime: null,
 };
 
 const DAILY_OFFERS_POOL: DailyOffer[] = [
@@ -626,14 +626,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateNotepadData = useCallback((updatedNotepadData: Partial<NotepadData>) => {
-    setUserProfile(prev => ({
-      ...prev,
-      notepadData: {
+    setUserProfile(prev => {
+      const newNotepadData = {
         ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
         ...updatedNotepadData,
+      };
+      if (JSON.stringify(prev.notepadData) !== JSON.stringify(newNotepadData)) {
+          checkAndUnlockAchievements();
       }
-    }));
-    checkAndUnlockAchievements();
+      return {...prev, notepadData: newNotepadData };
+    });
   }, [checkAndUnlockAchievements]);
 
   const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
@@ -1025,11 +1027,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             }
         }
         
-        let duration = getDurationForMode(nextMode, prev.settings);
+        let durationMs = getDurationForMode(nextMode, prev.settings) * 1000;
         if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
             const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
             if(offer?.effect.type === 'timer_speed') {
-                duration *= offer.effect.modifier;
+                durationMs *= offer.effect.modifier;
             }
         }
 
@@ -1037,7 +1039,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             mode: nextMode,
             cyclesCompleted: newCyclesCompleted,
-            timeLeft: duration,
+            sessionEndTime: Date.now() + durationMs,
+            isRunning: false,
         };
     });
   }, [pausePomodoro, getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
@@ -1045,8 +1048,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   // Stable timer logic using refs to prevent re-renders
   const pomodoroStateRef = useRef(pomodoroState);
   pomodoroStateRef.current = pomodoroState;
-  const stopwatchStateRef = useRef(stopwatchState);
-  stopwatchStateRef.current = stopwatchState;
   const addSessionRef = useRef(addSession);
   addSessionRef.current = addSession;
   const toastRef = useRef(toast);
@@ -1061,81 +1062,112 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     const timerWorker = () => {
       const currentPomodoroState = pomodoroStateRef.current;
-      if (currentPomodoroState.isRunning) {
-        if (currentPomodoroState.timeLeft <= 1) {
-          const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-          const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
-          addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
-          toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
-          switchPomodoroModeRef.current(); 
-        } else {
-          setPomodoroState(p => ({ ...p, timeLeft: p.timeLeft - 1 }));
-        }
-      }
-      
-      const currentStopwatchState = stopwatchStateRef.current;
-      if (currentStopwatchState.isRunning) {
-        setStopwatchState(s => ({ ...s, timeElapsed: Math.floor((Date.now() - s.sessionStartTime) / 1000) }));
+      if (currentPomodoroState.isRunning && Date.now() > currentPomodoroState.sessionEndTime) {
+        const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
+        const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
+        addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
+        toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
+        switchPomodoroModeRef.current(); 
       }
     };
     
     const intervalId = setInterval(timerWorker, 1000);
     return () => clearInterval(intervalId);
-  }, [isLoaded]); // Stable dependency array
+  }, [isLoaded]);
 
   const startPomodoro = useCallback(() => {
       setPomodoroState(prev => {
         if (prev.isRunning) return prev;
-        const sessionDuration = getDurationForMode(prev.mode, prev.settings);
-        const elapsedSinceStart = sessionDuration - prev.timeLeft;
-        return { ...prev, isRunning: true, sessionStartTime: Date.now() - (elapsedSinceStart * 1000) };
+        const now = Date.now();
+        const timeRemainingMs = prev.sessionEndTime > now ? prev.sessionEndTime - now : getDurationForMode(prev.mode, prev.settings) * 1000;
+        
+        return { 
+          ...prev, 
+          isRunning: true, 
+          sessionStartTime: now,
+          sessionEndTime: now + timeRemainingMs
+        };
       });
   }, [getDurationForMode]);
 
   const resetPomodoro = useCallback(() => {
-    pausePomodoro();
-    setPomodoroState(p => ({ ...p, timeLeft: getDurationForMode(p.mode, p.settings)}));
-  }, [pausePomodoro, getDurationForMode]);
+    setPomodoroState(prev => {
+      const durationMs = getDurationForMode(prev.mode, prev.settings) * 1000;
+      return {
+        ...prev,
+        isRunning: false,
+        sessionEndTime: Date.now() + durationMs,
+      }
+    });
+  }, [getDurationForMode]);
 
   const updatePomodoroSettings = useCallback((newSettings: Partial<PomodoroSettings>) => {
-    setPomodoroState(p => {
-        const updatedSettings = { ...p.settings, ...newSettings };
-        return { ...p, settings: updatedSettings, timeLeft: getDurationForMode(p.mode, updatedSettings) };
+    setPomodoroState(prev => {
+        const updatedSettings = { ...prev.settings, ...newSettings };
+        const durationMs = getDurationForMode(prev.mode, updatedSettings) * 1000;
+        return { 
+          ...prev, 
+          settings: updatedSettings, 
+          isRunning: false,
+          sessionEndTime: Date.now() + durationMs
+        };
     });
   }, [getDurationForMode]);
   
   const logPomodoroSession = useCallback(() => {
-    const sessionDuration = getDurationForMode(pomodoroState.mode, pomodoroState.settings);
-    const elapsedTime = sessionDuration - pomodoroState.timeLeft;
-    if (elapsedTime > 0) {
-      addSession({ type: pomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break', startTime: pomodoroState.sessionStartTime, durationInSeconds: elapsedTime, isFullPomodoroCycle: false });
+    const { isRunning, sessionStartTime, mode } = pomodoroState;
+    if (isRunning || !sessionStartTime) return;
+
+    const elapsedTime = Date.now() - sessionStartTime;
+    if (elapsedTime > 1000) { // Log if more than a second passed
+      addSession({ 
+        type: mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break', 
+        startTime: sessionStartTime, 
+        durationInSeconds: Math.floor(elapsedTime / 1000), 
+        isFullPomodoroCycle: false 
+      });
       resetPomodoro();
       toast({ title: "Progress Logged", description: `Your current session progress has been logged.`});
     }
-  }, [pomodoroState, addSession, resetPomodoro, getDurationForMode, toast]);
+  }, [pomodoroState, addSession, resetPomodoro, toast]);
 
   const startStopwatch = useCallback(() => {
     setStopwatchState(prev => {
         if (prev.isRunning) return prev;
-        return { ...prev, isRunning: true, sessionStartTime: Date.now() - (prev.timeElapsed * 1000) };
+        return { ...prev, isRunning: true, sessionStartTime: Date.now() };
     });
   }, []);
 
   const pauseStopwatch = useCallback(() => {
-    setStopwatchState(prev => ({ ...prev, isRunning: false }));
+    setStopwatchState(prev => {
+      if (!prev.isRunning || !prev.sessionStartTime) return prev;
+      const elapsedSinceStart = Date.now() - prev.sessionStartTime;
+      return { 
+        ...prev, 
+        isRunning: false, 
+        timeElapsedOnPause: prev.timeElapsedOnPause + elapsedSinceStart,
+        sessionStartTime: null
+      };
+    });
   }, []);
 
   const resetStopwatch = useCallback(() => {
-    setStopwatchState({ ...DEFAULT_STOPWATCH_STATE });
+    setStopwatchState({ isRunning: false, timeElapsedOnPause: 0, sessionStartTime: null });
   }, []);
 
   const logStopwatchSession = useCallback(() => {
-    if (stopwatchState.timeElapsed > 0) {
-        addSession({ type: 'Stopwatch', startTime: stopwatchState.sessionStartTime, durationInSeconds: stopwatchState.timeElapsed });
+    pauseStopwatch();
+    const finalTimeElapsedMs = stopwatchState.timeElapsedOnPause;
+    if (finalTimeElapsedMs > 1000) {
+        addSession({ 
+          type: 'Stopwatch', 
+          startTime: Date.now() - finalTimeElapsedMs, 
+          durationInSeconds: Math.floor(finalTimeElapsedMs / 1000) 
+        });
         resetStopwatch();
         toast({ title: "Session Logged", description: "Your stopwatch session has been saved."});
     }
-  }, [stopwatchState, addSession, resetStopwatch, toast]);
+  }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch, toast]);
 
   // Business Logic
   const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
@@ -1266,7 +1298,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       const storedPomoSettings = localStorage.getItem('pomodoroSettings');
       if (storedPomoSettings) {
         const settings = JSON.parse(storedPomoSettings);
-        setPomodoroState(p => ({...p, settings, timeLeft: getDurationForMode(p.mode, settings) }));
+        setPomodoroState(p => ({...p, settings, sessionEndTime: Date.now() + getDurationForMode(p.mode, settings) * 1000 }));
+      } else {
+        setPomodoroState(p => ({...p, sessionEndTime: Date.now() + getDurationForMode(p.mode, p.settings) * 1000 }));
       }
 
       const storedChallenges = localStorage.getItem('dailyChallenges');
