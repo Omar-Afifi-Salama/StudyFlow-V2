@@ -298,7 +298,6 @@ interface SessionContextType {
   claimChallengeReward: (challengeId: string) => void;
   updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void;
   getUnlockedAchievements: () => Achievement[];
-  checkAndUnlockAchievements: () => void;
   isLoaded: boolean;
   updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
 
@@ -330,6 +329,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [stopwatchState, setStopwatchState] = useState<StopwatchState>(DEFAULT_STOPWATCH_STATE);
 
   const lastGainTime = useRef({ xp: 0, cash: 0 });
+  const sessionsRef = useRef(sessions);
+  sessionsRef.current = sessions;
 
   const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
     if (typeof window === 'undefined') return;
@@ -357,9 +358,34 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(() => setFloatingGains(prev => prev.filter(g => g.id !== newGain.id)), 2500);
   }, []);
 
+  const checkAndUnlockAchievements = useCallback(() => {
+      setUserProfile(prevUserProfile => {
+          if (!prevUserProfile.unlockedSkillIds.includes('unlockAchievements')) return prevUserProfile;
+
+          const currentSessions = sessionsRef.current; 
+          const newlyUnlocked: string[] = [];
+          let totalCashRewardFromAchievements = 0;
+
+          ALL_ACHIEVEMENTS.forEach(ach => {
+            if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions)) {
+              newlyUnlocked.push(ach.id);
+              totalCashRewardFromAchievements += ach.cashReward;
+              toast({ title: "Achievement Unlocked!", description: `${ach.name} (+$${ach.cashReward.toLocaleString()})`, icon: <Trophy/> });
+              addFloatingGain('cash', ach.cashReward);
+            }
+          });
+          if (newlyUnlocked.length > 0) {
+            return { ...prevUserProfile, unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked], cash: prevUserProfile.cash + totalCashRewardFromAchievements };
+          }
+          return prevUserProfile;
+      });
+  }, [addFloatingGain, toast]);
+
+
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
     setUserProfile(prev => ({...prev, ...updatedProfileData}));
-  }, []);
+    checkAndUnlockAchievements();
+  }, [checkAndUnlockAchievements]);
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -451,12 +477,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       
       toast({ title: "Level Up!", description, icon: <Sparkles/> });
       if (cashGained > 0) addFloatingGain('cash', cashGained);
-
+      checkAndUnlockAchievements();
       return { newLevel, newTitle, leveledUp, skillPointsGained, cashGained };
     }
     
     return { newLevel: currentLevel, newTitle: TITLES[currentLevel -1], leveledUp, skillPointsGained, cashGained };
-  }, [toast, addFloatingGain]);
+  }, [toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
     const today = new Date();
@@ -506,7 +532,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000, duration: sessionDetails.durationInSeconds,
       tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false, description: sessionDetails.description,
     };
-    setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
+    setSessions(prevSessions => {
+      const updatedSessions = [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime);
+      sessionsRef.current = updatedSessions; // Update ref immediately
+      checkAndUnlockAchievements();
+      return updatedSessions;
+    });
     
     setUserProfile(prevProfile => {
         const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
@@ -559,7 +590,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           skillPoints: newSkillPoints,
         };
       });
-  }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked]);
+  }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
   const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
     const startTime = details.endTime - details.durationInSeconds * 1000;
@@ -602,7 +633,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         ...updatedNotepadData,
       }
     }));
-  }, []);
+    checkAndUnlockAchievements();
+  }, [checkAndUnlockAchievements]);
 
   const updateNotepadField = useCallback(<K extends keyof NotepadData>(field: K, data: NotepadData[K]) => {
       updateNotepadData({ [field]: data });
@@ -757,10 +789,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             return habit;
         });
         if(habitCompletedForChallenge && isFeatureUnlocked('challenges')){ updateChallengeProgress('habitCompletions', 1); }
+        checkAndUnlockAchievements();
         return { ...prevProfile, notepadData: { ...(prevProfile.notepadData), habits: updatedHabits } };
     });
     toast({ title: "Habit Updated", description: "Progress logged.", icon: <CheckCircle/> });
-  }, [isFeatureUnlocked, toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey]);
+  }, [isFeatureUnlocked, toast, updateChallengeProgress, getHabitCompletionsForWeek, getHabitLogKey, checkAndUnlockAchievements]);
 
   const addNotepadCountdownEvent = useCallback((eventData: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => {
     if(!isFeatureUnlocked('notepadEvents')) { toast({ title: "Feature Locked", description: "Unlock Events Countdown in the Skill Tree.", icon: <XCircle/> }); return; }
@@ -804,8 +837,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile(prev => ({ ...prev, cash: prev.cash - effectivePrice, ownedSkinIds: [...prev.ownedSkinIds, skinId] }));
     toast({ title: "Purchase Successful!", description: `Bought ${skin.name} for $${effectivePrice.toLocaleString()}${shopDiscount > 0 ? ` (with ${(shopDiscount * 100).toFixed(0)}% discount!)` : ''}.`, icon: <ShoppingCart/> });
     addFloatingGain('cash', -effectivePrice);
+    checkAndUnlockAchievements();
     return true;
-  }, [isFeatureUnlocked, userProfile.cash, userProfile.level, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, userProfile.cash, userProfile.level, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const equipSkin = useCallback((skinId: string) => {
     if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return; }
@@ -848,6 +882,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                     addFloatingGain('cash', finalCashReward);
 
                     const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
+                    checkAndUnlockAchievements();
                     return {
                         ...prevProfile, xp: prevProfile.xp + challenge.xpReward, cash: prevProfile.cash + finalCashReward,
                         level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
@@ -873,28 +908,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         toast({title: "Challenges Complete!", description: "Bonus: You can now select another Daily Offer!", icon: <Sparkles/>});
     }
 
-  }, [isFeatureUnlocked, toast, checkForLevelUp, addFloatingGain]);
-  
-  const checkAndUnlockAchievements = useCallback(() => {
-    if(!isFeatureUnlocked('achievements')) return;
-    setUserProfile(prevUserProfile => {
-        const currentSessions = sessions; 
-        const newlyUnlocked: string[] = [];
-        let totalCashRewardFromAchievements = 0;
-        ALL_ACHIEVEMENTS.forEach(ach => {
-          if (!(prevUserProfile.unlockedAchievementIds || []).includes(ach.id) && ach.criteria(prevUserProfile, currentSessions)) {
-            newlyUnlocked.push(ach.id);
-            totalCashRewardFromAchievements += ach.cashReward;
-            toast({ title: "Achievement Unlocked!", description: `${ach.name} (+$${ach.cashReward.toLocaleString()})`, icon: <Trophy/> });
-            addFloatingGain('cash', ach.cashReward);
-          }
-        });
-        if (newlyUnlocked.length > 0) {
-          return { ...prevUserProfile, unlockedAchievementIds: [...(prevUserProfile.unlockedAchievementIds || []), ...newlyUnlocked], cash: prevUserProfile.cash + totalCashRewardFromAchievements };
-        }
-        return prevUserProfile;
-    });
-  }, [isFeatureUnlocked, sessions, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, toast, checkForLevelUp, addFloatingGain, checkAndUnlockAchievements]);
   
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
 
@@ -961,6 +975,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             }
         }
         
+        checkAndUnlockAchievements();
         return {
             ...prev,
             skillPoints: prev.skillPoints - skill.cost,
@@ -970,7 +985,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     });
     toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
     return true;
-  }, [canUnlockSkill, toast, refundAllSkillPoints]);
+  }, [canUnlockSkill, toast, refundAllSkillPoints, checkAndUnlockAchievements]);
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     updateUserProfile({ wakeUpTime, sleepTime });
@@ -1034,8 +1049,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   stopwatchStateRef.current = stopwatchState;
   const addSessionRef = useRef(addSession);
   addSessionRef.current = addSession;
-  const checkAndUnlockAchievementsRef = useRef(checkAndUnlockAchievements);
-  checkAndUnlockAchievementsRef.current = checkAndUnlockAchievements;
   const toastRef = useRef(toast);
   toastRef.current = toast;
   const switchPomodoroModeRef = useRef(switchPomodoroMode);
@@ -1053,7 +1066,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
           const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
           addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
-          checkAndUnlockAchievementsRef.current();
           toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
           switchPomodoroModeRef.current(); 
         } else {
@@ -1135,9 +1147,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const newBusinesses = { ...prev.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() }};
         toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
         addFloatingGain('cash', -business.unlockCost);
+        checkAndUnlockAchievements();
         return { ...prev, cash: prev.cash - business.unlockCost, businesses: newBusinesses };
     });
-  }, [isFeatureUnlocked, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const upgradeBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
     if(!isFeatureUnlocked('capitalist')) return;
@@ -1155,9 +1168,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const newBusinesses = { ...prev.businesses, [businessId]: updatedBusiness };
         toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
         addFloatingGain('cash', -upgradeCost);
+        checkAndUnlockAchievements();
         return { ...prev, cash: prev.cash - upgradeCost, businesses: newBusinesses };
     });
-  }, [isFeatureUnlocked, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, toast, addFloatingGain, checkAndUnlockAchievements]);
   
   const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], amount: number) => {
     if(!isFeatureUnlocked('capitalist')) return;
@@ -1333,10 +1347,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [sessions, userProfile, pomodoroState.settings, dailyChallenges, lastChallengeResetDate, isLoaded]);
 
   useEffect(() => {
-    if (isLoaded) { checkAndUnlockAchievements(); }
-  }, [isLoaded, sessions.length, userProfile.level, userProfile.cash, userProfile.currentStreak, userProfile.ownedSkinIds.length, userProfile.completedChallengeIds.length, dailyChallenges.length, userProfile.notepadData, checkAndUnlockAchievements, userProfile.unlockedSkillIds.length]);
-
-  useEffect(() => {
     if (isLoaded) {
         const equippedSkin = getSkinById(userProfile.equippedSkinId);
         applyThemePreference(equippedSkin?.isTheme ? equippedSkin.themeClass : null);
@@ -1359,7 +1369,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       getSkinById, buySkin, equipSkin, isSkinOwned,
       dailyOffers, selectDailyOffer,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
-      getUnlockedAchievements, checkAndUnlockAchievements,
+      getUnlockedAchievements, 
       isLoaded,
       getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, refundAllSkillPoints,
       floatingGains,
@@ -1376,5 +1386,3 @@ export const useSessions = () => {
   }
   return context;
 };
-
-    
