@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain } from '@/types';
+import type { StudySession, UserProfile, Skin, CapitalistOffer, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, AchievementCriteriaInvestmentPayload, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
@@ -59,6 +59,25 @@ export const PREDEFINED_SKINS: Skin[] = [
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
   tasks: [], notes: [], goals: [], links: [], revisionConcepts: [], habits: [], countdownEvents: [],
   eisenhowerMatrix: { urgentImportant: [], notUrgentImportant: [], urgentNotImportant: [], notUrgentNotImportant: [] }
+};
+
+const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
+  workDuration: 25, shortBreakDuration: 5, longBreakDuration: 15, cyclesPerLongBreak: 4,
+};
+
+const DEFAULT_POMODORO_STATE: PomodoroState = {
+    timeLeft: DEFAULT_POMODORO_SETTINGS.workDuration * 60,
+    mode: 'work',
+    isRunning: false,
+    cyclesCompleted: 0,
+    settings: DEFAULT_POMODORO_SETTINGS,
+    sessionStartTime: 0,
+};
+
+const DEFAULT_STOPWATCH_STATE: StopwatchState = {
+    timeElapsed: 0,
+    isRunning: false,
+    sessionStartTime: 0,
 };
 
 const DEFAULT_USER_PROFILE: UserProfile = {
@@ -205,13 +224,29 @@ const defaultAchievementPayload: AchievementCriteriaInvestmentPayload = { firstI
 interface SessionContextType {
   sessions: StudySession[];
   addSession: (sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => void;
+  addManualSession: (details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => void;
   deleteSession: (sessionId: string) => void;
   addTestSession: () => void;
   clearSessions: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
+  
   userProfile: UserProfile;
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
   updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
+
+  pomodoroState: PomodoroState;
+  startPomodoro: () => void;
+  pausePomodoro: () => void;
+  resetPomodoro: () => void;
+  switchPomodoroMode: (mode?: PomodoroMode) => void;
+  updatePomodoroSettings: (newSettings: Partial<PomodoroSettings>) => void;
+  logPomodoroSession: () => void;
+  
+  stopwatchState: StopwatchState;
+  startStopwatch: () => void;
+  pauseStopwatch: () => void;
+  resetStopwatch: () => void;
+  logStopwatchSession: () => void;
 
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
@@ -272,6 +307,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [capitalistStatsForAchievements, setCapitalistStatsForAchievements] = useState<AchievementCriteriaInvestmentPayload>(defaultAchievementPayload);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
+
+  // Timer States
+  const [pomodoroState, setPomodoroState] = useState<PomodoroState>(DEFAULT_POMODORO_STATE);
+  const [stopwatchState, setStopwatchState] = useState<StopwatchState>(DEFAULT_STOPWATCH_STATE);
 
   const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
     if (typeof window === 'undefined') return;
@@ -405,12 +444,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [getAppliedBoost]);
 
-  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => {
+  const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean, description?: string }) => {
     if (sessionDetails.durationInSeconds <= 0) { console.warn("Attempted to log session with zero duration."); return; }
     const newSession: StudySession = {
       id: crypto.randomUUID(), type: sessionDetails.type, startTime: sessionDetails.startTime,
       endTime: sessionDetails.startTime + sessionDetails.durationInSeconds * 1000, duration: sessionDetails.durationInSeconds,
-      tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false,
+      tags: sessionDetails.tags || [], isFullPomodoroCycle: sessionDetails.isFullPomodoroCycle || false, description: sessionDetails.description,
     };
     setSessions(prevSessions => [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime));
     
@@ -463,6 +502,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         };
       });
   }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked]);
+  
+  const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
+    const startTime = details.endTime - details.durationInSeconds * 1000;
+    addSession({
+      type: details.type,
+      startTime: startTime,
+      durationInSeconds: details.durationInSeconds,
+      description: details.description,
+      isFullPomodoroCycle: details.type === 'Pomodoro Focus' ? (details.durationInSeconds / 60) >= pomodoroState.settings.workDuration : false,
+    });
+  }, [addSession, pomodoroState.settings.workDuration]);
 
   const addTestSession = useCallback(() => {
     addSession({
@@ -707,7 +757,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
-  }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]); // Removed applyThemePreference, will be handled by useEffect
+  }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
 
   const ensureCapitalistOffers = useCallback(() => {
     if(!isFeatureUnlocked('capitalist')) return;
@@ -892,6 +942,129 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     updateUserProfile({ wakeUpTime, sleepTime });
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved.", icon: <Settings/> });
   }, [updateUserProfile, toast]);
+  
+  // Timer Logic
+  const getDurationForMode = useCallback((mode: PomodoroMode, settings: PomodoroSettings) => {
+    switch (mode) {
+      case 'work': return settings.workDuration * 60;
+      case 'shortBreak': return settings.shortBreakDuration * 60;
+      case 'longBreak': return settings.longBreakDuration * 60;
+      default: return 0;
+    }
+  }, []);
+
+  const pausePomodoro = useCallback(() => {
+    setPomodoroState(prev => ({ ...prev, isRunning: false }));
+  }, []);
+
+  const switchPomodoroMode = useCallback((newMode?: PomodoroMode) => {
+    pausePomodoro();
+    setPomodoroState(prev => {
+        let nextMode: PomodoroMode = 'work';
+        let newCyclesCompleted = prev.cyclesCompleted;
+
+        if (newMode) {
+            nextMode = newMode;
+            if (prev.mode === 'work' && (nextMode === 'shortBreak' || nextMode === 'longBreak')) {
+                newCyclesCompleted++;
+            }
+        } else {
+            if (prev.mode === 'work') {
+                newCyclesCompleted = prev.cyclesCompleted + 1;
+                nextMode = newCyclesCompleted % prev.settings.cyclesPerLongBreak === 0 ? 'longBreak' : 'shortBreak';
+            } else {
+                nextMode = 'work';
+            }
+        }
+        
+        return {
+            ...prev,
+            mode: nextMode,
+            cyclesCompleted: newCyclesCompleted,
+            timeLeft: getDurationForMode(nextMode, prev.settings),
+        };
+    });
+  }, [pausePomodoro, getDurationForMode]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timerWorker = () => {
+      // Pomodoro
+      if (pomodoroState.isRunning) {
+        if (pomodoroState.timeLeft <= 1) {
+          const sessionType: StudySession['type'] = pomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
+          const duration = getDurationForMode(pomodoroState.mode, pomodoroState.settings);
+          addSession({ type: sessionType, startTime: pomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: pomodoroState.mode === 'work' });
+          checkAndUnlockAchievements();
+          toast({ title: `Time's up!`, description: `Your ${pomodoroState.mode} session has ended.` });
+          switchPomodoroMode(); // This also pauses the timer
+        } else {
+          setPomodoroState(p => ({ ...p, timeLeft: p.timeLeft - 1 }));
+        }
+      }
+      // Stopwatch
+      if (stopwatchState.isRunning) {
+        setStopwatchState(s => ({ ...s, timeElapsed: Math.floor((Date.now() - s.sessionStartTime) / 1000) }));
+      }
+    };
+    
+    const intervalId = setInterval(timerWorker, 1000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded, pomodoroState.isRunning, pomodoroState.timeLeft, stopwatchState.isRunning, addSession, checkAndUnlockAchievements, getDurationForMode, pomodoroState.mode, pomodoroState.sessionStartTime, pomodoroState.settings, switchPomodoroMode, toast, stopwatchState.sessionStartTime]);
+  
+  const startPomodoro = useCallback(() => {
+      setPomodoroState(prev => {
+        if (prev.isRunning) return prev;
+        const sessionDuration = getDurationForMode(prev.mode, prev.settings);
+        const elapsedSinceStart = sessionDuration - prev.timeLeft;
+        return { ...prev, isRunning: true, sessionStartTime: Date.now() - (elapsedSinceStart * 1000) };
+      });
+  }, [getDurationForMode]);
+
+  const resetPomodoro = useCallback(() => {
+    pausePomodoro();
+    setPomodoroState(p => ({ ...p, timeLeft: getDurationForMode(p.mode, p.settings)}));
+  }, [pausePomodoro, getDurationForMode]);
+
+  const updatePomodoroSettings = useCallback((newSettings: Partial<PomodoroSettings>) => {
+    setPomodoroState(p => {
+        const updatedSettings = { ...p.settings, ...newSettings };
+        return { ...p, settings: updatedSettings, timeLeft: getDurationForMode(p.mode, updatedSettings) };
+    });
+  }, [getDurationForMode]);
+  
+  const logPomodoroSession = useCallback(() => {
+    const sessionDuration = getDurationForMode(pomodoroState.mode, pomodoroState.settings);
+    const elapsedTime = sessionDuration - pomodoroState.timeLeft;
+    if (elapsedTime > 0) {
+      addSession({ type: pomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break', startTime: pomodoroState.sessionStartTime, durationInSeconds: elapsedTime, isFullPomodoroCycle: false });
+      resetPomodoro();
+      toast({ title: "Progress Logged", description: `Your current session progress has been logged.`});
+    }
+  }, [pomodoroState, addSession, resetPomodoro, getDurationForMode, toast]);
+
+  const startStopwatch = useCallback(() => {
+    setStopwatchState(prev => {
+        if (prev.isRunning) return prev;
+        return { ...prev, isRunning: true, sessionStartTime: Date.now() - (prev.timeElapsed * 1000) };
+    });
+  }, []);
+
+  const pauseStopwatch = useCallback(() => {
+    setStopwatchState(prev => ({ ...prev, isRunning: false }));
+  }, []);
+
+  const resetStopwatch = useCallback(() => {
+    setStopwatchState({ ...DEFAULT_STOPWATCH_STATE });
+  }, []);
+
+  const logStopwatchSession = useCallback(() => {
+    if (stopwatchState.timeElapsed > 0) {
+        addSession({ type: 'Stopwatch', startTime: stopwatchState.sessionStartTime, durationInSeconds: stopwatchState.timeElapsed });
+        resetStopwatch();
+        toast({ title: "Session Logged", description: "Your stopwatch session has been saved."});
+    }
+  }, [stopwatchState, addSession, resetStopwatch, toast]);
 
   const loadData = useCallback(() => {
     try {
@@ -934,6 +1107,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       setUserProfile(parsedProfile);
+      
+      const storedPomoSettings = localStorage.getItem('pomodoroSettings');
+      if (storedPomoSettings) {
+        const settings = JSON.parse(storedPomoSettings);
+        setPomodoroState(p => ({...p, settings, timeLeft: getDurationForMode(p.mode, settings) }));
+      }
 
       const storedOffers = localStorage.getItem('capitalistOffers');
       if (storedOffers) setCapitalistOffers(JSON.parse(storedOffers));
@@ -966,7 +1145,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     } finally {
         setIsLoaded(true);
     }
-  }, []);
+  }, [getDurationForMode]);
 
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -991,6 +1170,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.setItem('studySessions', JSON.stringify(sessions));
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('pomodoroSettings', JSON.stringify(pomodoroState.settings));
         localStorage.setItem('capitalistOffers', JSON.stringify(capitalistOffers));
         if (lastOfferGenerationTime) localStorage.setItem('lastOfferGenerationTime', lastOfferGenerationTime.toString());
         else localStorage.removeItem('lastOfferGenerationTime');
@@ -999,7 +1179,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('capitalistStatsForAchievements', JSON.stringify(capitalistStatsForAchievements));
       } catch (error) { console.error("Failed to save data to localStorage:", error); }
     }
-  }, [sessions, userProfile, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
+  }, [sessions, userProfile, pomodoroState.settings, capitalistOffers, lastOfferGenerationTime, dailyChallenges, lastChallengeResetDate, isLoaded, capitalistStatsForAchievements]);
 
   useEffect(() => {
     if (isLoaded) { checkAndUnlockAchievements(); }
@@ -1017,8 +1197,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SessionContext.Provider value={{
-      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription,
+      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
+      pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
+      stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
@@ -1043,4 +1225,3 @@ export const useSessions = () => {
   }
   return context;
 };
-

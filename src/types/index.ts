@@ -42,7 +42,7 @@ export interface Skin {
   imageUrl: string;
   dataAiHint: string;
   isTheme?: boolean;
-  themeClass?: string; // Changed from specific 'dark' | 'sepia' to string
+  themeClass?: string;
 }
 
 export interface CapitalistOffer {
@@ -197,11 +197,11 @@ export interface AmbientSound {
 }
 
 export type FeatureKey =
-  | 'timers' // Always available
-  | 'skill-tree' // Always available
+  | 'timers'
+  | 'skill-tree'
   | 'stats'
   | 'ambiance'
-  | 'notepad' // Unlocks the main Notepad page
+  | 'notepad'
   | 'challenges'
   | 'shop'
   | 'capitalist'
@@ -238,4 +238,28 @@ export interface FloatingGain {
   type: 'xp' | 'cash';
   amount: number;
   timestamp: number;
+}
+
+export type PomodoroMode = 'work' | 'shortBreak' | 'longBreak';
+
+export interface PomodoroSettings {
+  workDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  cyclesPerLongBreak: number;
+}
+
+export interface PomodoroState {
+  timeLeft: number;
+  mode: PomodoroMode;
+  isRunning: boolean;
+  cyclesCompleted: number;
+  settings: PomodoroSettings;
+  sessionStartTime: number;
+}
+
+export interface StopwatchState {
+  timeElapsed: number;
+  isRunning: boolean;
+  sessionStartTime: number;
 }

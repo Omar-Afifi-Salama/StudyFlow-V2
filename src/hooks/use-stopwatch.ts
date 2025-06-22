@@ -1,47 +1,28 @@
+
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSessions } from '@/contexts/SessionContext';
 
+/**
+ * A hook that provides state and actions for the Stopwatch timer.
+ * This hook acts as a simple proxy to the central timer state managed in SessionContext,
+ * ensuring timer persistence across the application.
+ */
 export function useStopwatch() {
-  const [timeElapsed, setTimeElapsed] = useState(0); // in seconds
-  const [isRunning, setIsRunning] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(0);
+  const {
+    stopwatchState,
+    startStopwatch,
+    pauseStopwatch,
+    resetStopwatch,
+    logStopwatchSession
+  } = useSessions();
 
-  const start = useCallback(() => {
-    if (!isRunning) {
-      setIsRunning(true);
-      startTimeRef.current = Date.now() - timeElapsed * 1000;
-      timerRef.current = setInterval(() => {
-        setTimeElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
-      }, 1000);
-    }
-  }, [isRunning, timeElapsed]);
-
-  const stop = useCallback(() => {
-    if (isRunning) {
-      setIsRunning(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      // Ensure final time is captured accurately
-      setTimeElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }
-  }, [isRunning]);
-
-  const reset = useCallback(() => {
-    stop();
-    setTimeElapsed(0);
-  }, [stop]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  return { timeElapsed, isRunning, start, stop, reset };
+  return {
+    timeElapsed: stopwatchState.timeElapsed,
+    isRunning: stopwatchState.isRunning,
+    start: startStopwatch,
+    stop: pauseStopwatch, // 'stop' is an alias for 'pause' in this hook
+    reset: resetStopwatch,
+    logSession: logStopwatchSession,
+  };
 }

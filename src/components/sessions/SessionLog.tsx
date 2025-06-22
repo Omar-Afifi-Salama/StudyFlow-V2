@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, ListX } from 'lucide-react';
+import ManualSessionDialog from './ManualSessionDialog';
 
 export default function SessionLog() {
   const { sessions, clearSessions } = useSessions();
@@ -14,15 +15,20 @@ export default function SessionLog() {
   return (
     <Card className="h-full flex flex-col shadow-lg">
       <CardHeader>
-        <CardTitle className="text-xl font-headline">Session Log</CardTitle>
-        <CardDescription>Your recorded study sessions.</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-xl font-headline">Session Log</CardTitle>
+            <CardDescription>Your recorded study sessions.</CardDescription>
+          </div>
+          <ManualSessionDialog />
+        </div>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden p-0"> {/* Padding removed from CardContent */}
         {sessions.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6">
             <ListX className="h-16 w-16 mb-4" />
             <p className="text-center">No sessions logged yet.</p>
-            <p className="text-center text-sm">Start a timer and log your studies!</p>
+            <p className="text-center text-sm">Start a timer or add one manually!</p>
           </div>
         ) : (
           // ScrollArea now has padding and a fixed height
@@ -43,4 +49,3 @@ export default function SessionLog() {
     </Card>
   );
 }
-
