@@ -5,11 +5,12 @@ import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { formatTime, cn } from '@/lib/utils';
 import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as TimerIcon, Zap, DollarSign, Activity, Award, Trophy, CalendarCheck, Calendar as CalendarIcon } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import React, { useMemo } from 'react';
-import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday } from 'date-fns';
+import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday, getMonth } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
+import SessionLog from '@/components/sessions/SessionLog';
 
 interface HeatmapDataPoint {
   date: string; // YYYY-MM-DD
@@ -54,49 +55,60 @@ export default function StatsDashboard() {
   const heatmapData = useMemo(() => {
     if (!isLoaded) return [];
     const dataByDate: Record<string, number> = {};
+    const endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
+    const startDate = subDays(endDate, 365); // Ensure we have ~52 weeks
+
+    const dateArray = eachDayOfInterval({ start: startDate, end: endDate });
+    dateArray.forEach(day => {
+        dataByDate[format(day, 'yyyy-MM-dd')] = 0;
+    });
+
     sessions.forEach(session => {
       if (session.type === 'Pomodoro Focus' || session.type === 'Stopwatch') {
         const dateKey = format(new Date(session.startTime), 'yyyy-MM-dd');
-        dataByDate[dateKey] = (dataByDate[dateKey] || 0) + session.duration / 60;
+        if(dataByDate.hasOwnProperty(dateKey)) {
+            dataByDate[dateKey] += session.duration / 60;
+        }
       }
     });
 
-    const endDate = new Date();
-    const startDate = subDays(endDate, 364);
-    const dateArray = eachDayOfInterval({ start: startDate, end: endDate });
-
-    return dateArray.map(day => {
-      const formattedDay = format(day, 'yyyy-MM-dd');
-      const studyTimeForDay = dataByDate[formattedDay] || 0;
+    return Object.entries(dataByDate).map(([date, studyTime]) => {
       let level = 0;
-      if (studyTimeForDay > 0 && studyTimeForDay <= 30) level = 1;
-      else if (studyTimeForDay > 30 && studyTimeForDay <= 60) level = 2;
-      else if (studyTimeForDay > 60 && studyTimeForDay <= 120) level = 3;
-      else if (studyTimeForDay > 120 && studyTimeForDay < 180) level = 4;
-      else if (studyTimeForDay >= 180) level = 5;
-      return { date: formattedDay, count: Math.round(studyTimeForDay), level };
+      if (studyTime > 0 && studyTime <= 30) level = 1;
+      else if (studyTime > 30 && studyTime <= 60) level = 2;
+      else if (studyTime > 60 && studyTime <= 120) level = 3;
+      else if (studyTime > 120 && studyTime < 180) level = 4;
+      else if (studyTime >= 180) level = 5;
+      return { date, count: Math.round(studyTime), level };
     });
   }, [sessions, isLoaded]);
-
-  const calendarHeatmapWeeks = useMemo(() => {
+  
+  const heatmapWeeks = useMemo(() => {
     if (!heatmapData.length) return [];
-    const weeks: Array<Array<HeatmapDataPoint | null>> = [];
-    const firstDate = parseISO(heatmapData[0].date);
-    const startDate = startOfWeek(firstDate, { weekStartsOn: 1 }); // Start on Monday
-    const endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
-    let currentDay = startDate;
-    while (currentDay <= endDate) {
-      const week: Array<HeatmapDataPoint | null> = [];
-      for (let i = 0; i < 7; i++) {
-        const dayKey = format(currentDay, 'yyyy-MM-dd');
-        const dataPoint = heatmapData.find(p => p.date === dayKey);
-        week.push(dataPoint || { date: dayKey, count: 0, level: 0});
-        currentDay = addDays(currentDay, 1);
-      }
-      weeks.push(week);
+    const weeks: Array<HeatmapDataPoint[]> = [];
+    // Group by week, starting on Monday
+    for (let i = 0; i < heatmapData.length; i += 7) {
+        weeks.push(heatmapData.slice(i, i + 7));
     }
     return weeks;
   }, [heatmapData]);
+
+  const monthLabels = useMemo(() => {
+    if (!heatmapWeeks.length) return [];
+    const labels: { label: string, weekIndex: number }[] = [];
+    let lastMonth = -1;
+    heatmapWeeks.forEach((week, index) => {
+        const firstDayOfMonth = week.find(day => day && getMonth(parseISO(day.date)) !== lastMonth);
+        if (firstDayOfMonth) {
+            const currentMonth = getMonth(parseISO(firstDayOfMonth.date));
+            if (currentMonth !== lastMonth) {
+                lastMonth = currentMonth;
+                labels.push({ label: format(parseISO(firstDayOfMonth.date), 'MMM'), weekIndex: index });
+            }
+        }
+    });
+    return labels;
+  }, [heatmapWeeks]);
 
   const totalStudyTime = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').reduce((acc, s) => acc + s.duration, 0);
   const totalFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').length;
@@ -105,7 +117,7 @@ export default function StatsDashboard() {
   const pomodoroBreakSessions = sessions.filter(s => s.type === 'Pomodoro Break').length;
   const stopwatchSessions = sessions.filter(s => s.type === 'Stopwatch').length;
   const longestSession = Math.max(0, ...sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').map(s => s.duration));
-  const studyDaysThisYear = heatmapData.filter(d => d.count > 0).length;
+  const studyDaysThisYear = new Set(sessions.map(s => format(new Date(s.startTime), 'yyyy-MM-dd'))).size;
   const todayStudyTime = sessions.filter(s => isToday(new Date(s.startTime)) && (s.type === 'Pomodoro Focus' || s.type === 'Stopwatch')).reduce((acc, s) => acc + s.duration, 0);
   const achievementsTotal = ALL_ACHIEVEMENTS.length;
 
@@ -153,7 +165,7 @@ export default function StatsDashboard() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Study Time" value={formatTime(totalStudyTime, true)} icon={<Sigma className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Today's Study Time" value={formatTime(todayStudyTime)} icon={<CalendarIcon className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Avg. Session Length" value={formatTime(averageSessionLength)} icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} />
@@ -170,88 +182,98 @@ export default function StatsDashboard() {
             <StatCard title="Achievements Unlocked" value={`${userProfile.unlockedAchievementIds.length} / ${achievementsTotal}`} icon={<Trophy className="h-5 w-5 text-muted-foreground" />} />
           </div>
           
-          <Card className="shadow-md card-animated">
-            <CardHeader>
-              <CardTitle>Study Activity Heatmap</CardTitle>
-              <CardDescription>Each cell represents a day's total study time in the last year. Weeks start on Monday.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center p-4">
-              <div className="flex gap-3">
-                <div className="flex flex-col text-xs text-muted-foreground mt-1.5" style={{ gap: '0.625rem' }}>
-                  <span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span></span>
-                </div>
-                <div className="overflow-x-auto">
-                    <div className="grid grid-flow-col grid-rows-7 gap-1">
-                      {calendarHeatmapWeeks.flat().map((day) => {
-                        if (!day) return <div key={Math.random()} className="w-3.5 h-3.5 bg-muted/20 rounded-sm"></div>;
-                        let cellFill = 'bg-muted/30';
-                        if (day.level === 1) cellFill = 'bg-primary/20';
-                        else if (day.level === 2) cellFill = 'bg-primary/40';
-                        else if (day.level === 3) cellFill = 'bg-primary/60';
-                        else if (day.level === 4) cellFill = 'bg-primary/80';
-                        else if (day.level === 5) cellFill = 'bg-primary';
-
-                        return (
-                          <TooltipProvider key={day.date} delayDuration={100}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className={cn("w-3.5 h-3.5 rounded-sm", cellFill, "transition-colors duration-150")} />
-                              </TooltipTrigger>
-                              <ShadTooltipContent>
-                                <p>{format(parseISO(day.date), 'PPP')}</p>
-                                <p>Study Time: {formatTime(day.count * 60)}</p>
-                              </ShadTooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        );
-                      })}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="shadow-md card-animated">
+                <CardHeader>
+                  <CardTitle>Study Activity Heatmap</CardTitle>
+                  <CardDescription>Each cell is a day in the last year. Weeks start on Monday.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="overflow-x-auto pb-2">
+                    <div className="flex flex-col items-center">
+                        <div className="flex gap-1" style={{paddingLeft: '2rem'}}>
+                            {monthLabels.map(({ label, weekIndex }) => (
+                                <div key={weekIndex} className="text-xs text-muted-foreground text-center" style={{ minWidth: `${(heatmapWeeks[weekIndex]?.length ?? 0) * 1}rem`}}>
+                                    {label}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                           <div className="grid grid-rows-7 gap-1 text-xs text-muted-foreground text-right pr-1">
+                                <span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span>
+                           </div>
+                           <div className="grid grid-flow-col auto-cols-max gap-1">
+                                {heatmapWeeks.map((week, i) => (
+                                    <div key={i} className="grid grid-rows-7 gap-1">
+                                        {week.map((day, j) => {
+                                            if (!day) return <div key={j} className="w-4 h-4 bg-muted/20 rounded-sm"></div>;
+                                            const cellColor = `bg-primary/${(day.level * 20) > 0 ? (day.level * 20) : '10'}`;
+                                            return(
+                                            <TooltipProvider key={day.date} delayDuration={100}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className={cn("w-4 h-4 rounded-sm transition-colors duration-150", day.level > 0 ? cellColor : 'bg-muted/30' )} />
+                                                    </TooltipTrigger>
+                                                    <ShadTooltipContent>
+                                                        <p>{format(parseISO(day.date), 'PPP')}</p>
+                                                        <p>Study Time: {formatTime(day.count * 60)}</p>
+                                                    </ShadTooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            );
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                   </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          <Card className="shadow-md card-animated">
-            <CardHeader>
-              <CardTitle>Study Activity (Last 7 Days)</CardTitle>
-              <CardDescription>Total study time and Pomodoros completed daily.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {dailyData.filter(d => d.totalTime > 0 || d.pomodoros > 0).length > 0 ? (
-                <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dailyData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                      <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                      <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} domain={[0, 'dataMax + 10']} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => Math.round(value).toString()} fontSize={12} domain={[0, 'dataMax + 1']} />
-                      <ChartTooltip 
-                        cursor={false}
-                        content={<ChartTooltipContent 
-                          formatter={(value, name, props) => {
-                            if (name === 'Study Time (min)') return `${formatTime(props.payload.totalTime)} study`;
-                            if (name === 'Completed Pomodoros') return `${props.payload.pomodoros} sessions`;
-                            return `${value}`;
-                          }}
-                          labelFormatter={(label, payload) => {
-                            if (payload && payload.length > 0 && payload[0].payload.originalDate) {
-                              return `Date: ${format(payload[0].payload.originalDate, 'MMM d, yyyy')}`;
-                            }
-                            return label;
-                          }}
-                          indicator="dot" 
-                        />} 
-                      />
-                      <Legend />
-                      <Bar yAxisId="left" dataKey="totalTime" fill="var(--color-totalTime)" radius={4} name="Study Time (min)" />
-                      <Bar yAxisId="right" dataKey="pomodoros" fill="var(--color-pomodoros)" radius={4} name="Completed Pomodoros"/>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">Not enough data for the chart yet. Log some sessions!</p>
-              )}
-            </CardContent>
-          </Card>
+              <Card className="shadow-md card-animated">
+                <CardHeader>
+                  <CardTitle>Study Activity (Last 7 Days)</CardTitle>
+                  <CardDescription>Total study time and Pomodoros completed daily.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {dailyData.filter(d => d.totalTime > 0 || d.pomodoros > 0).length > 0 ? (
+                    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                      <ResponsiveContainer>
+                        <BarChart data={dailyData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                          <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                          <YAxis yAxisId="left" stroke="hsl(var(--chart-1))" unit="m" tickFormatter={(value) => Math.round(value / 60).toString()} fontSize={12} />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => Math.round(value).toString()} fontSize={12} allowDecimals={false} />
+                          <ChartTooltip 
+                            cursor={false}
+                            content={<ChartTooltipContent 
+                              formatter={(value, name, props) => {
+                                if (name === 'Study Time (min)') return `${formatTime(props.payload.totalTime)} study`;
+                                if (name === 'Completed Pomodoros') return `${props.payload.pomodoros} sessions`;
+                                return `${value}`;
+                              }}
+                              labelFormatter={(label, payload) => payload?.[0] ? format(payload[0].payload.originalDate, 'EEEE, MMM d') : label}
+                              indicator="dot" 
+                            />} 
+                          />
+                          <Legend />
+                          <Bar yAxisId="left" dataKey="totalTime" fill="var(--color-totalTime)" radius={4} name="Study Time (min)" />
+                          <Bar yAxisId="right" dataKey="pomodoros" fill="var(--color-pomodoros)" radius={4} name="Completed Pomodoros"/>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">Not enough data for the chart yet. Log some sessions!</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-1">
+              <SessionLog />
+            </div>
+          </div>
         </>
       )}
     </div>

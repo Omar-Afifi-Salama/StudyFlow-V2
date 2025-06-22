@@ -15,7 +15,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const { isLoaded } = useSessions(); 
 
-  const showSidebarSessionLogOnPages = ['/stats']; 
+  const showSidebarSessionLogOnPages: string[] = []; // Removed '/stats' to handle it within the page itself
   const showSidebarLog = showSidebarSessionLogOnPages.includes(pathname);
 
   if (!isLoaded) { 

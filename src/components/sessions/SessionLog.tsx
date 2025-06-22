@@ -23,7 +23,7 @@ export default function SessionLog() {
           <ManualSessionDialog />
         </div>
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden p-0"> {/* Padding removed from CardContent */}
+      <CardContent className="flex-grow overflow-hidden p-0">
         {sessions.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-6">
             <ListX className="h-16 w-16 mb-4" />
@@ -31,8 +31,7 @@ export default function SessionLog() {
             <p className="text-center text-sm">Start a timer or add one manually!</p>
           </div>
         ) : (
-          // ScrollArea now has padding and a fixed height
-          <ScrollArea className="h-[280px] px-6 pb-2"> {/* Adjusted height for approx 3-4 items, added padding */}
+          <ScrollArea className="h-full px-6 pb-2">
             {sessions.map((session) => (
               <SessionItem key={session.id} session={session} />
             ))}
