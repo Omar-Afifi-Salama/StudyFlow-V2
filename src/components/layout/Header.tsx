@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, Briefcase as CapitalistIcon, Timer as CountdownIcon, Award, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIcon, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, MoreVertical, Flame, Sparkles } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, Briefcase as CapitalistIcon, Timer as CountdownIcon, Award, HelpCircle, Network, MoreVertical, Zap, DollarSign, Flame, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -10,34 +10,35 @@ import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STRE
 import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useHotkeys, type HotkeyCallback } from 'react-hotkeys-hook';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { formatTime } from '@/lib/utils';
 import { useMemo } from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { formatTime } from '@/lib/utils';
 
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
   hotkey: string;
   featureKey: FeatureKey;
   alwaysVisible?: boolean;
 }
 
+// Moved OUTSIDE the component to prevent re-creation on every render. This is the fix.
 const allPossibleNavItems: NavItem[] = [
-    { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
-    { href: '/skill-tree', label: 'Skill Tree', icon: <Network className="h-5 w-5" />, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
-    { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's', featureKey: 'stats' },
-    { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm', featureKey: 'ambiance' },
-    { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n', featureKey: 'notepad' },
-    { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h', featureKey: 'challenges' },
-    { href: '/shop', label: 'Shop', icon: <ShoppingCart className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
-    { href: '/capitalist', label: 'Capitalist', icon: <CapitalistIcon className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
-    { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
-    { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
-    { href: '/about', label: 'Guide', icon: <HelpCircle className="h-5 w-5" />, hotkey: 'g', featureKey: 'about' },
+    { href: '/', label: 'Timers', icon: BookOpen, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
+    { href: '/skill-tree', label: 'Skill Tree', icon: Network, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
+    { href: '/stats', label: 'Stats', icon: BarChart3, hotkey: 's', featureKey: 'stats' },
+    { href: '/ambiance', label: 'Ambiance', icon: Wind, hotkey: 'm', featureKey: 'ambiance' },
+    { href: '/notepad', label: 'Notepad', icon: NotebookText, hotkey: 'n', featureKey: 'notepad' },
+    { href: '/challenges', label: 'Challenges', icon: CalendarCheck, hotkey: 'h', featureKey: 'challenges' },
+    { href: '/capitalist', label: 'Capitalist', icon: CapitalistIcon, hotkey: 'c', featureKey: 'capitalist' },
+    { href: '/shop', label: 'Shop', icon: ShoppingCart, hotkey: 'x', featureKey: 'shop' },
+    { href: '/countdown', label: 'Countdown', icon: CountdownIcon, hotkey: 'd', featureKey: 'countdown' },
+    { href: '/achievements', label: 'Achievements', icon: Award, hotkey: 'v', featureKey: 'achievements' },
+    { href: '/about', label: 'Guide', icon: HelpCircle, hotkey: 'g', featureKey: 'about' },
 ];
 
 export default function Header() {
@@ -45,15 +46,18 @@ export default function Header() {
   const router = useRouter();
   const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
 
-  const hotkeys = useMemo(
-    () => allPossibleNavItems.map(item => ({ hotkey: item.hotkey, href: item.href, featureKey: item.featureKey, alwaysVisible: item.alwaysVisible })),
+  const hotkeyMap = useMemo(
+    () => allPossibleNavItems.reduce((acc, item) => {
+        acc[item.hotkey] = item;
+        return acc;
+    }, {} as Record<string, Omit<NavItem, 'icon'>>),
     []
   );
 
   useHotkeys(
-    hotkeys.map(h => h.hotkey).join(','),
+    Object.keys(hotkeyMap).join(','),
     (event, handler) => {
-      const navItem = hotkeys.find((item) => item.hotkey === handler.key);
+      const navItem = hotkeyMap[handler.key];
       if (navItem) {
         if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
           router.push(navItem.href);
@@ -61,13 +65,13 @@ export default function Header() {
       }
     },
     { preventDefault: true },
-    [isFeatureUnlocked, router, hotkeys]
+    [isFeatureUnlocked, router, hotkeyMap]
   );
   
   const mainBarItemHrefs = ['/', '/skill-tree'];
-  const mainNavItems: NavItem[] = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
+  const mainNavItems = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
   
-  const dropdownNavItems: NavItem[] = allPossibleNavItems.filter(item => {
+  const dropdownNavItems = allPossibleNavItems.filter(item => {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
     return !isMainItem && isUnlockedOrAlwaysVisible;
@@ -98,7 +102,9 @@ export default function Header() {
 
         <div className="flex-1 min-w-0">
           <nav className="flex items-center space-x-1">
-            {mainNavItems.map((item) => (
+            {mainNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
               <TooltipProvider key={item.href} delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -111,7 +117,7 @@ export default function Header() {
                       )}
                     >
                       <Link href={item.href} className="flex items-center">
-                        {item.icon}
+                        <Icon className="h-5 w-5" />
                         <span className="hidden md:inline-block ml-2">{item.label}</span>
                       </Link>
                     </Button>
@@ -124,7 +130,7 @@ export default function Header() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            ))}
+            )})}
             {dropdownNavItems.length > 0 && (
               <DropdownMenu>
                 <TooltipProvider delayDuration={300}>
@@ -147,17 +153,19 @@ export default function Header() {
                   align="start" 
                   className="mt-1"
                 >
-                  {dropdownNavItems.map((item) => (
+                  {dropdownNavItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
                     <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
                       <Link href={item.href} className="flex items-center w-full">
-                        {item.icon}
+                        <Icon className="h-5 w-5" />
                         <span className="ml-2">{item.label}</span>
-                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground">
+                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground group-hover:text-foreground">
                           {item.hotkey.toUpperCase()}
                         </span>
                       </Link>
                     </DropdownMenuItem>
-                  ))}
+                  )})}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
