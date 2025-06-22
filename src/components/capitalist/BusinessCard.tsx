@@ -19,7 +19,7 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade }
   const canUpgrade = business.unlocked && userCash >= business.upgradeCost;
 
   return (
-    <Card className={`flex flex-col overflow-hidden shadow-md card-animated transition-all duration-300 ${!business.unlocked ? 'opacity-70 bg-muted/30' : ''}`}>
+    <Card className={`flex flex-col shadow-md card-animated transition-all duration-300 ${!business.unlocked ? 'opacity-70 bg-muted/30' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
             <CardTitle className="text-xl font-semibold mb-1">{business.name}</CardTitle>
@@ -32,11 +32,11 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade }
                         <div className="max-w-xs p-1">
                           <p className="font-bold mb-1">Gimmick: {business.gimmick}</p>
                           <p className="text-sm">{business.description}</p>
-                          {business.id === 'startup' && (
-                            <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">{(business.volatility || 0) * 100}% chance of no income each hour.</p>
+                          {business.id === 'startup' && business.volatility && (
+                            <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">{(business.volatility * 100)}% chance of no income each hour.</p>
                           )}
-                          {business.id === 'mine' && (
-                             <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">Income depletes by {(business.depletionRate || 0) * 100}% each hour.</p>
+                          {business.id === 'mine' && business.depletionRate && (
+                             <p className="text-xs mt-2 text-amber-600 dark:text-amber-400">Income depletes by {(business.depletionRate * 100)}% each hour. Upgrading finds a new vein.</p>
                           )}
                         </div>
                     </TooltipContent>

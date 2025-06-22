@@ -15,7 +15,6 @@ const INCOME_COLLECTION_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 export default function CapitalistPage() {
   const { userProfile, collectAllIncome, unlockBusiness, upgradeBusiness } = useSessions();
   const { toast } = useToast();
-  const [lastCollected, setLastCollected] = useState(Date.now());
   const [timeToNext, setTimeToNext] = useState(INCOME_COLLECTION_INTERVAL);
   
   const businessOrder: BusinessType[] = ['farm', 'startup', 'mine', 'industry'];
@@ -33,18 +32,28 @@ export default function CapitalistPage() {
       }, 0);
   }, [userProfile.businesses]);
 
+  const nextCollectionTimestamp = useMemo(() => {
+    const unlockedBusinesses = Object.values(userProfile.businesses || {}).filter(b => b.unlocked);
+    if (unlockedBusinesses.length === 0) {
+      return Date.now() + INCOME_COLLECTION_INTERVAL;
+    }
+    const mostRecentCollection = Math.max(...unlockedBusinesses.map(b => b.lastCollected || 0));
+    return mostRecentCollection + INCOME_COLLECTION_INTERVAL;
+  }, [userProfile.businesses]);
+
+
   useEffect(() => {
     const timer = setInterval(() => {
-      const timeSinceLast = Date.now() - lastCollected;
-      const remainingTime = INCOME_COLLECTION_INTERVAL - timeSinceLast;
+      const remainingTime = nextCollectionTimestamp - Date.now();
       if (remainingTime <= 0) {
-        handleCollectIncome(); // Auto-collect
+        setTimeToNext(0);
+        // The context handles auto-collection, so we just let the timer hit 0
       } else {
         setTimeToNext(remainingTime);
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [lastCollected]);
+  }, [nextCollectionTimestamp]);
 
   const handleCollectIncome = () => {
     const { totalGains, messages } = collectAllIncome();
@@ -59,8 +68,6 @@ export default function CapitalistPage() {
         description: `No new income this cycle. ${messages.join(' ')}`,
       });
     }
-    setLastCollected(Date.now());
-    setTimeToNext(INCOME_COLLECTION_INTERVAL);
   };
   
   const handleUnlock = (type: BusinessType) => {
@@ -80,6 +87,7 @@ export default function CapitalistPage() {
   };
 
   const formatTime = (ms: number) => {
+    if (ms <= 0) return '00:00:00';
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
