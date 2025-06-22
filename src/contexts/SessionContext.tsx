@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings, DailyOffer } from '@/types';
+import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
@@ -93,6 +93,13 @@ const DAILY_OFFERS_POOL: DailyOffer[] = [
   { id: 'high_stakes', title: 'High Stakes', description: 'Double cash from studying, but gain no XP.', type: 'buff', durationMinutes: 60, effect: { type: 'cash', modifier: 2.0, description: '+100% Cash, but 0 XP' } },
 ];
 
+const now = Date.now();
+const DEFAULT_BUSINESSES = {
+  startup: { id: 'startup', name: 'AI Startup', description: 'A risky but potentially lucrative AI venture.', gimmickTitle: 'High Volatility', gimmickDescription: 'Income is unpredictable. There is a 40% chance of earning no income each hour, but a 10% chance of a 5x "viral" bonus!', unlockCost: 1000, unlocked: false, level: 1, baseIncome: 120, lastCollected: now, currentCash: 0 },
+  farm: { id: 'farm', name: 'Hydroponic Farm', description: 'A steady and reliable source of income from high-tech crops.', gimmickTitle: 'Seasonal Yield', gimmickDescription: 'Consistent income, but a 15% chance of a "low yield" hour (50% income).', unlockCost: 5000, unlocked: false, level: 1, baseIncome: 200, lastCollected: now, currentCash: 0 },
+  mine: { id: 'mine', name: 'Asteroid Mine', description: 'Extracts valuable minerals from space rocks.', gimmickTitle: 'Depleting Resource', gimmickDescription: 'High initial income that depletes by 2% each hour. Upgrading "finds a new vein," resetting the depletion.', unlockCost: 25000, unlocked: false, level: 1, baseIncome: 800, lastCollected: now, currentCash: 0, depletionRate: 0.02 },
+  industry: { id: 'industry', name: 'Fusion Factory', description: 'A massive industrial complex generating clean energy.', gimmickTitle: 'Maintenance Costs', gimmickDescription: 'Very reliable income but requires 10% of its output for hourly maintenance costs.', unlockCost: 100000, unlocked: false, level: 1, baseIncome: 2500, lastCollected: now, currentCash: 0, maintenanceCost: 0.10 },
+};
 
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0, cash: 1000, level: 1, title: TITLES[0],
@@ -100,17 +107,18 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   completedChallengeIds: [], currentStreak: 0, longestStreak: 0, lastStudyDate: null,
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
-  notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], 
+  notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], skillLevels: {},
   dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null,
+  businesses: DEFAULT_BUSINESSES,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
     { id: 'study30', title: 'Quick Learner', description: 'Study for a total of 30 minutes today.', xpReward: 50, cashReward: 500, targetValue: 30, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
     { id: 'study90', title: 'Deep Dive', description: 'Study for a total of 90 minutes today.', xpReward: 150, cashReward: 1500, targetValue: 90, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
     { id: 'study180', title: 'Marathon Session', description: 'Study for a total of 3 hours today.', xpReward: 300, cashReward: 3000, targetValue: 180, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyDurationMinutes', resetsDaily: true },
-    { id: 'pomodoro1', title: 'Pomodoro Warm-up', description: 'Complete 1 Pomodoro focus cycle.', xpReward: 40, cashReward: 300, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
-    { id: 'pomodoro3', title: 'Pomodoro Pro', description: 'Complete 3 Pomodoro focus cycles.', xpReward: 100, cashReward: 800, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
-    { id: 'pomodoro5', title: 'Pomodoro Powerhouse', description: 'Complete 5 Pomodoro focus cycles.', xpReward: 180, cashReward: 1500, targetValue: 5, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'pomodoroCycles', resetsDaily: true },
+    { id: 'focusCycles1', title: 'Focus Warm-up', description: 'Complete 1 focus cycle (1 full Pomodoro or 25+ min Stopwatch).', xpReward: 40, cashReward: 300, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'focusCycles', resetsDaily: true },
+    { id: 'focusCycles3', title: 'Focus Pro', description: 'Complete 3 focus cycles (Pomodoro or 25+ min Stopwatch).', xpReward: 100, cashReward: 800, targetValue: 3, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'focusCycles', resetsDaily: true },
+    { id: 'focusCycles5', title: 'Focus Powerhouse', description: 'Complete 5 focus cycles (Pomodoro or 25+ min Stopwatch).', xpReward: 180, cashReward: 1500, targetValue: 5, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'focusCycles', resetsDaily: true },
     { id: 'tasks2', title: 'Task Ticker', description: 'Complete 2 tasks from your checklist.', xpReward: 30, cashReward: 300, targetValue: 2, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
     { id: 'tasks5', title: 'Task Master', description: 'Complete 5 tasks from your checklist.', xpReward: 75, cashReward: 700, targetValue: 5, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'tasksCompleted', resetsDaily: true },
     { id: 'ambiance15', title: 'Sound Scaper', description: 'Use the Ambiance Mixer for 15 minutes.', xpReward: 25, cashReward: 200, targetValue: 15, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'ambianceUsage', resetsDaily: true },
@@ -123,6 +131,7 @@ const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
 ];
 
 export const ALL_ACHIEVEMENTS: Achievement[] = [
+  // This array is large and unchanged, keeping it as is from the provided context.
   { id: 'firstSteps', name: 'First Steps', description: 'Log your first study session.', iconName: 'BookOpen', cashReward: 250, criteria: (p, s) => s.length >= 1, category: 'Study Time' },
   { id: 'hourOfPower', name: 'Hour of Power', description: 'Study for a total of 1 hour.', iconName: 'Clock', cashReward: 500, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600, category: 'Study Time' },
   { id: 'fiveHourFocus', name: 'Five Hour Focus', description: 'Study for a total of 5 hours.', iconName: 'Clock', cashReward: 1000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 18000, category: 'Study Time' },
@@ -198,32 +207,31 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'unlockNotepadLinks', name: 'Resource Manager', description: 'Unlocks the Links tab in Notepad.', cost: 1, iconName: 'LinkLucide', unlocksFeature: 'notepadLinks', prerequisiteSkillIds: ['unlockNotepadNotes'], prerequisiteLevel: 4, category: 'Notepad Feature' },
   
   // Core Gameplay Loop Features - Tier 3 & 4
-  { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
+  { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges" and "Daily Offers".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
   { id: 'unlockCountdown', name: 'Event Tracker', description: 'Unlocks the main "Countdown Timer" page.', cost: 1, iconName: 'Timer', unlocksFeature: 'countdown', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAbout'], category: 'Core Feature' },
   
   // Top Tier Features & Notepad - Tier 4 & 5
-  { id: 'unlockCapitalist', name: 'Budding Investor', description: 'Unlocks the "Daily Offers" page.', cost: 2, iconName: 'Sparkles', unlocksFeature: 'capitalist', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
+  { id: 'unlockCapitalist', name: 'Budding Investor', description: 'Unlocks the "Capitalist Corner" to generate passive income.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
   { id: 'unlockNotepadRevision', name: 'Revision Strategist', description: 'Unlocks the "Revision Hub" in Notepad.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadNotes', 'unlockNotepadGoals'], prerequisiteLevel: 6, category: 'Notepad Feature' },
   { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlocks the "Habit Tracker" tab in Notepad.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
   { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab in Notepad.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockCountdown', 'unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
   { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlocks the "Eisenhower Matrix" in Notepad.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadHabits'], prerequisiteLevel: 8, category: 'Notepad Feature' },
 
   // Passive Boosts Branch - XP
-  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 1, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 3, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
-  { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 8, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
-  { id: 'xpBoost3', name: 'Learner\'s Edge III', description: 'Gain an additional +10% XP (total +20%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.10, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Passive Boost' },
+  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
+  { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 10, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
 
   // Passive Boosts Branch - Cash
-  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 1, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockCountdown'], category: 'Passive Boost' },
-  { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
-  { id: 'cashBoost3', name: 'Money Mindset III', description: 'Gain an additional +10% Cash (total +20%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.10, prerequisiteLevel: 16, prerequisiteSkillIds: ['cashBoost2'], category: 'Passive Boost' },
+  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockCountdown'], category: 'Passive Boost' },
+  { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 11, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
 
   // Utility Skills - Higher Cost / Unique Effects
-  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Effect logic is conceptual for now)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
-  { id: 'shopDiscount1', name: 'Savvy Shopper', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Utility' },
-  { id: 'investmentInsight', name: 'Investor\'s Edge', description: 'Slightly increases the chance of positive Daily Offers.', cost: 2, iconName: 'Lightbulb', otherEffect: 'capitalist_boost', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
-  { id: 'revisionAccelerator', name: 'Memory Enhancer', description: 'Reduces revision intervals in the Revision Hub by 10%.', cost: 2, iconName: 'RepeatIcon', otherEffect: 'revision_boost', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockNotepadRevision'], category: 'Utility' },
-  { id: 'skillPointRefund', name: 'Strategic Respec', description: 'Allows refunding ALL spent skill points ONCE. Use wisely!', cost: 5, iconName: 'Settings2', otherEffect: 'skill_refund', prerequisiteLevel: 12, prerequisiteSkillIds: ['streakShield','shopDiscount1', 'investmentInsight'], category: 'Utility' },
+  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Conceptual)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
+  { id: 'shopDiscount1', name: 'Savvy Shopper', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
+  
+  // Infinite Skills
+  { id: 'infiniteXpBoost', name: 'Endless Insight', description: 'Permanently increases XP gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Infinite' },
+  { id: 'infiniteCashBoost', name: 'Infinite Earnings', description: 'Permanently increases Cash gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['cashBoost2'], category: 'Infinite' },
 ];
 
 const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; 
@@ -273,6 +281,10 @@ interface SessionContextType {
   updateNotepadCountdownEvent: (event: NotepadCountdownEvent) => void;
   deleteNotepadCountdownEvent: (eventId: string) => void;
   updateNotepadEisenhowerMatrix: (matrix: UserProfile['notepadData']['eisenhowerMatrix']) => void;
+
+  unlockBusiness: (businessId: keyof UserProfile['businesses']) => void;
+  upgradeBusiness: (businessId: keyof UserProfile['businesses']) => void;
+  collectBusinessIncome: (businessId: keyof UserProfile['businesses']) => void;
 
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
@@ -362,7 +374,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
     const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
     if (!skill) {
-      console.warn(`isFeatureUnlocked: No skill defined for featureKey '${featureKey}'. Feature is considered locked.`);
+      // console.warn(`isFeatureUnlocked: No skill defined for featureKey '${featureKey}'. Feature is considered locked.`);
       return false; 
     }
     return isSkillUnlocked(skill.id);
@@ -386,26 +398,36 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, isFeatureUnlocked]);
   
   const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
-    let finalModifier = 1;
+    let boost = 0;
+    
+    // Skill boosts
+    userProfile.unlockedSkillIds.forEach(skillId => {
+      const skill = ALL_SKILLS.find(s => s.id === skillId);
+      if (skill) {
+          if (type === 'xp' && skill.xpBoostPercent && skill.category !== 'Infinite') boost += skill.xpBoostPercent;
+          if (type === 'cash' && skill.cashBoostPercent && skill.category !== 'Infinite') boost += skill.cashBoostPercent;
+          if (type === 'shopDiscount' && skill.shopDiscountPercent) boost += skill.shopDiscountPercent;
+      }
+    });
+
+    // Infinite skill boosts
+    if(type === 'xp' && userProfile.skillLevels?.['infiniteXpBoost']) {
+      boost += (userProfile.skillLevels['infiniteXpBoost'] || 0) * 0.05;
+    }
+    if(type === 'cash' && userProfile.skillLevels?.['infiniteCashBoost']) {
+      boost += (userProfile.skillLevels['infiniteCashBoost'] || 0) * 0.05;
+    }
+
+    // Active offer boost/debuff
     if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
         const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
         if(offer && offer.effect.type === type) {
-            finalModifier *= offer.effect.modifier;
+            boost += (offer.effect.modifier - 1);
         }
     }
-    const skillBoost = userProfile.unlockedSkillIds.reduce((totalBoost, skillId) => {
-      const skill = ALL_SKILLS.find(s => s.id === skillId);
-      if (skill && isSkillUnlocked(skillId)) { 
-        if (type === 'xp' && skill.xpBoostPercent) return totalBoost + skill.xpBoostPercent;
-        if (type === 'cash' && skill.cashBoostPercent) return totalBoost + skill.cashBoostPercent;
-        if (type === 'shopDiscount' && skill.shopDiscountPercent) return totalBoost + skill.shopDiscountPercent;
-      }
-      return totalBoost;
-    }, 0);
     
-    if(type === 'shopDiscount') return skillBoost;
-    return (finalModifier - 1) + skillBoost;
-  }, [userProfile.unlockedSkillIds, isSkillUnlocked, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
+    return boost;
+  }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
   
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -497,8 +519,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
           if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
         }
-        if (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle && isFeatureUnlocked('challenges')) {
-            updateChallengeProgress('pomodoroCycles', 1);
+
+        if ( (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) || (sessionDetails.type === 'Stopwatch' && sessionDetails.durationInSeconds >= 25 * 60) ) {
+            if(isFeatureUnlocked('challenges')) updateChallengeProgress('focusCycles', 1);
         }
 
         if (prevProfile.lastStudyDate !== updatedLastStudyDate && isFeatureUnlocked('challenges')) { 
@@ -796,19 +819,24 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
 
   const selectDailyOffer = useCallback((offerId: string) => {
-    if (!isFeatureUnlocked('capitalist')) return;
+    if (!isFeatureUnlocked('challenges')) return;
     const offer = dailyOffers.find(o => o.id === offerId);
-    if (!offer || userProfile.activeOfferId) {
-      toast({title: "Offer Invalid", description: "You have already selected an offer for today.", variant: 'destructive'});
+    const allChallengesDone = dailyChallenges.every(c => c.rewardClaimed);
+
+    if (!offer) return;
+    if (userProfile.activeOfferId && !allChallengesDone) {
+      toast({title: "Offer In Progress", description: "You already have an active offer. Complete all challenges to select another.", variant: 'destructive'});
       return;
     }
     const endTime = Date.now() + offer.durationMinutes * 60 * 1000;
     setUserProfile(prev => ({...prev, activeOfferId: offerId, activeOfferEndTime: endTime}));
     toast({title: "Offer Activated!", description: `${offer.title} is now active for ${offer.durationMinutes} minutes.`});
-  }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, toast]);
+  }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, dailyChallenges, toast]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     if(!isFeatureUnlocked('challenges')) return;
+    let wasLastChallenge = false;
+    
     setDailyChallenges(prevChallenges => {
         const updatedChallenges = prevChallenges.map(challenge => {
             if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
@@ -831,15 +859,28 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             }
             return challenge;
         });
+
+        const numClaimed = updatedChallenges.filter(c => c.rewardClaimed).length;
+        const totalChallenges = updatedChallenges.length;
+        const numToClaim = updatedChallenges.filter(c => c.isCompleted && !c.rewardClaimed).length;
+        if(numClaimed === totalChallenges -1 && numToClaim === 1) { //This was the second to last challenge being claimed
+             wasLastChallenge = true;
+        }
+        
         return updatedChallenges;
     });
+
+    if (wasLastChallenge) {
+        setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null}));
+        toast({title: "Challenges Complete!", description: "Bonus: You can now select another Daily Offer!", icon: <Sparkles/>});
+    }
+
   }, [isFeatureUnlocked, toast, checkForLevelUp, addFloatingGain]);
   
   const checkAndUnlockAchievements = useCallback(() => {
     if(!isFeatureUnlocked('achievements')) return;
     setUserProfile(prevUserProfile => {
         const currentSessions = sessions; 
-        const currentDailyChallenges = dailyChallenges; 
         const newlyUnlocked: string[] = [];
         let totalCashRewardFromAchievements = 0;
         ALL_ACHIEVEMENTS.forEach(ach => {
@@ -855,16 +896,18 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         return prevUserProfile;
     });
-  }, [isFeatureUnlocked, sessions, dailyChallenges, toast, addFloatingGain]);
+  }, [isFeatureUnlocked, sessions, toast, addFloatingGain]);
   
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
 
   const getAllSkills = useCallback(() => ALL_SKILLS, []);
   
   const canUnlockSkill = useCallback((skillId: string): { can: boolean, reason?: string } => {
-    if (isSkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
     const skill = ALL_SKILLS.find(s => s.id === skillId);
     if (!skill) return { can: false, reason: "Skill not found."};
+    
+    if (skill.category !== 'Infinite' && isSkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
+
     if (userProfile.skillPoints < skill.cost) return { can: false, reason: `Not enough skill points. Needs ${skill.cost}, has ${userProfile.skillPoints}.`};
     if (skill.prerequisiteLevel && userProfile.level < skill.prerequisiteLevel) return { can: false, reason: `Requires Level ${skill.prerequisiteLevel}.`};
     if (skill.prerequisiteSkillIds) {
@@ -907,18 +950,35 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (!skill) return false;
 
     if (skill.id === 'skillPointRefund') { refundAllSkillPoints(); return true; } 
+    
+    setUserProfile(prev => {
+        let newUnlockedSkills = prev.unlockedSkillIds;
+        let newSkillLevels = { ...(prev.skillLevels || {}) };
 
-    setUserProfile(prev => ({ ...prev, skillPoints: prev.skillPoints - skill.cost, unlockedSkillIds: [...prev.unlockedSkillIds, skillId] }));
-    toast({ title: "Skill Unlocked!", description: `You unlocked: ${skill.name}`, icon: <CheckCircle/>});
+        if(skill.category === 'Infinite') {
+            newSkillLevels[skillId] = (newSkillLevels[skillId] || 0) + 1;
+        } else {
+            if (!newUnlockedSkills.includes(skillId)) {
+                newUnlockedSkills = [...newUnlockedSkills, skillId];
+            }
+        }
+        
+        return {
+            ...prev,
+            skillPoints: prev.skillPoints - skill.cost,
+            unlockedSkillIds: newUnlockedSkills,
+            skillLevels: newSkillLevels,
+        };
+    });
+    toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
     return true;
   }, [canUnlockSkill, toast, refundAllSkillPoints]);
-  
+
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     updateUserProfile({ wakeUpTime, sleepTime });
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved.", icon: <Settings/> });
   }, [updateUserProfile, toast]);
   
-  // Timer Logic
   const getDurationForMode = useCallback((mode: PomodoroMode, settings: PomodoroSettings) => {
     switch (mode) {
       case 'work': return settings.workDuration * 60;
@@ -980,7 +1040,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           addSession({ type: sessionType, startTime: pomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: pomodoroState.mode === 'work' });
           checkAndUnlockAchievements();
           toast({ title: `Time's up!`, description: `Your ${pomodoroState.mode} session has ended.` });
-          switchPomodoroMode(); // This also pauses the timer
+          switchPomodoroMode(); 
         } else {
           setPomodoroState(p => ({ ...p, timeLeft: p.timeLeft - 1 }));
         }
@@ -993,7 +1053,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     const intervalId = setInterval(timerWorker, 1000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, pomodoroState.isRunning, pomodoroState.timeLeft, stopwatchState.isRunning, addSession, checkAndUnlockAchievements, getDurationForMode, pomodoroState.mode, pomodoroState.sessionStartTime, pomodoroState.settings, switchPomodoroMode, toast, stopwatchState.sessionStartTime]);
+  }, [isLoaded, pomodoroState, stopwatchState.isRunning, addSession, checkAndUnlockAchievements, getDurationForMode, switchPomodoroMode, toast]);
   
   const startPomodoro = useCallback(() => {
       setPomodoroState(prev => {
@@ -1049,6 +1109,97 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [stopwatchState, addSession, resetStopwatch, toast]);
 
+  // Business Logic
+  const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
+    if(!isFeatureUnlocked('capitalist')) { toast({ title: "Capitalist Corner Locked", description: "Unlock this feature from the Skill Tree first.", icon: <XCircle/> }); return; }
+    setUserProfile(prev => {
+        const business = prev.businesses[businessId];
+        if(business.unlocked) { toast({ title: "Already Unlocked", description: "You already own this business." }); return prev; }
+        if(prev.cash < business.unlockCost) { toast({ title: "Not Enough Cash", description: `You need $${business.unlockCost.toLocaleString()}.`, icon: <DollarSign/> }); return prev; }
+        const newBusinesses = { ...prev.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() }};
+        toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
+        addFloatingGain('cash', -business.unlockCost);
+        return { ...prev, cash: prev.cash - business.unlockCost, businesses: newBusinesses };
+    });
+  }, [isFeatureUnlocked, toast, addFloatingGain]);
+
+  const upgradeBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
+    if(!isFeatureUnlocked('capitalist')) return;
+    setUserProfile(prev => {
+        const business = prev.businesses[businessId];
+        if(!business.unlocked) return prev;
+        const upgradeCost = business.level * 1000 * Math.pow(1.2, business.level);
+        if(prev.cash < upgradeCost) { toast({ title: "Not Enough Cash", description: `You need $${upgradeCost.toLocaleString()} to upgrade.`, icon: <DollarSign/> }); return prev; }
+        
+        let updatedBusiness = { ...business, level: business.level + 1 };
+        if (updatedBusiness.id === 'mine') { // Reset depletion on upgrade
+            updatedBusiness.lastCollected = Date.now();
+        }
+        
+        const newBusinesses = { ...prev.businesses, [businessId]: updatedBusiness };
+        toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
+        addFloatingGain('cash', -upgradeCost);
+        return { ...prev, cash: prev.cash - upgradeCost, businesses: newBusinesses };
+    });
+  }, [isFeatureUnlocked, toast, addFloatingGain]);
+  
+  const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses']) => {
+    if(!isFeatureUnlocked('capitalist')) return;
+    setUserProfile(prev => {
+        const business = prev.businesses[businessId];
+        if (!business.unlocked || business.currentCash <= 0) return prev;
+
+        const cashToCollect = Math.floor(business.currentCash);
+        const newBusiness = { ...business, currentCash: 0, lastCollected: Date.now() };
+        const newBusinesses = { ...prev.businesses, [businessId]: newBusiness };
+        toast({ title: "Income Collected!", description: `You collected $${cashToCollect.toLocaleString()} from ${business.name}.`, icon: <DollarSign/> });
+        addFloatingGain('cash', cashToCollect);
+        return { ...prev, cash: prev.cash + cashToCollect, businesses: newBusinesses };
+    });
+  }, [isFeatureUnlocked, toast, addFloatingGain]);
+
+  useEffect(() => {
+    if (!isLoaded || !isFeatureUnlocked('capitalist')) return;
+    const businessInterval = setInterval(() => {
+        setUserProfile(prev => {
+            const now = Date.now();
+            let hasChanges = false;
+            const updatedBusinesses = { ...prev.businesses };
+
+            (Object.keys(updatedBusinesses) as Array<keyof typeof updatedBusinesses>).forEach(key => {
+                const business = updatedBusinesses[key];
+                if(business.unlocked) {
+                    const hoursPassed = (now - business.lastCollected) / (1000 * 3600);
+                    if (hoursPassed > 0) {
+                        let incomeThisCycle = business.baseIncome * Math.pow(1.15, business.level - 1) * hoursPassed;
+                        
+                        // Apply gimmicks
+                        if (business.id === 'startup' && Math.random() < 0.4) incomeThisCycle = 0; // 40% chance of no income
+                        else if (business.id === 'startup' && Math.random() < 0.1) incomeThisCycle *= 5; // 10% chance of 5x bonus
+                        if (business.id === 'farm' && Math.random() < 0.15) incomeThisCycle *= 0.5; // 15% chance of low yield
+                        if (business.id === 'mine' && business.depletionRate) {
+                            const hoursSinceLastReset = (now - business.lastCollected) / (1000 * 3600);
+                            incomeThisCycle *= Math.pow(1 - business.depletionRate, hoursSinceLastReset);
+                        }
+                        if (business.maintenanceCost) incomeThisCycle *= (1 - business.maintenanceCost);
+
+                        updatedBusinesses[key] = {
+                            ...business,
+                            currentCash: business.currentCash + incomeThisCycle,
+                            lastCollected: now
+                        };
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            return hasChanges ? { ...prev, businesses: updatedBusinesses } : prev;
+        });
+    }, 60 * 1000); // Check every minute to update accrued cash
+    return () => clearInterval(businessInterval);
+  }, [isLoaded, isFeatureUnlocked]);
+
+
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
@@ -1074,6 +1225,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
             ...tempProfile,
+            businesses: {...DEFAULT_BUSINESSES, ...(tempProfile.businesses || {})},
             cash: tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' ? DEFAULT_USER_PROFILE.cash : tempProfile.cash,
             ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
@@ -1081,6 +1233,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             notepadData: ensuredNotepadData,
             skillPoints: typeof tempProfile.skillPoints === 'number' ? tempProfile.skillPoints : DEFAULT_USER_PROFILE.skillPoints,
             unlockedSkillIds: Array.isArray(tempProfile.unlockedSkillIds) ? tempProfile.unlockedSkillIds : DEFAULT_USER_PROFILE.unlockedSkillIds,
+            skillLevels: tempProfile.skillLevels || {},
             dailyOffers: tempProfile.dailyOffers || { date: '', offers: [] },
             activeOfferId: tempProfile.activeOfferId || null,
             activeOfferEndTime: tempProfile.activeOfferEndTime || null,
@@ -1110,7 +1263,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setLastChallengeResetDate(todayDateString);
       } else {
         const shuffledChallenges = [...INITIAL_DAILY_CHALLENGES_POOL].sort(() => 0.5 - Math.random());
-        const freshChallenges = shuffledChallenges.slice(0, Math.min(6, shuffledChallenges.length)).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+        const freshChallenges = shuffledChallenges.slice(0, Math.min(3, shuffledChallenges.length)).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
         setDailyChallenges(freshChallenges);
         setLastChallengeResetDate(todayDateString);
         localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
@@ -1130,7 +1283,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       setUserProfile(DEFAULT_USER_PROFILE); 
-      const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,6).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+      const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,3).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
       setDailyChallenges(freshChallenges);
       setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
     } finally {
@@ -1191,6 +1344,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
+      unlockBusiness, upgradeBusiness, collectBusinessIncome,
       getSkinById, buySkin, equipSkin, isSkinOwned,
       dailyOffers, selectDailyOffer,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
@@ -1211,3 +1365,5 @@ export const useSessions = () => {
   }
   return context;
 };
+
+    

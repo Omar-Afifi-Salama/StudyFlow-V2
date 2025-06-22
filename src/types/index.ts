@@ -28,6 +28,20 @@ export interface Business {
   maintenanceCost?: number;
 }
 
+export interface DailyOffer {
+    id: string;
+    title: string;
+    description: string;
+    type: 'buff' | 'debuff';
+    durationMinutes: number;
+    effect: {
+        type: 'xp' | 'cash' | 'timer_speed';
+        modifier: number; // e.g., 1.1 for +10%, 0.9 for -10%
+        description: string;
+    };
+}
+
+
 export interface UserProfile {
   xp: number;
   cash: number;
@@ -54,6 +68,12 @@ export interface UserProfile {
     mine: Business;
     industry: Business;
   };
+  dailyOffers: {
+      date: string;
+      offers: DailyOffer[];
+  };
+  activeOfferId: string | null;
+  activeOfferEndTime: number | null;
 }
 
 export interface Skin {
@@ -173,7 +193,7 @@ export interface DailyChallenge {
   currentValue: number;
   isCompleted: boolean;
   rewardClaimed: boolean;
-  type: 'pomodoroCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions';
+  type: 'focusCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions';
   resetsDaily: boolean;
   lastProgressUpdate?: number;
 }
@@ -265,3 +285,5 @@ export interface StopwatchState {
   isRunning: boolean;
   sessionStartTime: number;
 }
+
+    

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, Briefcase as CapitalistIcon, Timer as CountdownIcon, Award, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIconLucide, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, MoreVertical, Flame } from 'lucide-react';
+import { BookOpen, BarChart3, Wind, NotebookText, CalendarCheck, ShoppingCart, Briefcase as CapitalistIcon, Timer as CountdownIcon, Award, HelpCircle, Network, Grid, CheckSquare2, StickyNote, Target as TargetLucide, Link as LinkLucideIcon, Brain as BrainLucide, ListChecks as HabitIcon, CalendarClock as CalendarClockLucide, ChevronDown, Zap, DollarSign, MoreVertical, Flame, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,7 @@ export default function Header() {
     { href: '/ambiance', label: 'Ambiance', icon: <Wind className="h-5 w-5" />, hotkey: 'm', featureKey: 'ambiance' },
     { href: '/notepad', label: 'Notepad', icon: <NotebookText className="h-5 w-5" />, hotkey: 'n', featureKey: 'notepad' },
     { href: '/challenges', label: 'Challenges', icon: <CalendarCheck className="h-5 w-5" />, hotkey: 'h', featureKey: 'challenges' },
-    { href: '/shop', label: 'Shop', icon: <ShoppingBag className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
+    { href: '/shop', label: 'Shop', icon: <ShoppingCart className="h-5 w-5" />, hotkey: 'x', featureKey: 'shop' },
     { href: '/capitalist', label: 'Capitalist', icon: <CapitalistIcon className="h-5 w-5" />, hotkey: 'c', featureKey: 'capitalist' },
     { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
     { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
@@ -231,3 +231,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
