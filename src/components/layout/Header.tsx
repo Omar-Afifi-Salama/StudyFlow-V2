@@ -54,29 +54,13 @@ export default function Header() {
     const router = useRouter();
     const { userProfile, getAppliedBoost } = useSessions();
     const { unlockedSkillIds, level, xp, skillPoints, cash, currentStreak, longestStreak, title } = userProfile;
-
-    const { mainBarItems, dropdownItems } = useMemo(() => {
-        const isFeatureUnlocked = (featureKey: FeatureKey) => {
-            if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
-            const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
-            return skill ? unlockedSkillIds.includes(skill.id) : false;
-        };
-        
-        const visibleNavItems = allPossibleNavItems.filter(item => isFeatureUnlocked(item.featureKey));
-
-        const main = visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree');
-        const dropdown = visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree');
-        
-        return { mainBarItems: main, dropdownItems: dropdown };
-    }, [unlockedSkillIds]);
-
-
+    
     useHotkeys(
         HOTKEY_STRING,
         (event, handler) => {
             const navItem = hotkeyNavMap[handler.key];
             if (navItem) {
-                // Check visibility inside the callback
+                // Check visibility inside the callback, using the stable unlockedSkillIds array
                 const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
                 const isVisible = navItem.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
                 
@@ -86,8 +70,17 @@ export default function Header() {
             }
         },
         { preventDefault: true },
-        [router, unlockedSkillIds]
+        [router, unlockedSkillIds] // Stable dependencies
     );
+
+    const dropdownItemsExist = useMemo(() => {
+        return allPossibleNavItems.some(item => {
+            const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
+            const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+            const isDropdownItem = item.href !== '/' && item.href !== '/skill-tree';
+            return isUnlocked && isDropdownItem;
+        });
+    }, [unlockedSkillIds]);
 
     const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[level - 1] ?? 0;
     const nextLevelXpTarget = level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[level] : xp;
@@ -113,7 +106,15 @@ export default function Header() {
 
                 <div className="flex-1 min-w-0">
                     <nav className="flex items-center space-x-1">
-                        {mainBarItems.map((item) => {
+                        {allPossibleNavItems.map((item) => {
+                             const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
+                             const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                             const isMainBarItem = item.href === '/' || item.href === '/skill-tree';
+
+                             if (!isUnlocked || !isMainBarItem) {
+                                return null;
+                             }
+
                             const Icon = item.icon;
                             return (
                                 <TooltipProvider key={item.href} delayDuration={300}>
@@ -132,7 +133,7 @@ export default function Header() {
                             )
                         })}
 
-                        {dropdownItems.length > 0 && (
+                        {dropdownItemsExist && (
                             <DropdownMenu>
                                 <TooltipProvider delayDuration={300}>
                                     <Tooltip>
@@ -148,7 +149,15 @@ export default function Header() {
                                     </Tooltip>
                                 </TooltipProvider>
                                 <DropdownMenuContent align="start" className="mt-1">
-                                    {dropdownItems.map((item) => {
+                                    {allPossibleNavItems.map((item) => {
+                                        const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
+                                        const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                                        const isDropdownItem = item.href !== '/' && item.href !== '/skill-tree';
+
+                                        if (!isUnlocked || !isDropdownItem) {
+                                            return null;
+                                        }
+
                                         const Icon = item.icon;
                                         return (
                                             <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
