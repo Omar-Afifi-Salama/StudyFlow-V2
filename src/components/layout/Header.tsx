@@ -12,7 +12,6 @@ import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTime } from '@/lib/utils';
@@ -58,7 +57,7 @@ export default function Header() {
     (event, handler) => {
       const navItem = hotkeyMap[handler.key];
       if (navItem) {
-        // Replicate isFeatureUnlocked logic here with stable dependencies
+        // Logic to check if feature is unlocked happens inside the callback
         const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
         const isUnlocked = skill ? unlockedSkills.includes(skill.id) : false;
 
@@ -68,15 +67,14 @@ export default function Header() {
       }
     },
     { preventDefault: true },
-    [router, unlockedSkills] // Use stable dependencies
+    [router, unlockedSkills] // Stable dependencies
   );
 
-  const dropdownNavItems = useMemo(() => allPossibleNavItems.filter(item => {
+  const hasVisibleDropdownItems = allPossibleNavItems.some(item => {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
     return !isMainItem && isUnlockedOrAlwaysVisible;
-  }), [isFeatureUnlocked, userProfile.unlockedSkillIds]);
-
+  });
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
@@ -95,8 +93,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center px-4 md:px-6">
         <Link href="/" className="mr-4 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-primary transition-transform duration-300 hover:rotate-12">
-             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-primary transition-transform duration-300 hover:rotate-12">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8.5 16.71c.38.28.78.52 1.21.72.4.18.82.31 1.26.39.42.08.85.12 1.28.12.89 0 1.67-.18 2.33-.55.66-.36 1.12-.88 1.39-1.55.27-.67.4-1.42.4-2.25s-.13-1.58-.4-2.25c-.27-.67-.73-1.19-1.39-1.55-.66-.37-1.44-.55-2.33-.55-.43 0-.86.04-1.28.12-.44.08-.86.21-1.26.39-.43.2-.83.44-1.21.72L7.29 8.5C8.02 7.85 8.9 7.33 9.91 6.95c1.01-.38 2.09-.57 3.22-.57 1.48 0 2.8.31 4.01.94 1.21.63 2.19 1.5 2.94 2.6.75 1.11 1.13 2.39 1.13 3.84s-.38 2.73-1.13 3.84c-.75 1.1-1.73 1.97-2.94 2.6-1.21.63-2.53.94-4.01.94-1.13 0-2.21-.19-3.22-.57-1.01-.38-1.89-.9-2.62-1.55l1.21-1.79z"/>
           </svg>
           <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
         </Link>
@@ -105,7 +103,7 @@ export default function Header() {
           <nav className="flex items-center space-x-1">
             {allPossibleNavItems.map((item) => {
               if (!mainBarItemHrefs.includes(item.href)) return null;
-
+              
               const isVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
               if (!isVisible) return null;
 
@@ -137,7 +135,8 @@ export default function Header() {
                 </Tooltip>
               </TooltipProvider>
             )})}
-            {dropdownNavItems.length > 0 && (
+
+            {hasVisibleDropdownItems && (
               <DropdownMenu>
                 <TooltipProvider delayDuration={300}>
                     <Tooltip>
@@ -155,23 +154,26 @@ export default function Header() {
                         <TooltipContent><p>More Options</p></TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-                <DropdownMenuContent
-                  align="start"
-                  className="mt-1"
-                >
-                  {dropdownNavItems.map((item) => {
+                <DropdownMenuContent align="start" className="mt-1">
+                  {allPossibleNavItems.map((item) => {
+                    if (mainBarItemHrefs.includes(item.href)) return null;
+
+                    const isVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
+                    if (!isVisible) return null;
+
                     const Icon = item.icon;
                     return (
-                    <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
-                      <Link href={item.href} className="flex items-center w-full">
-                        <Icon className="h-5 w-5" />
-                        <span className="ml-2">{item.label}</span>
-                        <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground group-hover:text-foreground">
-                          {item.hotkey.toUpperCase()}
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )})}
+                      <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
+                        <Link href={item.href} className="flex items-center w-full">
+                          <Icon className="h-5 w-5" />
+                          <span className="ml-2">{item.label}</span>
+                          <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground group-hover:text-foreground">
+                            {item.hotkey.toUpperCase()}
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
