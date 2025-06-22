@@ -69,13 +69,17 @@ export default function Header() {
   );
   
   const mainBarItemHrefs = ['/', '/skill-tree'];
-  const mainNavItems = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
+
+  const mainNavItems = useMemo(() => allPossibleNavItems.filter(item => 
+    mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey))
+  ), [isFeatureUnlocked]);
   
-  const dropdownNavItems = allPossibleNavItems.filter(item => {
+  const dropdownNavItems = useMemo(() => allPossibleNavItems.filter(item => {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
     return !isMainItem && isUnlockedOrAlwaysVisible;
-  });
+  }), [isFeatureUnlocked]);
+
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
