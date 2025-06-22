@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useMemo } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { cn } from '@/lib/utils';
 import type { FeatureKey } from '@/types';
@@ -13,7 +12,6 @@ import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STRE
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTime } from '@/lib/utils';
 
@@ -60,7 +58,6 @@ export default function Header() {
         (event, handler) => {
             const navItem = hotkeyNavMap[handler.key];
             if (navItem) {
-                // Check visibility inside the callback, using the stable unlockedSkillIds array
                 const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
                 const isVisible = navItem.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
                 
@@ -70,17 +67,8 @@ export default function Header() {
             }
         },
         { preventDefault: true },
-        [router, unlockedSkillIds] // Stable dependencies
+        [router, unlockedSkillIds]
     );
-
-    const dropdownItemsExist = useMemo(() => {
-        return allPossibleNavItems.some(item => {
-            const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
-            const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
-            const isDropdownItem = item.href !== '/' && item.href !== '/skill-tree';
-            return isUnlocked && isDropdownItem;
-        });
-    }, [unlockedSkillIds]);
 
     const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[level - 1] ?? 0;
     const nextLevelXpTarget = level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[level] : xp;
@@ -105,13 +93,12 @@ export default function Header() {
                 </Link>
 
                 <div className="flex-1 min-w-0">
-                    <nav className="flex items-center space-x-1">
+                    <nav className="flex items-center space-x-1 overflow-x-auto pb-2">
                         {allPossibleNavItems.map((item) => {
                              const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
                              const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
-                             const isMainBarItem = item.href === '/' || item.href === '/skill-tree';
 
-                             if (!isUnlocked || !isMainBarItem) {
+                             if (!isUnlocked) {
                                 return null;
                              }
 
@@ -132,48 +119,6 @@ export default function Header() {
                                 </TooltipProvider>
                             )
                         })}
-
-                        {dropdownItemsExist && (
-                            <DropdownMenu>
-                                <TooltipProvider delayDuration={300}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="text-sm font-medium transition-colors hover:text-primary shrink-0 px-2 sm:px-3 py-1.5 btn-animated text-foreground/70 hover:text-foreground">
-                                                    <LucideIcons.MoreVertical className="h-5 w-5 md:mr-2" />
-                                                    <span className="hidden md:inline-block">More</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>More Options</p></TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <DropdownMenuContent align="start" className="mt-1">
-                                    {allPossibleNavItems.map((item) => {
-                                        const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
-                                        const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
-                                        const isDropdownItem = item.href !== '/' && item.href !== '/skill-tree';
-
-                                        if (!isUnlocked || !isDropdownItem) {
-                                            return null;
-                                        }
-
-                                        const Icon = item.icon;
-                                        return (
-                                            <DropdownMenuItem key={item.href} asChild className="btn-animated cursor-pointer group">
-                                                <Link href={item.href} className="flex items-center w-full">
-                                                    <Icon className="h-5 w-5" />
-                                                    <span className="ml-2">{item.label}</span>
-                                                    <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-hover:text-foreground group-focus:text-foreground">
-                                                        {item.hotkey.toUpperCase()}
-                                                    </span>
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        );
-                                    })}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
                     </nav>
                 </div>
 
