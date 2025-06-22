@@ -10,12 +10,12 @@ import { useSessions, ACTUAL_LEVEL_THRESHOLDS, TITLES, XP_PER_MINUTE_FOCUS, STRE
 import type { FeatureKey } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useHotkeys, type HotkeyCallback } from 'react-hotkeys-hook';
 import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
 import { formatTime } from '@/lib/utils';
-import { useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 
 interface NavItem {
   href: string;
@@ -46,20 +46,22 @@ export default function Header() {
   const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // FIX: This entire section has been refactored to call useHotkeys at the top level
-  const createNavCallback = useCallback((featureKey: FeatureKey, href: string, alwaysVisible?: boolean) => {
-    return () => {
-      if (alwaysVisible || isFeatureUnlocked(featureKey)) {
-        router.push(href);
-      }
-    };
-  }, [isFeatureUnlocked, router]);
+  // Correctly implement hotkeys with a single top-level hook call.
+  const hotkeys = useMemo(
+    () => allPossibleNavItems.map((item) => item.hotkey),
+    []
+  );
 
-  allPossibleNavItems.forEach(item => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useHotkeys(item.hotkey, createNavCallback(item.featureKey, item.href, item.alwaysVisible), { preventDefault: true }, [createNavCallback, item.featureKey, item.href, item.alwaysVisible]);
-  });
-  // END FIX
+  const onHotkey: HotkeyCallback = (event, handler) => {
+    const navItem = allPossibleNavItems.find((item) => item.hotkey === handler.key);
+    if (navItem) {
+      if (navItem.alwaysVisible || isFeatureUnlocked(navItem.featureKey)) {
+        router.push(navItem.href);
+      }
+    }
+  };
+
+  useHotkeys(hotkeys.join(','), onHotkey, { preventDefault: true }, [isFeatureUnlocked, router]);
 
   const mainBarItemHrefs = ['/', '/skill-tree'];
   const mainNavItems: NavItem[] = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
@@ -235,5 +237,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
