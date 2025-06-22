@@ -50,12 +50,6 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png?text=Forest+Theme', dataAiHint: 'forest theme study app interface', isTheme: true, themeClass: 'theme-forest' },
   { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png?text=Sunset+Theme', dataAiHint: 'sunset theme study app focus mode', isTheme: true, themeClass: 'theme-sunset' },
   { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png?text=Galaxy+Theme', dataAiHint: 'galaxy theme app dashboard study', isTheme: true, themeClass: 'theme-galaxy' },
-  { id: 'mono', name: 'Monochrome Focus', description: 'Minimalist black and white.', price: 20000, levelRequirement: 8, imageUrl: 'https://placehold.co/400x225/333333/F5F5F5.png?text=Monochrome', dataAiHint: 'monochrome study app interface', isTheme: true, themeClass: 'theme-mono' },
-  { id: 'ocean', name: 'Ocean Depths', description: 'Dive deep into your studies.', price: 25000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/20B2AA/AFEEEE.png?text=Ocean+Theme', dataAiHint: 'ocean theme app timers and log', isTheme: true, themeClass: 'theme-ocean' },
-  { id: 'neon', name: 'Neon Grid', description: 'Retro-futuristic study zone.', price: 40000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/FF00FF/00FFFF.png?text=Neon+Theme', dataAiHint: 'neon theme study productivity app', isTheme: true, themeClass: 'theme-neon' },
-  { id: 'pastel', name: 'Pastel Dreams', description: 'Soft and gentle study environment.', price: 35000, levelRequirement: 15, imageUrl: 'https://placehold.co/400x225/FFB6C1/ADD8E6.png?text=Pastel+Theme', dataAiHint: 'pastel theme study app interface', isTheme: true, themeClass: 'theme-pastel' },
-  { id: 'gold', name: 'Golden Achiever', description: 'For those who shine.', price: 100000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/FFD700/B8860B.png?text=Gold+Theme', dataAiHint: 'gold theme productivity app dashboard', isTheme: true, themeClass: 'theme-gold' },
-  { id: 'elite', name: 'Elite Scholar', description: 'The ultimate focus skin.', price: 200000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/1A237E/C5CAE9.png?text=Elite+Theme', dataAiHint: 'elite theme study app stats page', isTheme: true, themeClass: 'theme-elite' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -1359,3 +1353,4 @@ export const useSessions = () => {
   }
   return context;
 };
+

@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from '@/components/ui/dropdown-menu';
 import { formatTime } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 interface NavItem {
   href: string;
@@ -26,13 +26,7 @@ interface NavItem {
   alwaysVisible?: boolean;
 }
 
-export default function Header() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const allPossibleNavItems: NavItem[] = [
+const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: <BookOpen className="h-5 w-5" />, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
     { href: '/skill-tree', label: 'Skill Tree', icon: <Network className="h-5 w-5" />, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
     { href: '/stats', label: 'Stats', icon: <BarChart3 className="h-5 w-5" />, hotkey: 's', featureKey: 'stats' },
@@ -44,7 +38,28 @@ export default function Header() {
     { href: '/countdown', label: 'Countdown', icon: <CountdownIcon className="h-5 w-5" />, hotkey: 'd', featureKey: 'countdown' },
     { href: '/achievements', label: 'Achievements', icon: <Award className="h-5 w-5" />, hotkey: 'v', featureKey: 'achievements' },
     { href: '/about', label: 'Guide', icon: <HelpCircle className="h-5 w-5" />, hotkey: 'g', featureKey: 'about' },
-  ];
+];
+
+export default function Header() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { userProfile, isFeatureUnlocked, getAppliedBoost } = useSessions();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // FIX: This entire section has been refactored to call useHotkeys at the top level
+  const createNavCallback = useCallback((featureKey: FeatureKey, href: string, alwaysVisible?: boolean) => {
+    return () => {
+      if (alwaysVisible || isFeatureUnlocked(featureKey)) {
+        router.push(href);
+      }
+    };
+  }, [isFeatureUnlocked, router]);
+
+  allPossibleNavItems.forEach(item => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useHotkeys(item.hotkey, createNavCallback(item.featureKey, item.href, item.alwaysVisible), { preventDefault: true }, [createNavCallback, item.featureKey, item.href, item.alwaysVisible]);
+  });
+  // END FIX
 
   const mainBarItemHrefs = ['/', '/skill-tree'];
   const mainNavItems: NavItem[] = allPossibleNavItems.filter(item => mainBarItemHrefs.includes(item.href) && (item.alwaysVisible || isFeatureUnlocked(item.featureKey)));
@@ -53,17 +68,6 @@ export default function Header() {
     const isMainItem = mainBarItemHrefs.includes(item.href);
     const isUnlockedOrAlwaysVisible = item.alwaysVisible || isFeatureUnlocked(item.featureKey);
     return !isMainItem && isUnlockedOrAlwaysVisible;
-  });
-
-
-  allPossibleNavItems.forEach(item => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useHotkeys(item.hotkey, (e) => {
-      e.preventDefault();
-      if (item.alwaysVisible || isFeatureUnlocked(item.featureKey)) {
-        router.push(item.href);
-      }
-    }, { preventDefault: true }, [isFeatureUnlocked, router, item.alwaysVisible, item.featureKey, item.href]);
   });
 
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
@@ -84,7 +88,7 @@ export default function Header() {
       <div className="container flex h-16 max-w-screen-2xl items-center px-4 md:px-6">
         <Link href="/" className="mr-4 flex items-center space-x-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-primary transition-transform duration-300 hover:rotate-12">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
           </svg>
           <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
         </Link>

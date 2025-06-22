@@ -177,9 +177,9 @@ export default function ManualSessionDialog() {
             />
              <DialogFooter>
                 <DialogClose asChild>
-                    <Button type="button" variant="ghost">Cancel</Button>
+                    <Button type="button" variant="ghost" className="btn-animated">Cancel</Button>
                 </DialogClose>
-                <Button type="submit">Save Session</Button>
+                <Button type="submit" className="btn-animated">Save Session</Button>
             </DialogFooter>
           </form>
         </Form>
