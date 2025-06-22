@@ -46,7 +46,6 @@ const hotkeyNavMap = allPossibleNavItems.reduce((acc, item) => {
     return acc;
 }, {} as Record<string, NavItem>);
 
-// Define hotkey string as a constant outside the render cycle.
 const HOTKEY_STRING = Object.keys(hotkeyNavMap).join(',');
 
 
@@ -56,14 +55,14 @@ export default function Header() {
     const { userProfile, getAppliedBoost } = useSessions();
     const { unlockedSkillIds, level, xp, skillPoints, cash, currentStreak, longestStreak, title } = userProfile;
 
-    // Memoize the navigation items to prevent recreation on every render.
-    // This is the core fix for the infinite loop.
     const { mainBarItems, dropdownItems } = useMemo(() => {
-        const visibleNavItems = allPossibleNavItems.filter(item => {
-            if (item.alwaysVisible) return true;
-            const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
+        const isFeatureUnlocked = (featureKey: FeatureKey) => {
+            if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
+            const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
             return skill ? unlockedSkillIds.includes(skill.id) : false;
-        });
+        };
+        
+        const visibleNavItems = allPossibleNavItems.filter(item => isFeatureUnlocked(item.featureKey));
 
         const main = visibleNavItems.filter(item => item.href === '/' || item.href === '/skill-tree');
         const dropdown = visibleNavItems.filter(item => item.href !== '/' && item.href !== '/skill-tree');
@@ -72,7 +71,6 @@ export default function Header() {
     }, [unlockedSkillIds]);
 
 
-    // Hotkey handler using stable dependencies
     useHotkeys(
         HOTKEY_STRING,
         (event, handler) => {
@@ -88,10 +86,9 @@ export default function Header() {
             }
         },
         { preventDefault: true },
-        [router, unlockedSkillIds] // Depend only on stable values
+        [router, unlockedSkillIds]
     );
 
-    // Calculations for user stats display
     const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[level - 1] ?? 0;
     const nextLevelXpTarget = level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[level] : xp;
     const xpIntoCurrentLevel = xp - currentLevelXpStart;
@@ -158,7 +155,7 @@ export default function Header() {
                                                 <Link href={item.href} className="flex items-center w-full">
                                                     <Icon className="h-5 w-5" />
                                                     <span className="ml-2">{item.label}</span>
-                                                    <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-focus:text-foreground group-hover:text-foreground">
+                                                    <span className="text-xs p-1 bg-muted rounded-sm ml-auto text-muted-foreground group-hover:text-foreground group-focus:text-foreground">
                                                         {item.hotkey.toUpperCase()}
                                                     </span>
                                                 </Link>
