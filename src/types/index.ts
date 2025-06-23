@@ -74,6 +74,7 @@ export interface UserProfile {
   };
   activeOfferId: string | null;
   activeOfferEndTime: number | null;
+  offerDeactivatedToday?: boolean;
 }
 
 export interface Skin {

@@ -111,7 +111,7 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], skillLevels: {},
   businesses: DEFAULT_BUSINESSES,
-  dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null,
+  dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null, offerDeactivatedToday: false,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -554,19 +554,12 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         newLastStudyDate = todayStr;
     }
     
-    const baseStreakBonus = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
-    const skillXpBoost = getSkillBoost('xp');
-    const skillCashBoost = getSkillBoost('cash');
-
     return {
-        streakBonusMultiplier: baseStreakBonus,
-        totalXpMultiplier: 1 + baseStreakBonus + skillXpBoost,
-        totalCashMultiplier: 1 + baseStreakBonus + skillCashBoost,
         updatedCurrentStreak: currentStudyStreak,
         updatedLongestStreak: longestStudyStreak,
         updatedLastStudyDate: newLastStudyDate
     };
-  }, [getSkillBoost]);
+  }, []);
 
   const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean, description?: string }) => {
     if (sessionDetails.durationInSeconds <= 0) { console.warn("Attempted to log session with zero duration."); return; }
@@ -578,23 +571,38 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     
     let newProfile: UserProfile | null = null;
     setUserProfile(prevProfile => {
-        const { totalXpMultiplier, totalCashMultiplier, updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
+        const { updatedCurrentStreak, updatedLongestStreak, updatedLastStudyDate } = updateStreakAndGetBonus(prevProfile);
         let awardedXp = 0, awardedCash = 0;
         const minutesStudied = sessionDetails.durationInSeconds / 60;
-
-        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch' || sessionDetails.type === 'Countdown') {
-          awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
-          awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
-          
-          const activeOffer = prevProfile.activeOfferId && prevProfile.activeOfferEndTime && prevProfile.activeOfferEndTime > Date.now()
-            ? DAILY_OFFERS_POOL.find(o => o.id === prevProfile.activeOfferId)
-            : null;
-    
-          if (activeOffer && activeOffer.id === 'high_stakes') {
-            awardedXp = 0; // Force XP to 0 for High Stakes offer
-          }
         
-          if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
+        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch' || sessionDetails.type === 'Countdown') {
+            const baseStreakBonus = Math.min(updatedCurrentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
+            const skillXpBonus = getSkillBoost('xp');
+            const skillCashBonus = getSkillBoost('cash');
+            let offerXpBonus = 0;
+            let offerCashBonus = 0;
+            let xpDisabledByOffer = false;
+
+            const activeOffer = prevProfile.activeOfferId && prevProfile.activeOfferEndTime && prevProfile.activeOfferEndTime > Date.now()
+                ? DAILY_OFFERS_POOL.find(o => o.id === prevProfile.activeOfferId)
+                : null;
+
+            if (activeOffer) {
+                if (activeOffer.effect.type === 'xp') offerXpBonus = activeOffer.effect.modifier - 1;
+                if (activeOffer.effect.type === 'cash') offerCashBonus = activeOffer.effect.modifier - 1;
+                if (activeOffer.id === 'high_stakes') xpDisabledByOffer = true;
+            }
+
+            const totalXpMultiplier = 1 + baseStreakBonus + skillXpBonus + offerXpBonus;
+            const totalCashMultiplier = 1 + baseStreakBonus + skillCashBonus + offerCashBonus;
+
+            awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
+            if (xpDisabledByOffer) {
+                awardedXp = 0;
+            }
+            awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
+            
+            if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
         }
 
         if ( (sessionDetails.type === 'Pomodoro Focus' && sessionDetails.isFullPomodoroCycle) || (sessionDetails.type === 'Stopwatch' && sessionDetails.durationInSeconds >= 25 * 60) ) {
@@ -618,15 +626,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (awardedXp > 0) rewardParts.push(`${awardedXp} XP`);
         if (awardedCash > 0) rewardParts.push(`$${awardedCash.toLocaleString()}`);
         
-        const baseStreakBonusPercent = (totalXpMultiplier - 1 - getSkillBoost('xp')) * 100; 
-        if (baseStreakBonusPercent > 0.1 && (awardedXp > 0 || awardedCash > 0)) { 
-            rewardParts.push(`(+${baseStreakBonusPercent.toFixed(0)}% streak)`);
+        const totalXpBonusPercent = ( (1 + Math.min(updatedCurrentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) + getSkillBoost('xp')) - 1) * 100;
+        if (totalXpBonusPercent > 0.1 && awardedXp > 0) { 
+            rewardParts.push(`(+${totalXpBonusPercent.toFixed(0)}% bonus)`);
         }
-        const skillBonusXpPercent = getSkillBoost('xp') * 100;
-        if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardParts.push(`(+${skillBonusXpPercent.toFixed(0)}% skill XP)`); }
-        const skillBonusCashPercent = getSkillBoost('cash') * 100;
-        if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardParts.push(`(+${skillBonusCashPercent.toFixed(0)}% skill cash)`); }
-
+        
         if (rewardParts.length > 0) {
             toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
         }
@@ -919,6 +923,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const allChallengesDone = dailyChallenges.every(c => c.rewardClaimed);
 
     if (!offer) return;
+     if (userProfile.offerDeactivatedToday) {
+        toast({title: "Offer Choice Locked", description: "You have already deactivated an offer today.", variant: 'destructive'});
+        return;
+    }
     if (userProfile.activeOfferId && !allChallengesDone) {
       toast({title: "Offer In Progress", description: "You already have an active offer. Complete all challenges to select another.", variant: 'destructive'});
       return;
@@ -926,11 +934,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const endTime = Date.now() + offer.durationMinutes * 60 * 1000;
     setUserProfile(prev => ({...prev, activeOfferId: offerId, activeOfferEndTime: endTime}));
     toast({title: "Offer Activated!", description: `${offer.title} is now active for ${offer.durationMinutes} minutes.`});
-  }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, dailyChallenges, toast]);
+  }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, userProfile.offerDeactivatedToday, dailyChallenges, toast]);
   
   const deactivateOffer = useCallback((offerId: string) => {
     if (userProfile.activeOfferId !== offerId) return;
-    setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null}));
+    setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null, offerDeactivatedToday: true}));
     toast({title: "Offer Deactivated", description: "The active offer has been cancelled for the day."});
   }, [userProfile.activeOfferId, toast]);
 
@@ -1424,6 +1432,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             dailyOffers: tempProfile.dailyOffers || { date: '', offers: [] },
             activeOfferId: tempProfile.activeOfferId || null,
             activeOfferEndTime: tempProfile.activeOfferEndTime || null,
+            offerDeactivatedToday: tempProfile.offerDeactivatedToday || false,
         };
         
         const coreSkillsToEnsure = ['unlockTimers', 'unlockSkillTree'];
@@ -1433,8 +1442,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             }
         });
       }
-      setUserProfile(parsedProfile);
-      
+
       const storedPomoSettings = localStorage.getItem('pomodoroSettings');
       if (storedPomoSettings) {
         const settings = JSON.parse(storedPomoSettings);
@@ -1479,10 +1487,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           const shuffledOffers = [...DAILY_OFFERS_POOL].sort(() => 0.5 - Math.random());
           const newOffers = shuffledOffers.slice(0, 3);
           setDailyOffers(newOffers);
-          setUserProfile(p => ({...p, dailyOffers: { date: todayStr, offers: newOffers }, activeOfferId: null, activeOfferEndTime: null }));
+          parsedProfile.dailyOffers = { date: todayStr, offers: newOffers };
+          parsedProfile.activeOfferId = null;
+          parsedProfile.activeOfferEndTime = null;
+          parsedProfile.offerDeactivatedToday = false;
       } else {
           setDailyOffers(parsedProfile.dailyOffers.offers);
       }
+      
+      setUserProfile(parsedProfile);
 
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
@@ -1540,16 +1553,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain]);
 
-  const applyThemePreference = useCallback((themeClassToApply?: string | null) => {
+  const applyThemePreference = useCallback((skinId: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    PREDEFINED_SKINS.forEach(skin => {
-        if (skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') {
-            root.classList.remove(skin.themeClass);
+
+    // Remove all possible theme classes first
+    PREDEFINED_SKINS.forEach(s => {
+        if (s.isTheme && s.themeClass && s.themeClass !== 'classic') {
+            root.classList.remove(s.themeClass);
         }
     });
-    if (themeClassToApply && themeClassToApply !== 'classic') { 
-      root.classList.add(themeClassToApply);
+
+    // Find the skin to apply
+    const skinToApply = PREDEFINED_SKINS.find(s => s.id === skinId);
+
+    // Add the new theme class if it exists and is a theme
+    if (skinToApply && skinToApply.isTheme && skinToApply.themeClass && skinToApply.themeClass !== 'classic') {
+        root.classList.add(skinToApply.themeClass);
     }
   }, []);
 
@@ -1567,10 +1587,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isLoaded) {
-        const equippedSkin = getSkinById(userProfile.equippedSkinId);
-        applyThemePreference(equippedSkin?.isTheme ? equippedSkin.themeClass : null);
+        applyThemePreference(userProfile.equippedSkinId);
     }
-  }, [userProfile.equippedSkinId, isLoaded, applyThemePreference, getSkinById]);
+  }, [userProfile.equippedSkinId, isLoaded, applyThemePreference]);
 
   const contextValue = useMemo(() => ({
       sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
