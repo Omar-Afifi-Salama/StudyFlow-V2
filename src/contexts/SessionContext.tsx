@@ -632,7 +632,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (rewardParts.length > 0) {
-            toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
+            // This toast is being removed to prevent duplicates
+            // toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
         }
         
         newProfile = {
@@ -661,7 +662,11 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       description: details.description,
       isFullPomodoroCycle: details.type === 'Pomodoro Focus' ? (details.durationInSeconds / 60) >= pomodoroState.settings.workDuration : false,
     });
-  }, [addSession, pomodoroState.settings.workDuration]);
+    toast({
+      title: "Session Logged",
+      description: `Manually added a ${details.type} session.`,
+    });
+  }, [addSession, pomodoroState.settings.workDuration, toast]);
 
   const addTestSession = useCallback(() => {
     addSession({
@@ -1441,6 +1446,21 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 parsedProfile.unlockedSkillIds.push(coreSkillId);
             }
         });
+
+        // Recalculate level based on XP to fix any data desync
+        let correctLevel = 1;
+        for (let i = 1; i < ACTUAL_LEVEL_THRESHOLDS.length; i++) {
+          if (parsedProfile.xp >= ACTUAL_LEVEL_THRESHOLDS[i]) {
+            correctLevel = i + 1;
+          } else {
+            break;
+          }
+        }
+        if (parsedProfile.level !== correctLevel) {
+            console.warn(`Correcting user level from ${parsedProfile.level} to ${correctLevel} based on XP to prevent data inconsistencies.`);
+            parsedProfile.level = correctLevel;
+            parsedProfile.title = TITLES[correctLevel - 1] || TITLES[TITLES.length - 1];
+        }
       }
 
       const storedPomoSettings = localStorage.getItem('pomodoroSettings');
@@ -1556,16 +1576,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const applyThemePreference = useCallback((skinId: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-
-    // Explicitly list all theme classes to be managed
     const themeClasses = ['dark', 'sepia', 'theme-forest', 'theme-sunset', 'theme-galaxy'];
-
-    // Remove all possible theme classes to ensure a clean slate
     root.classList.remove(...themeClasses);
-    
     const skinToApply = PREDEFINED_SKINS.find(s => s.id === skinId);
-    
-    // Add the new theme class if it's a valid theme and not the default 'classic'
     if (skinToApply && skinToApply.isTheme && skinToApply.themeClass && skinToApply.themeClass !== 'classic') {
         root.classList.add(skinToApply.themeClass);
     }
