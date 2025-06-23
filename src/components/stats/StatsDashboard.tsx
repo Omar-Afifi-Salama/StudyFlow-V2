@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
@@ -7,7 +8,7 @@ import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as Tim
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import React, { useMemo } from 'react';
-import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday, getMonth, differenceInDays } from 'date-fns';
+import { format, subDays, eachDayOfInterval, parseISO, isToday, getMonth, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 import SessionLog from '@/components/sessions/SessionLog';
 
@@ -82,50 +83,39 @@ export default function StatsDashboard() {
     });
   }, [sessions, isLoaded]);
   
-  const heatmapWeeks = useMemo(() => {
-      if (!heatmapData.length) return [];
-      const dataMap = new Map(heatmapData.map(d => [d.date, d]));
-      const today = new Date();
-      const yearAgo = subDays(today, 365);
-      const firstMonday = startOfWeek(yearAgo, { weekStartsOn: 1 });
+  const monthlyHeatmapData = useMemo(() => {
+    if (!isLoaded) return [];
+    
+    const dataByDate: Record<string, HeatmapDataPoint> = heatmapData.reduce((acc, curr) => {
+        acc[curr.date] = curr;
+        return acc;
+    }, {} as Record<string, HeatmapDataPoint>);
 
-      const days = eachDayOfInterval({ start: firstMonday, end: today });
-      const weeks: HeatmapDataPoint[][] = Array.from({ length: Math.ceil(days.length / 7) }, () => []);
+    const months = [];
+    const today = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const monthDate = subMonths(today, i);
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
+        
+        const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+        
+        const monthDays: HeatmapDataPoint[] = daysInMonth.map(day => {
+            const dateKey = format(day, 'yyyy-MM-dd');
+            return dataByDate[dateKey] || { date: dateKey, count: 0, level: 0 };
+        });
 
-      days.forEach(day => {
-          const weekIndex = Math.floor(differenceInDays(day, firstMonday) / 7);
-          const dateKey = format(day, 'yyyy-MM-dd');
-          if (dataMap.has(dateKey)) {
-              weeks[weekIndex].push(dataMap.get(dateKey)!);
-          } else {
-              weeks[weekIndex].push({ date: dateKey, count: 0, level: -1 }); // -1 indicates a blank cell before user's history starts
-          }
-      });
-      return weeks.map(week => {
-          while (week.length < 7) {
-              week.push({ date: `placeholder-${week.length}`, count: 0, level: -2 }); // -2 for placeholder
-          }
-          return week;
-      });
-  }, [heatmapData]);
-
-  const monthLabels = useMemo(() => {
-    if (!heatmapWeeks.length) return [];
-    const labels: { label: string; weekIndex: number }[] = [];
-    let lastMonth = -1;
-    heatmapWeeks.forEach((week, weekIndex) => {
-        const firstDayOfWeek = week[0];
-        if (firstDayOfWeek && firstDayOfWeek.level >= -1) {
-            const date = parseISO(firstDayOfWeek.date);
-            const month = getMonth(date);
-            if (month !== lastMonth) {
-                labels.push({ label: format(date, 'MMM'), weekIndex });
-                lastMonth = month;
-            }
-        }
-    });
-    return labels;
-  }, [heatmapWeeks]);
+        const firstDayOfWeek = (monthStart.getDay() + 6) % 7;
+        const paddedDays: (HeatmapDataPoint | null)[] = Array(firstDayOfWeek).fill(null);
+        paddedDays.push(...monthDays);
+        
+        months.push({
+            monthName: format(monthStart, 'MMMM yyyy'),
+            days: paddedDays
+        });
+    }
+    return months;
+  }, [heatmapData, isLoaded]);
 
 
   const totalStudyTime = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').reduce((acc, s) => acc + s.duration, 0);
@@ -196,48 +186,49 @@ export default function StatsDashboard() {
             
             <StatCard title="Total XP Earned" value={userProfile.xp.toLocaleString()} icon={<Zap className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Total Cash Earned" value={`$${userProfile.cash.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Study Days (Year)" value={studyDaysThisYear.toString()} icon={<CalendarCheck className="h-5 w-5 text-muted-foreground" />} />
+            <StatCard title="Study Days (Year)" value={studyDaysThisYear.toString()} icon={<CalendarCheck className="h-5 w-g text-muted-foreground" />} />
             <StatCard title="Achievements Unlocked" value={`${userProfile.unlockedAchievementIds.length} / ${achievementsTotal}`} icon={<Trophy className="h-5 w-5 text-muted-foreground" />} />
           </div>
           
-          <div className="grid grid-cols-1 gap-6">
-            <div className="w-full">
-              <SessionLog />
-            </div>
+          <div className="space-y-6">
+            <SessionLog />
 
             <Card className="shadow-md card-animated">
               <CardHeader>
                   <CardTitle>Study Activity Heatmap</CardTitle>
-                  <CardDescription>Each cell is a day in the last year. Weeks start on Monday.</CardDescription>
+                  <CardDescription>Your study consistency over the last 12 months.</CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-center p-4">
-                  <div className="inline-grid grid-flow-col gap-1 overflow-x-auto p-1">
-                      {heatmapWeeks.map((week, weekIndex) => (
-                          <div key={weekIndex} className="grid grid-rows-7 gap-1">
-                              {week.map((day, dayIndex) => {
-                                  let colorClass = 'bg-muted/30';
-                                  if(day.level > 0) colorClass = `bg-primary/20`;
-                                  if(day.level > 1) colorClass = `bg-primary/40`;
-                                  if(day.level > 2) colorClass = `bg-primary/70`;
-                                  if(day.level > 3) colorClass = `bg-primary`;
-                                  if(day.level < 0) colorClass = 'bg-transparent';
-                                  
-                                  return (
-                                    <TooltipProvider key={day.date} delayDuration={100}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className={cn("h-3 w-3 rounded-sm", colorClass)} />
-                                            </TooltipTrigger>
-                                            {day.level >= 0 && (
-                                                <ShadTooltipContent>
-                                                    <p className="font-semibold">{day.count} minutes</p>
-                                                    <p className="text-muted-foreground">{format(parseISO(day.date), 'PPP')}</p>
-                                                </ShadTooltipContent>
-                                            )}
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                  );
-                              })}
+              <CardContent className="p-4 overflow-x-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-8">
+                      {monthlyHeatmapData.map(({ monthName, days }) => (
+                          <div key={monthName}>
+                              <h4 className="text-sm font-semibold mb-2 text-center">{monthName}</h4>
+                              <div className="grid grid-cols-7 gap-1">
+                                  {days.map((day, index) => {
+                                      if (!day) {
+                                          return <div key={`blank-${index}`} className="h-4 w-4 rounded-sm" />;
+                                      }
+                                      let colorClass = 'bg-muted/30';
+                                      if (day.level > 0) colorClass = `bg-primary/20`;
+                                      if (day.level > 1) colorClass = `bg-primary/40`;
+                                      if (day.level > 2) colorClass = `bg-primary/70`;
+                                      if (day.level > 3) colorClass = `bg-primary`;
+                                      
+                                      return (
+                                          <TooltipProvider key={day.date} delayDuration={100}>
+                                              <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                      <div className={cn("h-4 w-4 rounded-sm", colorClass)} />
+                                                  </TooltipTrigger>
+                                                  <ShadTooltipContent>
+                                                      <p className="font-semibold">{day.count} minutes</p>
+                                                      <p className="text-muted-foreground">{format(parseISO(day.date), 'PPP')}</p>
+                                                  </ShadTooltipContent>
+                                              </Tooltip>
+                                          </TooltipProvider>
+                                      );
+                                  })}
+                              </div>
                           </div>
                       ))}
                   </div>
