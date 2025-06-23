@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format, parseISO, isValid } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
+import { cn } from '@/lib/utils';
 
 export default function GoalsTab() {
   const { userProfile, updateNotepadData } = useSessions();
@@ -87,10 +87,10 @@ export default function GoalsTab() {
     const setText = isEditMode ? setEditGoalText : setNewGoalText;
     const setDate = isEditMode ? setEditGoalDueDate : setNewGoalDueDate;
     const submitAction = isEditMode ? handleSaveEdit : handleAddGoal;
-    const cancelAction = isEditMode ? cancelEditing : () => { setNewGoalText(''); setNewGoalDueDate(undefined); /* Potentially hide form */ };
+    const cancelAction = isEditMode ? cancelEditing : () => { setNewGoalText(''); setNewGoalDueDate(undefined); };
 
     return (
-      <div className={`p-3 border rounded-md space-y-2 mb-4 ${isEditMode ? 'bg-muted/40' : ''}`}>
+      <div className={`p-3 border rounded-md space-y-3 mb-4 ${isEditMode ? 'bg-muted/40' : ''}`}>
         <h3 className="text-lg font-medium">{isEditMode ? 'Edit Goal' : 'Add New Goal'}</h3>
         <Input
             type="text"
@@ -100,26 +100,30 @@ export default function GoalsTab() {
             className="flex-grow"
             aria-label={isEditMode ? "Edit goal text" : "New goal text"}
           />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={`w-full justify-start text-left font-normal ${!dateValue && "text-muted-foreground"}`}
-                aria-label={isEditMode ? "Pick new due date for goal" : "Pick due date for new goal"}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateValue && isValid(dateValue) ? format(dateValue, "PPP") : <span>Pick due date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dateValue}
-                onSelect={setDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-auto justify-start text-left font-normal",
+                    !dateValue && "text-muted-foreground"
+                  )}
+                  aria-label={isEditMode ? "Pick new due date for goal" : "Pick due date for new goal"}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateValue && isValid(dateValue) ? format(dateValue, "PPP") : <span>Due Date (Optional)</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateValue}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           <div className="flex justify-end space-x-2">
             {isEditMode && <Button variant="ghost" onClick={cancelAction}><XCircle className="mr-2 h-4 w-4"/>Cancel</Button>}
             <Button onClick={submitAction}>
@@ -127,6 +131,7 @@ export default function GoalsTab() {
                 {isEditMode ? 'Save Changes' : 'Add Goal'}
             </Button>
           </div>
+        </div>
       </div>
     );
   };
