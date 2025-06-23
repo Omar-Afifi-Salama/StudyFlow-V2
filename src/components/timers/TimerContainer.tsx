@@ -4,7 +4,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Stopwatch from "./Stopwatch";
 import PomodoroTimer from "./PomodoroTimer";
-import { Timer, Clock4 } from "lucide-react";
+import { Timer, Clock4, Hourglass } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 
 export default function TimerContainer() {
@@ -19,7 +19,7 @@ export default function TimerContainer() {
             <Timer className="mr-2 h-5 w-5" /> Stopwatch
           </TabsTrigger>
           <TabsTrigger value="countdown" className="py-2 text-base md:py-3">
-            <Timer className="mr-2 h-5 w-5" /> Countdown
+            <Hourglass className="mr-2 h-5 w-5" /> Countdown
           </TabsTrigger>
         </TabsList>
         <TabsContent value="pomodoro">
