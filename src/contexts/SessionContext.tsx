@@ -194,7 +194,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'persistentProgress', name: 'Persistent Progress', description: 'Maintain a 12-week streak on any weekly habit.', iconName: 'Signal', cashReward: 7500, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'weekly' && h.longestStreak >= 12), category: 'Habits' },
   
   // Capitalist
-  { id: 'firstInvestment', name: 'First Investment', description: 'Unlock your first business.', iconName: 'Banknote', cashReward: 500, criteria: (p) => Object.values(p.businesses).some(b => b.unlocked), category: 'Capitalist' },
+  { id: 'firstInvestment', name: 'First Investment', description: 'Unlock your first business.', iconName: 'HandCoins', cashReward: 500, criteria: (p) => Object.values(p.businesses).some(b => b.unlocked), category: 'Capitalist' },
   { id: 'diversifiedPortfolio', name: 'Diversified Portfolio', description: 'Unlock all four businesses.', iconName: 'Briefcase', cashReward: 5000, criteria: (p) => Object.values(p.businesses).every(b => b.unlocked), category: 'Capitalist' },
   { id: 'businessTycoon', name: 'Business Tycoon', description: 'Get one business to Level 10.', iconName: 'Building', cashReward: 10000, criteria: (p) => Object.values(p.businesses).some(b => b.level >= 10), category: 'Capitalist' },
   { id: 'mogul', name: 'Mogul', description: 'Have a combined level of 40 across all businesses.', iconName: 'Landmark', cashReward: 25000, criteria: (p) => Object.values(p.businesses).reduce((sum, b) => sum + b.level, 0) >= 40, category: 'Capitalist' },
@@ -1557,19 +1557,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
 
-    // Remove all possible theme classes first
-    PREDEFINED_SKINS.forEach(s => {
-        if (s.isTheme && s.themeClass && s.themeClass !== 'classic') {
-            root.classList.remove(s.themeClass);
-        }
-    });
+    // More robustly find and remove all possible theme classes first
+    const allThemeClasses = PREDEFINED_SKINS
+      .map(s => s.isTheme ? s.themeClass : null)
+      .filter((c): c is string => !!c && c !== 'classic');
+      
+    root.classList.remove(...allThemeClasses);
 
     // Find the skin to apply
     const skinToApply = PREDEFINED_SKINS.find(s => s.id === skinId);
 
-    // Add the new theme class if it exists and is a theme
+    // Add the new theme class if it's not the default 'classic'
     if (skinToApply && skinToApply.isTheme && skinToApply.themeClass && skinToApply.themeClass !== 'classic') {
-        root.classList.add(skinToApply.themeClass);
+      root.classList.add(skinToApply.themeClass);
     }
   }, []);
 
