@@ -9,7 +9,6 @@ import { PlusSquare } from 'lucide-react';
 const quotes = [
   { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
   { quote: "Strive not to be a success, but rather to be of value.", author: "Albert Einstein" },
-  { quote: "The mind is everything. What you think you become.", author: "Buddha" },
   { quote: "Your time is limited, so don’t waste it living someone else’s life.", author: "Steve Jobs" },
   { quote: "The best way to predict the future is to create it.", author: "Peter Drucker" },
   { quote: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },

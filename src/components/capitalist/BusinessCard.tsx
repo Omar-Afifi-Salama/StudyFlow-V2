@@ -14,7 +14,7 @@ interface BusinessCardProps {
   userCash: number;
   onUnlock: () => void;
   onUpgrade: () => void;
-  onCollect: (incomeToCollect: number) => void;
+  onCollect: (incomeToCollect: number, secondsPassed: number) => void;
 }
 
 export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, onCollect }: BusinessCardProps) {
@@ -27,6 +27,7 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
   }, [business.baseIncome, business.level]);
 
   const [accruedCash, setAccruedCash] = useState(0);
+  const [secondsSinceCollection, setSecondsSinceCollection] = useState(0);
 
   useEffect(() => {
     if (isLocked) {
@@ -36,17 +37,9 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
 
     const calculateAccrued = () => {
       const secondsPassed = (Date.now() - business.lastCollected) / 1000;
-      let incomeThisCycle = (incomePerHour / 3600) * secondsPassed;
-      
-      // Apply gimmicks to income calculation dynamically
-      if (business.id === 'mine' && business.depletionRate) {
-        const hoursPassed = secondsPassed / 3600;
-        incomeThisCycle *= Math.pow(1 - business.depletionRate, hoursPassed);
-      }
-      if (business.maintenanceCost) {
-        incomeThisCycle *= (1 - business.maintenanceCost);
-      }
-      
+      setSecondsSinceCollection(secondsPassed);
+      // This now calculates RAW income. All gimmicks are applied in the context.
+      const incomeThisCycle = (incomePerHour / 3600) * secondsPassed;
       setAccruedCash(incomeThisCycle);
     };
 
@@ -54,10 +47,10 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
     const interval = setInterval(calculateAccrued, 1000);
     return () => clearInterval(interval);
 
-  }, [business.lastCollected, incomePerHour, isLocked, business.id, business.depletionRate, business.maintenanceCost]);
+  }, [business.lastCollected, incomePerHour, isLocked]);
 
   const handleCollect = () => {
-    onCollect(accruedCash);
+    onCollect(accruedCash, secondsSinceCollection);
     setAccruedCash(0);
   }
 
@@ -90,20 +83,14 @@ export default function BusinessCard({ business, userCash, onUnlock, onUpgrade, 
             <Zap className="h-4 w-4 mr-2 text-yellow-500" />
             Next Upgrade: +${(incomePerHour * 0.15).toFixed(0)}/hr
           </p>
-           {business.maintenanceCost > 0 && (
-             <p className="text-xs text-amber-600 dark:text-amber-400">Maintenance: {(business.maintenanceCost * 100).toFixed(0)}% of income</p>
-           )}
-           {business.depletionRate > 0 && (
-             <p className="text-xs text-destructive/80">Depletion: Income reduces over time.</p>
-           )}
         </div>
         {business.unlocked && (
           <div>
             <div className="text-xs text-muted-foreground mb-1 flex justify-between">
-              <span>Next Income</span>
-              <span>Accrued: ${accruedCash.toFixed(2)}</span>
+              <span>Income Accrued</span>
+              <span>${accruedCash.toFixed(2)}</span>
             </div>
-            <Progress value={(Date.now() - business.lastCollected) / (3600 * 1000) * 100} />
+             <Progress value={Math.min(100, (secondsSinceCollection % 3600) / 36)} aria-label="Hourly collection progress"/>
           </div>
         )}
       </CardContent>

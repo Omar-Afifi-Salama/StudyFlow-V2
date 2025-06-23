@@ -15,6 +15,7 @@ export default function CapitalistPage() {
   const totalIncomePerHour = useMemo(() => {
     return Object.values(businesses).reduce((total, business) => {
       if (business.unlocked) {
+        // This is an approximation as it doesn't account for volatility, but it's good for a dashboard.
         const income = business.baseIncome * Math.pow(1.15, business.level - 1) * (1 - (business.maintenanceCost || 0));
         return total + income;
       }
@@ -33,11 +34,11 @@ export default function CapitalistPage() {
                 <Banknote className="h-8 w-8 text-primary" />
                 <div>
                     <CardTitle className="text-3xl font-headline">Capitalist Corner</CardTitle>
-                    <CardDescription>Invest your study earnings to generate passive income.</CardDescription>
+                    <CardDescription>Invest your study earnings. Income accrues in real-time, but special business traits are applied when you collect.</CardDescription>
                 </div>
             </div>
             <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Income Potential</p>
+                <p className="text-sm text-muted-foreground">Total Income Potential (approx.)</p>
                 <p className="font-bold text-lg text-green-500">${totalIncomePerHour.toFixed(0)} / hour</p>
             </div>
           </div>
@@ -51,7 +52,7 @@ export default function CapitalistPage() {
                 userCash={userProfile.cash}
                 onUnlock={() => unlockBusiness(businessId)}
                 onUpgrade={() => upgradeBusiness(businessId)}
-                onCollect={(amount) => collectBusinessIncome(businessId, amount)}
+                onCollect={(amount, secondsPassed) => collectBusinessIncome(businessId, amount, secondsPassed)}
               />
             ))}
           </div>

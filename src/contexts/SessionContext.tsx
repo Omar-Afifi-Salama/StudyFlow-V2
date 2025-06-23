@@ -97,10 +97,10 @@ const DAILY_OFFERS_POOL: DailyOffer[] = [
 
 const now = Date.now();
 const DEFAULT_BUSINESSES = {
-  farm: { id: 'farm', name: 'Hydroponic Farm', description: 'A steady and reliable source of income from high-tech crops.', gimmickTitle: 'Seasonal Yield', gimmickDescription: 'Consistent income, but a 15% chance of a "low yield" hour (50% income).', unlockCost: 5000, unlocked: false, level: 1, baseIncome: 200, lastCollected: now, currentCash: 0 },
-  startup: { id: 'startup', name: 'AI Startup', description: 'A risky but potentially lucrative AI venture.', gimmickTitle: 'High Volatility', gimmickDescription: 'Income is unpredictable. There is a 40% chance of earning no income each hour, but a 10% chance of a 5x "viral" bonus!', unlockCost: 1000, unlocked: false, level: 1, baseIncome: 120, lastCollected: now, currentCash: 0 },
-  mine: { id: 'mine', name: 'Asteroid Mine', description: 'Extracts valuable minerals from space rocks.', gimmickTitle: 'Depleting Resource', gimmickDescription: 'High initial income that depletes by 2% each hour. Upgrading "finds a new vein," resetting the depletion.', unlockCost: 25000, unlocked: false, level: 1, baseIncome: 800, lastCollected: now, currentCash: 0, depletionRate: 0.02 },
-  industry: { id: 'industry', name: 'Fusion Factory', description: 'A massive industrial complex generating clean energy.', gimmickTitle: 'Maintenance Costs', gimmickDescription: 'Very reliable income but requires 10% of its output for hourly maintenance costs.', unlockCost: 100000, unlocked: false, level: 1, baseIncome: 2500, lastCollected: now, currentCash: 0, maintenanceCost: 0.10 },
+  farm: { id: 'farm', name: 'Hydroponic Farm', description: 'A steady and reliable source of income from high-tech crops.', gimmickTitle: 'Steady Growth', gimmickDescription: 'A reliable investment. Upon collection, there is a small (15%) chance of a "low yield," which halves the collected amount.', unlockCost: 5000, unlocked: false, level: 1, baseIncome: 200, lastCollected: now, currentCash: 0 },
+  startup: { id: 'startup', name: 'AI Startup', description: 'A risky but potentially lucrative AI venture.', gimmickTitle: 'High Volatility', gimmickDescription: 'High risk, high reward. Upon collection, there is a 40% chance of failure (collecting $0), but a 10% chance of a 5x "viral" bonus.', unlockCost: 1000, unlocked: false, level: 1, baseIncome: 120, lastCollected: now, currentCash: 0 },
+  mine: { id: 'mine', name: 'Asteroid Mine', description: 'Extracts valuable minerals from space rocks.', gimmickTitle: 'Depleting Resource', gimmickDescription: 'Starts with high income, but the accrued amount depletes by 2% for every hour it sits uncollected. Upgrading resets the depletion.', unlockCost: 25000, unlocked: false, level: 1, baseIncome: 800, lastCollected: now, currentCash: 0, depletionRate: 0.02 },
+  industry: { id: 'industry', name: 'Fusion Factory', description: 'A massive industrial complex generating clean energy.', gimmickTitle: 'Maintenance Costs', gimmickDescription: 'Excellent and reliable income, but 10% of the collected amount is automatically deducted for maintenance costs.', unlockCost: 100000, unlocked: false, level: 1, baseIncome: 2500, lastCollected: now, currentCash: 0, maintenanceCost: 0.10 },
 };
 
 const DEFAULT_USER_PROFILE: UserProfile = {
@@ -329,7 +329,7 @@ interface SessionContextType {
 
   unlockBusiness: (businessId: keyof UserProfile['businesses']) => void;
   upgradeBusiness: (businessId: keyof UserProfile['businesses']) => void;
-  collectBusinessIncome: (businessId: keyof UserProfile['businesses'], amount: number) => void;
+  collectBusinessIncome: (businessId: keyof UserProfile['businesses'], rawAmount: number, secondsPassed: number) => void;
 
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
@@ -1312,6 +1312,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if(userProfile.cash < upgradeCost) { toast({ title: "Not Enough Cash", description: `You need $${upgradeCost.toLocaleString()} to upgrade.`, icon: <DollarSign/> }); return; }
     
     let updatedBusiness = { ...business, level: business.level + 1 };
+    // For the mine, upgrading should also reset the depletion timer
     if (updatedBusiness.id === 'mine') {
         updatedBusiness.lastCollected = Date.now();
     }
@@ -1328,29 +1329,48 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
   
-  const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], amount: number) => {
+  const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], rawAmount: number, secondsPassed: number) => {
     if(!isFeatureUnlocked('capitalist')) return;
-    if (amount < 1) return;
+    if (rawAmount < 1) return;
 
     const business = userProfile.businesses[businessId];
     if (!business.unlocked) return;
     
-    let incomeToCollect = Math.floor(amount);
+    let finalIncome = rawAmount;
     
-    if (business.id === 'startup') {
-        const roll = Math.random();
-        if (roll < 0.4) {
-            toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'});
-            incomeToCollect = 0;
-        } else if (roll > 0.9) {
-             toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>});
-             incomeToCollect *= 5;
-        }
+    // Apply business-specific gimmicks
+    switch(business.id) {
+        case 'startup':
+            const roll = Math.random();
+            if (roll < 0.4) {
+                toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'});
+                finalIncome = 0;
+            } else if (roll > 0.9) {
+                 toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>});
+                 finalIncome *= 5;
+            }
+            break;
+        case 'farm':
+            if (Math.random() < 0.15) {
+                 toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'});
+                 finalIncome *= 0.5;
+            }
+            break;
+        case 'mine':
+            if (business.depletionRate) {
+                const hoursPassed = secondsPassed / 3600;
+                finalIncome *= Math.pow(1 - business.depletionRate, hoursPassed);
+            }
+            break;
+        case 'industry':
+            if (business.maintenanceCost) {
+                finalIncome *= (1 - business.maintenanceCost);
+            }
+            break;
     }
-    if (business.id === 'farm' && Math.random() < 0.15) {
-         toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'});
-         incomeToCollect *= 0.5;
-    }
+
+    // Safeguard against negative income and floor the result
+    const incomeToCollect = Math.floor(Math.max(0, finalIncome));
 
     const newBusiness = { ...business, lastCollected: Date.now() };
     const newBusinesses = { ...userProfile.businesses, [businessId]: newBusiness };
