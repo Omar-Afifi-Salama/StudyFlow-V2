@@ -79,7 +79,7 @@ const DEFAULT_STOPWATCH_STATE: StopwatchState = {
 
 const DEFAULT_COUNTDOWN_STATE: CountdownState = {
     isRunning: false,
-    timeLeftOnPause: 0,
+    timeLeftOnPause: 5 * 60 * 1000,
     initialDuration: 5 * 60 * 1000,
     sessionStartTime: null,
 };
@@ -139,8 +139,8 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'twoFiftyHourForce', name: '250 Hour Force', description: 'Study for a total of 250 hours.', iconName: 'Trophy', cashReward: 50000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 900000, category: 'Study Time' },
   { id: 'timeLord', name: 'Time Master', description: 'Study for a total of 500 hours.', iconName: 'Sun', cashReward: 100000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 1800000, category: 'Study Time' },
   { id: 'thousandHourThrone', name: 'Thousand Hour Throne', description: 'Study for a total of 1000 hours. An incredible feat.', iconName: 'Crown', cashReward: 200000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600000, category: 'Study Time' },
-  { id: 'nightOwl', name: 'Night Owl', description: 'Log a study session between midnight and 4 AM.', iconName: 'Moon', cashReward: 500, criteria: (p, s) => s.some(sess => new Date(sess.startTime).getHours() >= 0 && new Date(sess.startTime).getHours() < 4), category: 'Study Time' },
-  { id: 'earlyBird', name: 'Early Bird', description: 'Log a study session between 4 AM and 7 AM.', iconName: 'Sunrise', cashReward: 500, criteria: (p, s) => s.some(sess => new Date(sess.startTime).getHours() >= 4 && new Date(sess.startTime).getHours() < 7), category: 'Study Time' },
+  { id: 'nightOwl', name: 'Night Owl', description: 'Log 10 study sessions between midnight and 4 AM.', iconName: 'Moon', cashReward: 500, criteria: (p, s) => s.filter(sess => new Date(sess.startTime).getHours() >= 0 && new Date(sess.startTime).getHours() < 4).length >= 10, category: 'Study Time' },
+  { id: 'earlyBird', name: 'Early Bird', description: 'Log 10 study sessions between 4 AM and 7 AM.', iconName: 'Sunrise', cashReward: 500, criteria: (p, s) => s.filter(sess => new Date(sess.startTime).getHours() >= 4 && new Date(sess.startTime).getHours() < 7).length >= 10, category: 'Study Time' },
   
   // Pomodoro
   { id: 'pomodoroInitiate', name: 'Pomodoro Initiate', description: 'Complete 1 full Pomodoro focus cycle.', iconName: 'Timer', cashReward: 100, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 1, category: 'Pomodoro' },
@@ -650,10 +650,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [updateStreakAndGetBonus, getSkillBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
   const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
-    const startTime = details.endTime - details.durationInSeconds * 1000;
     addSession({
       type: details.type,
-      startTime: startTime,
+      startTime: details.endTime - details.durationInSeconds * 1000,
       durationInSeconds: details.durationInSeconds,
       description: details.description,
       isFullPomodoroCycle: details.type === 'Pomodoro Focus' ? (details.durationInSeconds / 60) >= pomodoroState.settings.workDuration : false,
@@ -1282,7 +1281,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             startTime: Date.now() - timeStudiedMs,
             durationInSeconds: Math.floor(timeStudiedMs / 1000)
         });
-        resetCountdown();
+        resetCountdown(initialDuration);
         toast({ title: "Session Logged", description: "Your countdown session has been saved." });
     }
   }, [countdownState, addSession, resetCountdown, toast]);
@@ -1394,8 +1393,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         parsedProfile = {
             ...DEFAULT_USER_PROFILE,
             ...tempProfile,
+            xp: (tempProfile.xp === undefined || typeof tempProfile.xp !== 'number' || isNaN(tempProfile.xp)) ? 0 : Math.max(0, tempProfile.xp),
             businesses: {...DEFAULT_BUSINESSES, ...(tempProfile.businesses || {})},
-            cash: tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' ? DEFAULT_USER_PROFILE.cash : tempProfile.cash,
+            cash: (tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' || isNaN(tempProfile.cash)) ? DEFAULT_USER_PROFILE.cash : tempProfile.cash,
             ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
             completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
             unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
