@@ -1557,19 +1557,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
 
-    // More robustly find and remove all possible theme classes first
-    const allThemeClasses = PREDEFINED_SKINS
-      .map(s => s.isTheme ? s.themeClass : null)
-      .filter((c): c is string => !!c && c !== 'classic');
-      
-    root.classList.remove(...allThemeClasses);
+    // Explicitly list all theme classes to be managed
+    const themeClasses = ['dark', 'sepia', 'theme-forest', 'theme-sunset', 'theme-galaxy'];
 
-    // Find the skin to apply
+    // Remove all possible theme classes to ensure a clean slate
+    root.classList.remove(...themeClasses);
+    
     const skinToApply = PREDEFINED_SKINS.find(s => s.id === skinId);
-
-    // Add the new theme class if it's not the default 'classic'
+    
+    // Add the new theme class if it's a valid theme and not the default 'classic'
     if (skinToApply && skinToApply.isTheme && skinToApply.themeClass && skinToApply.themeClass !== 'classic') {
-      root.classList.add(skinToApply.themeClass);
+        root.classList.add(skinToApply.themeClass);
     }
   }, []);
 
