@@ -4,7 +4,7 @@
 import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Building } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -138,6 +138,9 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'hundredHourHero', name: 'Hundred Hour Hero', description: 'Study for a total of 100 hours.', iconName: 'Trophy', cashReward: 25000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 360000, category: 'Study Time' },
   { id: 'twoFiftyHourForce', name: '250 Hour Force', description: 'Study for a total of 250 hours.', iconName: 'Trophy', cashReward: 50000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 900000, category: 'Study Time' },
   { id: 'timeLord', name: 'Time Master', description: 'Study for a total of 500 hours.', iconName: 'Sun', cashReward: 100000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 1800000, category: 'Study Time' },
+  { id: 'thousandHourThrone', name: 'Thousand Hour Throne', description: 'Study for a total of 1000 hours. An incredible feat.', iconName: 'Crown', cashReward: 200000, criteria: (p, s) => s.reduce((sum, sess) => sum + sess.duration, 0) >= 3600000, category: 'Study Time' },
+  { id: 'nightOwl', name: 'Night Owl', description: 'Log a study session between midnight and 4 AM.', iconName: 'Moon', cashReward: 500, criteria: (p, s) => s.some(sess => new Date(sess.startTime).getHours() >= 0 && new Date(sess.startTime).getHours() < 4), category: 'Study Time' },
+  { id: 'earlyBird', name: 'Early Bird', description: 'Log a study session between 4 AM and 7 AM.', iconName: 'Sunrise', cashReward: 500, criteria: (p, s) => s.some(sess => new Date(sess.startTime).getHours() >= 4 && new Date(sess.startTime).getHours() < 7), category: 'Study Time' },
   
   // Pomodoro
   { id: 'pomodoroInitiate', name: 'Pomodoro Initiate', description: 'Complete 1 full Pomodoro focus cycle.', iconName: 'Timer', cashReward: 100, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 1, category: 'Pomodoro' },
@@ -145,6 +148,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'pomodoroExpert', name: 'Pomodoro Expert', description: 'Complete 50 full Pomodoro focus cycles.', iconName: 'Coffee', cashReward: 5000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 50, category: 'Pomodoro' },
   { id: 'pomodoroSensei', name: 'Pomodoro Sensei', description: 'Complete 100 full Pomodoro focus cycles.', iconName: 'Activity', cashReward: 7500, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 100, category: 'Pomodoro' },
   { id: 'pomodoroZenith', name: 'Pomodoro Zenith', description: 'Complete 500 full Pomodoro focus cycles.', iconName: 'Moon', cashReward: 30000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 500, category: 'Pomodoro' },
+  { id: 'pomodoroGrandmaster', name: 'Pomodoro Grandmaster', description: 'Complete 1,000 full Pomodoro focus cycles.', iconName: 'BrainCircuit', cashReward: 50000, criteria: (p, s) => s.filter(sess => sess.type === 'Pomodoro Focus' && sess.isFullPomodoroCycle).length >= 1000, category: 'Pomodoro' },
   
   // Progression
   { id: 'levelUpNovice', name: 'Adept Learner', description: 'Reach Level 5: Adept.', iconName: 'Award', cashReward: 1000, criteria: (p) => p.level >= 5, category: 'Progression' },
@@ -152,6 +156,8 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'levelTwentyTitan', name: 'Study Titan', description: 'Reach Level 20: Ascendant.', iconName: 'Star', cashReward: 15000, criteria: (p) => p.level >= 20, category: 'Progression' },
   { id: 'levelThirtyLegend', name: 'Galactic Prodigy', description: 'Reach Level 30: Singularity.', iconName: 'Package', cashReward: 30000, criteria: (p) => p.level >= 30, category: 'Progression' },
   { id: 'levelFiftyOracle', name: 'Apex Scholar', description: 'Reach Level 50: Headmaster of Habits.', iconName: 'Gem', cashReward: 75000, criteria: (p) => p.level >= 50, category: 'Progression' },
+  { id: 'levelSeventyFiveSage', name: 'Level 75 Sage', description: 'Reach Level 75: Ontology Officer.', iconName: 'Feather', cashReward: 100000, criteria: (p) => p.level >= 75, category: 'Progression' },
+  { id: 'centurion', name: 'Centurion', description: 'Reach Level 100: The Librarian.', iconName: 'Library', cashReward: 250000, criteria: (p) => p.level >= 100, category: 'Progression' },
   
   // Collection
   { id: 'shopSpree', name: 'Shop Spree', description: 'Buy your first (non-free) skin.', iconName: 'ShoppingCart', cashReward: 500, criteria: (p) => p.ownedSkinIds.some(id => (PREDEFINED_SKINS.find(s => s.id === id)?.price || 0) > 0), category: 'Collection' },
@@ -164,30 +170,42 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'unstoppableStreaker', name: 'Unstoppable Streaker', description: 'Achieve a 30-day study streak.', iconName: 'Flame', cashReward: 20000, criteria: (p) => p.longestStreak >= 30, category: 'Streaks & Challenges' },
   { id: 'challengeChampion', name: 'Challenge Champion', description: 'Complete 10 daily challenges in total.', iconName: 'TargetIcon', cashReward: 2000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 10, category: 'Streaks & Challenges' },
   { id: 'challengeConqueror', name: 'Challenge Conqueror', description: 'Complete 50 daily challenges in total.', iconName: 'Gift', cashReward: 10000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 50, category: 'Streaks & Challenges' },
-  
+  { id: 'hundredDayHabit', name: 'Hundred Day Habit', description: 'Achieve a 100-day study streak.', iconName: 'CalendarHeart', cashReward: 50000, criteria: (p) => p.longestStreak >= 100, category: 'Streaks & Challenges' },
+  { id: 'yearOfFocus', name: 'A Year of Focus', description: 'Achieve a 365-day study streak.', iconName: 'CalendarCheck2', cashReward: 200000, criteria: (p) => p.longestStreak >= 365, category: 'Streaks & Challenges' },
+  { id: 'challengeDevotee', name: 'Challenge Devotee', description: 'Complete 100 daily challenges in total.', iconName: 'Star', cashReward: 25000, criteria: (p) => (p.completedChallengeIds?.length || 0) >= 100, category: 'Streaks & Challenges' },
+
   // Notepad & Revision
   { id: 'diligentRevisionist', name: 'Diligent Revisionist', description: 'Add 5 concepts to the Revision Hub.', iconName: 'Brain', cashReward: 1000, criteria: (p) => (p.notepadData.revisionConcepts?.length || 0) >= 5, category: 'Notepad & Revision' },
   { id: 'memoryMaster', name: 'Memory Master', description: 'Successfully revise 10 concepts through their cycle (stage 3+).', iconName: 'AlignLeft', cashReward: 3000, criteria: (p) => (p.notepadData.revisionConcepts?.filter(rc => rc.revisionStage >= 3).length || 0) >= 10, category: 'Notepad & Revision' },
   { id: 'perfectRecall', name: 'Perfect Recall', description: 'Master 20 concepts in Revision Hub (stage 5+).', iconName: 'CheckSquare', cashReward: 10000, criteria: (p) => (p.notepadData.revisionConcepts?.filter(rc => rc.revisionStage >= 5).length || 0) >= 20, category: 'Notepad & Revision' },
   { id: 'taskScheduler', name: 'Task Scheduler', description: 'Complete 20 tasks from your checklist.', iconName: 'ListChecks', cashReward: 1500, criteria: (p) => (p.notepadData.tasks.filter(t => t.completed).length || 0) >= 20, category: 'Notepad & Revision' },
   { id: 'goalGetter', name: 'Goal Getter', description: 'Complete 10 goals from your goals list.', iconName: 'Target', cashReward: 2000, criteria: (p) => (p.notepadData.goals.filter(g => g.completed).length || 0) >= 10, category: 'Notepad & Revision' },
-  
+  { id: 'greatWallOfText', name: 'Great Wall of Text', description: 'Write a single note with over 1000 characters.', iconName: 'FileText', cashReward: 2000, criteria: (p) => (p.notepadData.notes?.some(n => n.content.length > 1000) || false), category: 'Notepad & Revision' },
+  { id: 'taskAnnihilator', name: 'Task Annihilator', description: 'Complete 100 tasks from your checklist.', iconName: 'ListChecks', cashReward: 3000, criteria: (p) => (p.notepadData.tasks.filter(t => t.completed).length || 0) >= 100, category: 'Notepad & Revision' },
+  { id: 'archivist', name: 'Archivist', description: 'Save 50 links in your notepad.', iconName: 'Archive', cashReward: 2500, criteria: (p) => (p.notepadData.links?.length || 0) >= 50, category: 'Notepad & Revision' },
+  { id: 'longTermPlanner', name: 'Long-Term Planner', description: 'Set a goal with a due date more than a year away.', iconName: 'CalendarPlus', cashReward: 1500, criteria: (p) => p.notepadData.goals.some(g => g.dueDate && differenceInDays(parseISO(g.dueDate), new Date()) > 365), category: 'Notepad & Revision' },
+
   // Habits
   { id: 'habitFormer', name: 'Habit Former', description: 'Create your first habit.', iconName: 'HabitIcon', cashReward: 500, criteria: (p) => (p.notepadData.habits?.length || 0) >= 1, category: 'Habits' },
   { id: 'dailyDiscipliner', name: 'Daily Discipliner', description: 'Maintain a 7-day streak on any daily habit.', iconName: 'Repeat', cashReward: 1500, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'daily' && h.currentStreak >= 7), category: 'Habits' },
   { id: 'weeklyWarrior', name: 'Weekly Warrior', description: 'Maintain a 4-week streak on any weekly habit.', iconName: 'RepeatIcon', cashReward: 2000, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'weekly' && h.currentStreak >= 4), category: 'Habits' },
   { id: 'habitualAchiever', name: 'Habitual Achiever', description: 'Complete 50 habit instances in total.', iconName: 'ListChecks', cashReward: 3000, criteria: (p) => (p.notepadData.habits?.reduce((sum, hab) => sum + Object.values(hab.log).filter(l => l.completed).length, 0) || 0) >= 50, category: 'Habits'},
+  { id: 'ironWill', name: 'Iron Will', description: 'Maintain a 30-day streak on any daily habit.', iconName: 'Gem', cashReward: 5000, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'daily' && h.longestStreak >= 30), category: 'Habits' },
+  { id: 'persistentProgress', name: 'Persistent Progress', description: 'Maintain a 12-week streak on any weekly habit.', iconName: 'Signal', cashReward: 7500, criteria: (p) => !!p.notepadData.habits?.some(h => h.frequency === 'weekly' && h.longestStreak >= 12), category: 'Habits' },
   
   // Capitalist
   { id: 'firstInvestment', name: 'First Investment', description: 'Unlock your first business.', iconName: 'Banknote', cashReward: 500, criteria: (p) => Object.values(p.businesses).some(b => b.unlocked), category: 'Capitalist' },
   { id: 'diversifiedPortfolio', name: 'Diversified Portfolio', description: 'Unlock all four businesses.', iconName: 'Briefcase', cashReward: 5000, criteria: (p) => Object.values(p.businesses).every(b => b.unlocked), category: 'Capitalist' },
   { id: 'businessTycoon', name: 'Business Tycoon', description: 'Get one business to Level 10.', iconName: 'Building', cashReward: 10000, criteria: (p) => Object.values(p.businesses).some(b => b.level >= 10), category: 'Capitalist' },
   { id: 'mogul', name: 'Mogul', description: 'Have a combined level of 40 across all businesses.', iconName: 'Landmark', cashReward: 25000, criteria: (p) => Object.values(p.businesses).reduce((sum, b) => sum + b.level, 0) >= 40, category: 'Capitalist' },
-  { id: 'millionaire', name: 'Millionaire', description: 'Earn a total of $1,000,000.', iconName: 'Diamond', cashReward: 50000, criteria: (p,s) => { const totalCashFromStudy = s.reduce((sum, sess) => sum + Math.floor((sess.duration / 60 / 5) * CASH_PER_5_MINUTES_FOCUS), 0); const totalCashFromAchievements = ALL_ACHIEVEMENTS.filter(a => p.unlockedAchievementIds.includes(a.id)).reduce((sum, a) => sum + a.cashReward, 0); return (totalCashFromStudy + totalCashFromAchievements) >= 1000000; }, category: 'Capitalist'},
+  { id: 'millionaireClub', name: 'Millionaire Club', description: 'Hold over $1,000,000 cash at one time.', iconName: 'Landmark', cashReward: 10000, criteria: (p) => p.cash >= 1000000, category: 'Capitalist' },
+  { id: 'passivePowerhouse', name: 'Passive Powerhouse', description: 'Have a combined passive income of over $20,000 per hour.', iconName: 'DollarSign', cashReward: 20000, criteria: (p) => Object.values(p.businesses).reduce((total, business) => { if (business.unlocked) { const income = business.baseIncome * Math.pow(1.15, business.level - 1) * (1 - (business.maintenanceCost || 0)); return total + income; } return total; }, 0) >= 20000, category: 'Capitalist' },
+  { id: 'businessMagnate', name: 'Business Magnate', description: 'Get all four businesses to Level 10.', iconName: 'Building2', cashReward: 50000, criteria: (p) => Object.values(p.businesses).every(b => b.level >= 10), category: 'Capitalist' },
 
   // General / Meta
   { id: 'skillfulLearner', name: 'Skillful Learner', description: 'Unlock 5 skills from the skill tree.', iconName: 'Network', cashReward: 1000, criteria: (p) => p.unlockedSkillIds.length >= 5, category: 'General' },
   { id: 'treeOfKnowledge', name: 'Tree of Knowledge', description: 'Unlock 15 skills from the skill tree.', iconName: 'Network', cashReward: 5000, criteria: (p) => p.unlockedSkillIds.length >= 15, category: 'General' },
+  { id: 'skillTreeMaster', name: 'Skill Tree Master', description: 'Unlock all non-infinite skills.', iconName: 'Network', cashReward: 20000, criteria: p => ALL_SKILLS.filter(sk => sk.category !== 'Infinite').every(sk => p.unlockedSkillIds.includes(sk.id)), category: 'General'},
   { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Crown', cashReward: 100000, criteria: (p) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length - 1, category: 'General' },
 ];
 
@@ -209,6 +227,7 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'unlockAchievements', name: 'Milestone Monitor', description: 'Unlocks the "Achievements" page.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteLevel: 3, prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
   { id: 'unlockShop', name: 'Aspiring Collector', description: 'Unlocks the "Skin Shop".', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
   { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlocks the "Ambiance Mixer".', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockAbout'], category: 'Core Feature' },
+  { id: 'pwaPro', name: 'PWA Pro', description: 'Enhances PWA functionality with offline access to core features.', cost: 1, iconName: 'Smartphone', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Utility' },
 
   // Advanced Notepad Features - Tier 3 (Requires earlier notepad skills or higher level)
   { id: 'unlockNotepadGoals', name: 'Goal Setter', description: 'Unlocks the Goals tab in Notepad.', cost: 1, iconName: 'Target', unlocksFeature: 'notepadGoals', prerequisiteSkillIds: ['unlockNotepadChecklist'], prerequisiteLevel: 4, category: 'Notepad Feature' },
@@ -216,7 +235,7 @@ export const ALL_SKILLS: Skill[] = [
   
   // Core Gameplay Loop Features - Tier 3 & 4
   { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges" and "Daily Offers".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
-  { id: 'skillPointRefund', name: 'Strategic Respec', description: 'Refunds all spent Skill Points (except for this skill and core unlocks). This is a one-time use per click.', cost: 5, iconName: 'RepeatIcon', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockAbout', 'unlockStats'], category: 'Utility' },
+  { id: 'challengeReroll', name: 'Challenge Reroll', description: 'Once per day, you can reroll one of your daily challenges for a new one.', cost: 2, iconName: 'Shuffle', prerequisiteLevel: 7, prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
 
   
   // Top Tier Features & Notepad - Tier 4 & 5
@@ -225,22 +244,31 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlocks the "Habit Tracker" tab in Notepad.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
   { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab in Notepad.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
   { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlocks the "Eisenhower Matrix" in Notepad.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadHabits'], prerequisiteLevel: 8, category: 'Notepad Feature' },
+  { id: 'revisionAccelerator', name: 'Revision Accelerator', description: 'Reduces the time between revision intervals in the Revision Hub by 10%.', cost: 2, iconName: 'Rocket', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockNotepadRevision'], category: 'Notepad Feature' },
+  { id: 'goalMomentum', name: 'Goal Momentum', description: 'Completing a goal on its due date grants a small XP bonus.', cost: 2, iconName: 'Trophy', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockNotepadGoals'], category: 'Notepad Feature' },
 
   // Passive Boosts Branch - XP
-  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
+  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 5, prerequisiteSkillIds: ['pwaPro'], category: 'Passive Boost' },
   { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 10, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
+  { id: 'knowledgeRetention', name: 'Knowledge Retention', description: 'Every 10th focus session grants a 25% XP bonus.', cost: 3, iconName: 'BrainCircuit', prerequisiteLevel: 12, prerequisiteSkillIds: ['xpBoost2'], category: 'Passive Boost' },
+  { id: 'deepWork', name: "Deep Work Mode", description: "Unlocks a 'Deep Work' Pomodoro mode (50/10) with a 10% XP bonus.", cost: 5, iconName: 'Zap', prerequisiteLevel: 20, prerequisiteSkillIds: ['knowledgeRetention'], category: 'Core Feature' },
 
   // Passive Boosts Branch - Cash
-  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['skillPointRefund'], category: 'Passive Boost' },
+  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Passive Boost' },
   { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 11, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
+  { id: 'businessAcumen', name: 'Business Acumen', description: 'Reduces upgrade costs for all businesses by 10%.', cost: 3, iconName: 'TrendingUp', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
+  { id: 'marketAnalyst', name: 'Market Analyst', description: "Provides a hint about the next hour's AI Startup income chance.", cost: 4, iconName: 'Eye', prerequisiteLevel: 12, prerequisiteSkillIds: ['businessAcumen'], category: 'Utility' },
+
 
   // Utility Skills - Higher Cost / Unique Effects
-  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Conceptual)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
+  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Conceptual)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, prerequisiteSkillIds: ['challengeReroll'], category: 'Utility' },
   { id: 'shopDiscount1', name: 'Savvy Shopper', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
-  
+  { id: 'breakTimeBonus', name: 'Break Time Bonus', description: 'Taking Pomodoro breaks has a small chance to grant bonus cash.', cost: 2, iconName: 'Coffee', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
+
   // Infinite Skills
   { id: 'infiniteXpBoost', name: 'Endless Insight', description: 'Permanently increases XP gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Infinite' },
   { id: 'infiniteCashBoost', name: 'Infinite Earnings', description: 'Permanently increases Cash gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['cashBoost2'], category: 'Infinite' },
+  { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteLevel: 25, prerequisiteSkillIds: ['infiniteXpBoost', 'infiniteCashBoost'], category: 'Infinite' },
 ];
 
 const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; 
@@ -1020,8 +1048,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (!unlockCheck.can) { toast({ title: "Cannot Unlock Skill", description: unlockCheck.reason, variant: "destructive", icon: <XCircle/> }); return false; }
     const skill = ALL_SKILLS.find(s => s.id === skillId);
     if (!skill) return false;
-
-    if (skill.id === 'skillPointRefund') { refundAllSkillPoints(); return true; } 
     
     let newUnlockedSkills = userProfile.unlockedSkillIds;
     let newSkillLevels = { ...(userProfile.skillLevels || {}) };
@@ -1044,7 +1070,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
     toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
     return true;
-  }, [canUnlockSkill, toast, refundAllSkillPoints, userProfile, checkAndUnlockAchievements]);
+  }, [canUnlockSkill, toast, userProfile, checkAndUnlockAchievements]);
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     updateUserProfile({ wakeUpTime, sleepTime });

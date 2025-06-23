@@ -208,7 +208,7 @@ export default function StatsDashboard() {
                                       if (!day) {
                                           return <div key={`blank-${index}`} className="h-4 w-4 rounded-sm" />;
                                       }
-                                      let colorClass = 'bg-muted/30';
+                                      let colorClass = 'bg-muted';
                                       if (day.level > 0) colorClass = `bg-primary/20`;
                                       if (day.level > 1) colorClass = `bg-primary/40`;
                                       if (day.level > 2) colorClass = `bg-primary/70`;
@@ -218,7 +218,7 @@ export default function StatsDashboard() {
                                           <TooltipProvider key={day.date} delayDuration={100}>
                                               <Tooltip>
                                                   <TooltipTrigger asChild>
-                                                      <div className={cn("h-4 w-4 rounded-sm", colorClass)} />
+                                                      <div className={cn("h-4 w-4 rounded-sm transition-all hover:ring-2 hover:ring-primary", colorClass)} />
                                                   </TooltipTrigger>
                                                   <ShadTooltipContent>
                                                       <p className="font-semibold">{day.count} minutes</p>
