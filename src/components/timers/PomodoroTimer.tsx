@@ -26,7 +26,8 @@ export default function PomodoroTimer() {
     resetPomodoro,
     switchPomodoroMode,
     updatePomodoroSettings,
-    logPomodoroSession
+    logPomodoroSession,
+    getSkillBoost
   } = useSessions();
 
   const { mode, isRunning, settings, sessionEndTime, sessionStartTime } = pomodoroState;
@@ -89,6 +90,9 @@ export default function PomodoroTimer() {
   const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal);
   const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
 
+  const skillXpBoost = getSkillBoost('xp');
+  const skillCashBoost = getSkillBoost('cash');
+
   useHotkeys('p', () => { if (isRunning) pausePomodoro(); else startPomodoro(); }, { preventDefault: true }, [isRunning, startPomodoro, pausePomodoro]);
   useHotkeys('r', () => { resetPomodoro(); }, { preventDefault: true }, [resetPomodoro]);
   useHotkeys('s', () => switchPomodoroMode(), { preventDefault: true }, [switchPomodoroMode]); 
@@ -113,6 +117,8 @@ export default function PomodoroTimer() {
                             <p><Zap className="inline h-4 w-4 mr-1 text-yellow-400"/>{XP_PER_MINUTE_FOCUS} XP per minute.</p>
                             <p><DollarSign className="inline h-4 w-4 mr-1 text-green-500"/>${CASH_PER_5_MINUTES_FOCUS.toLocaleString()} per 5 minutes.</p>
                             {userProfile.currentStreak > 0 && <p className="text-green-600 mt-1"><ChevronsRight className="inline h-4 w-4 mr-1"/>Current Streak Bonus: +{(streakBonusPercentVal * 100).toFixed(0)}% XP/Cash!</p>}
+                            {skillXpBoost > 0 && <p className="text-primary mt-1"><ChevronsRight className="inline h-4 w-4 mr-1"/>Skill Bonus: +{(skillXpBoost * 100).toFixed(0)}% XP</p>}
+                            {skillCashBoost > 0 && <p className="text-primary mt-1"><ChevronsRight className="inline h-4 w-4 mr-1"/>Skill Bonus: +{(skillCashBoost * 100).toFixed(0)}% Cash</p>}
                             <p className="mt-2 text-xs text-muted-foreground">Breaks do not grant rewards.</p>
                         </TooltipContent>
                     </Tooltip>

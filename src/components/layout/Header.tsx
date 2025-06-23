@@ -35,7 +35,6 @@ const allPossibleNavItems: NavItem[] = [
     { href: '/challenges', label: 'Challenges', icon: LucideIcons.CalendarCheck, hotkey: 'h', featureKey: 'challenges' },
     { href: '/capitalist', label: 'Capitalist', icon: LucideIcons.Briefcase, hotkey: 'c', featureKey: 'capitalist' },
     { href: '/shop', label: 'Shop', icon: LucideIcons.ShoppingCart, hotkey: 'x', featureKey: 'shop' },
-    { href: '/countdown', label: 'Countdown', icon: LucideIcons.Timer, hotkey: 'd', featureKey: 'countdown' },
     { href: '/achievements', label: 'Achievements', icon: LucideIcons.Award, hotkey: 'v', featureKey: 'achievements' },
     { href: '/about', label: 'Guide', icon: LucideIcons.HelpCircle, hotkey: 'g', featureKey: 'about' },
 ];

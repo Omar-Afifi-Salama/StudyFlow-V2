@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
+import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame } from 'lucide-react';
@@ -76,6 +76,14 @@ const DEFAULT_STOPWATCH_STATE: StopwatchState = {
     isRunning: false,
     sessionStartTime: null,
 };
+
+const DEFAULT_COUNTDOWN_STATE: CountdownState = {
+    isRunning: false,
+    timeLeftOnPause: 0,
+    initialDuration: 5 * 60 * 1000,
+    sessionStartTime: null,
+};
+
 
 const DAILY_OFFERS_POOL: DailyOffer[] = [
   { id: 'xp_buff_sm', title: 'Mental Clarity', description: 'A small boost to your learning efficiency.', type: 'buff', durationMinutes: 60, effect: { type: 'xp', modifier: 1.10, description: '+10% XP Gain' } },
@@ -208,13 +216,14 @@ export const ALL_SKILLS: Skill[] = [
   
   // Core Gameplay Loop Features - Tier 3 & 4
   { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges" and "Daily Offers".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
-  { id: 'unlockCountdown', name: 'Event Tracker', description: 'Unlocks the main "Countdown Timer" page.', cost: 1, iconName: 'Timer', unlocksFeature: 'countdown', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAbout'], category: 'Core Feature' },
+  { id: 'skillPointRefund', name: 'Strategic Respec', description: 'Refunds all spent Skill Points (except for this skill and core unlocks). This is a one-time use per click.', cost: 5, iconName: 'RepeatIcon', prerequisiteLevel: 10, prerequisiteSkillIds: ['unlockAbout', 'unlockStats'], category: 'Utility' },
+
   
   // Top Tier Features & Notepad - Tier 4 & 5
   { id: 'unlockCapitalist', name: 'Budding Investor', description: 'Unlocks the "Capitalist Corner" to generate passive income.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
   { id: 'unlockNotepadRevision', name: 'Revision Strategist', description: 'Unlocks the "Revision Hub" in Notepad.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadNotes', 'unlockNotepadGoals'], prerequisiteLevel: 6, category: 'Notepad Feature' },
   { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlocks the "Habit Tracker" tab in Notepad.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
-  { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab in Notepad.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockCountdown', 'unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
+  { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab in Notepad.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
   { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlocks the "Eisenhower Matrix" in Notepad.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadHabits'], prerequisiteLevel: 8, category: 'Notepad Feature' },
 
   // Passive Boosts Branch - XP
@@ -222,7 +231,7 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 10, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
 
   // Passive Boosts Branch - Cash
-  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockCountdown'], category: 'Passive Boost' },
+  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['skillPointRefund'], category: 'Passive Boost' },
   { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 11, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
 
   // Utility Skills - Higher Cost / Unique Effects
@@ -262,6 +271,14 @@ interface SessionContextType {
   pauseStopwatch: () => void;
   resetStopwatch: () => void;
   logStopwatchSession: () => void;
+
+  countdownState: CountdownState;
+  startCountdown: () => void;
+  pauseCountdown: () => void;
+  resetCountdown: (newDurationMs?: number) => void;
+  setCountdownDuration: (durationMs: number) => void;
+  logCountdownSession: () => void;
+
 
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
@@ -308,6 +325,7 @@ interface SessionContextType {
   unlockSkill: (skillId: string) => boolean;
   isFeatureUnlocked: (featureKey: FeatureKey) => boolean;
   getAppliedBoost: (type: 'xp' | 'cash' | 'shopDiscount') => number;
+  getSkillBoost: (type: 'xp' | 'cash') => number;
   refundAllSkillPoints: () => void;
 
   floatingGains: FloatingGain[];
@@ -328,6 +346,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   // Timer States
   const [pomodoroState, setPomodoroState] = useState<PomodoroState>(DEFAULT_POMODORO_STATE);
   const [stopwatchState, setStopwatchState] = useState<StopwatchState>(DEFAULT_STOPWATCH_STATE);
+  const [countdownState, setCountdownState] = useState<CountdownState>(DEFAULT_COUNTDOWN_STATE);
+
 
   const lastGainTime = useRef({ xp: 0, cash: 0 });
   const sessionsRef = useRef(sessions);
@@ -412,28 +432,33 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [toast, isFeatureUnlocked]);
   
-  const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
+  const getSkillBoost = useCallback((type: 'xp' | 'cash'): number => {
     let boost = 0;
-    
-    // Skill boosts
     userProfile.unlockedSkillIds.forEach(skillId => {
-      const skill = ALL_SKILLS.find(s => s.id === skillId);
-      if (skill) {
-          if (type === 'xp' && skill.xpBoostPercent && skill.category !== 'Infinite') boost += skill.xpBoostPercent;
-          if (type === 'cash' && skill.cashBoostPercent && skill.category !== 'Infinite') boost += skill.cashBoostPercent;
-          if (type === 'shopDiscount' && skill.shopDiscountPercent) boost += skill.shopDiscountPercent;
-      }
+        const skill = ALL_SKILLS.find(s => s.id === skillId);
+        if (skill) {
+            if (type === 'xp' && skill.xpBoostPercent && skill.category !== 'Infinite') boost += skill.xpBoostPercent;
+            if (type === 'cash' && skill.cashBoostPercent && skill.category !== 'Infinite') boost += skill.cashBoostPercent;
+        }
     });
-
-    // Infinite skill boosts
     if(type === 'xp' && userProfile.skillLevels?.['infiniteXpBoost']) {
-      boost += (userProfile.skillLevels['infiniteXpBoost'] || 0) * 0.05;
+        boost += (userProfile.skillLevels['infiniteXpBoost'] || 0) * 0.05;
     }
     if(type === 'cash' && userProfile.skillLevels?.['infiniteCashBoost']) {
-      boost += (userProfile.skillLevels['infiniteCashBoost'] || 0) * 0.05;
+        boost += (userProfile.skillLevels['infiniteCashBoost'] || 0) * 0.05;
     }
+    return boost;
+  }, [userProfile.unlockedSkillIds, userProfile.skillLevels]);
 
-    // Active offer boost/debuff
+  const getAppliedBoost = useCallback((type: 'xp' | 'cash' | 'shopDiscount'): number => {
+    let boost = getSkillBoost(type as 'xp' | 'cash');
+    if (type === 'shopDiscount') {
+        userProfile.unlockedSkillIds.forEach(skillId => {
+            const skill = ALL_SKILLS.find(s => s.id === skillId);
+            if (skill && skill.shopDiscountPercent) boost += skill.shopDiscountPercent;
+        });
+    }
+    
     if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
         const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
         if(offer && offer.effect.type === type) {
@@ -442,7 +467,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
     
     return boost;
-  }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
+  }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, userProfile.activeOfferEndTime, getSkillBoost]);
+
   
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -501,8 +527,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const baseStreakBonus = Math.min(currentStudyStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
-    const skillXpBoost = getAppliedBoost('xp');
-    const skillCashBoost = getAppliedBoost('cash');
+    const skillXpBoost = getSkillBoost('xp');
+    const skillCashBoost = getSkillBoost('cash');
 
     return {
         streakBonusMultiplier: baseStreakBonus,
@@ -512,7 +538,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         updatedLongestStreak: longestStudyStreak,
         updatedLastStudyDate: newLastStudyDate
     };
-  }, [getAppliedBoost]);
+  }, [getSkillBoost]);
 
   const addSession = useCallback((sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean, description?: string }) => {
     if (sessionDetails.durationInSeconds <= 0) { console.warn("Attempted to log session with zero duration."); return; }
@@ -528,7 +554,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         let awardedXp = 0, awardedCash = 0;
         const minutesStudied = sessionDetails.durationInSeconds / 60;
 
-        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
+        if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch' || sessionDetails.type === 'Countdown') {
           awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
           awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
           
@@ -564,13 +590,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (awardedXp > 0) rewardParts.push(`${awardedXp} XP`);
         if (awardedCash > 0) rewardParts.push(`$${awardedCash.toLocaleString()}`);
         
-        const baseStreakBonusPercent = (totalXpMultiplier - 1 - getAppliedBoost('xp')) * 100; 
+        const baseStreakBonusPercent = (totalXpMultiplier - 1 - getSkillBoost('xp')) * 100; 
         if (baseStreakBonusPercent > 0.1 && (awardedXp > 0 || awardedCash > 0)) { 
             rewardParts.push(`(+${baseStreakBonusPercent.toFixed(0)}% streak)`);
         }
-        const skillBonusXpPercent = getAppliedBoost('xp') * 100;
+        const skillBonusXpPercent = getSkillBoost('xp') * 100;
         if (skillBonusXpPercent > 0 && awardedXp > 0) { rewardParts.push(`(+${skillBonusXpPercent.toFixed(0)}% skill XP)`); }
-        const skillBonusCashPercent = getAppliedBoost('cash') * 100;
+        const skillBonusCashPercent = getSkillBoost('cash') * 100;
         if (skillBonusCashPercent > 0 && awardedCash > 0) { rewardParts.push(`(+${skillBonusCashPercent.toFixed(0)}% skill cash)`); }
 
         if (rewardParts.length > 0) {
@@ -593,7 +619,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       }
       return updatedSessions;
     });
-  }, [updateStreakAndGetBonus, getAppliedBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
+  }, [updateStreakAndGetBonus, getSkillBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
   const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
     const startTime = details.endTime - details.durationInSeconds * 1000;
@@ -1173,6 +1199,69 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch, toast]);
 
+  const setCountdownDuration = useCallback((durationMs: number) => {
+    setCountdownState(prev => ({
+        ...prev,
+        isRunning: false,
+        timeLeftOnPause: durationMs,
+        initialDuration: durationMs,
+        sessionStartTime: null
+    }));
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    setCountdownState(prev => {
+        if (prev.isRunning || prev.timeLeftOnPause <= 0) return prev;
+        return { ...prev, isRunning: true, sessionStartTime: Date.now() };
+    });
+  }, []);
+
+  const pauseCountdown = useCallback(() => {
+    setCountdownState(prev => {
+        if (!prev.isRunning || !prev.sessionStartTime) return prev;
+        const elapsedSinceStart = Date.now() - prev.sessionStartTime;
+        return {
+            ...prev,
+            isRunning: false,
+            timeLeftOnPause: prev.timeLeftOnPause - elapsedSinceStart,
+            sessionStartTime: null
+        };
+    });
+  }, []);
+
+  const resetCountdown = useCallback((newDurationMs?: number) => {
+    setCountdownState(prev => ({
+        ...prev,
+        isRunning: false,
+        timeLeftOnPause: newDurationMs ?? prev.initialDuration,
+        initialDuration: newDurationMs ?? prev.initialDuration,
+        sessionStartTime: null,
+    }));
+  }, []);
+  
+  const logCountdownSession = useCallback(() => {
+    const { isRunning, initialDuration, timeLeftOnPause, sessionStartTime } = countdownState;
+    if (isRunning) return; // Can only log when paused
+    
+    let timeStudiedMs = initialDuration - timeLeftOnPause;
+    
+    if(sessionStartTime && !isRunning) {
+        // This case shouldn't happen if pause is always called, but as a safeguard.
+        timeStudiedMs = initialDuration - (timeLeftOnPause - (Date.now() - sessionStartTime));
+    }
+
+    if (timeStudiedMs > 1000) {
+        addSession({
+            type: 'Countdown',
+            startTime: Date.now() - timeStudiedMs,
+            durationInSeconds: Math.floor(timeStudiedMs / 1000)
+        });
+        resetCountdown();
+        toast({ title: "Session Logged", description: "Your countdown session has been saved." });
+    }
+  }, [countdownState, addSession, resetCountdown, toast]);
+
+
   const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
     if(!isFeatureUnlocked('capitalist')) { toast({ title: "Capitalist Corner Locked", description: "Unlock this feature from the Skill Tree first.", icon: <XCircle/> }); return; }
     
@@ -1444,6 +1533,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
       pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
       stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
+      countdownState, startCountdown, pauseCountdown, resetCountdown, setCountdownDuration, logCountdownSession,
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
@@ -1454,13 +1544,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, 
       isLoaded,
-      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, refundAllSkillPoints,
+      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost, refundAllSkillPoints,
       floatingGains,
   }), [
       sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
       userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
       pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
       stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
+      countdownState, startCountdown, pauseCountdown, resetCountdown, setCountdownDuration, logCountdownSession,
       addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
@@ -1471,7 +1562,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, 
       isLoaded,
-      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, refundAllSkillPoints,
+      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost, refundAllSkillPoints,
       floatingGains,
   ]);
 

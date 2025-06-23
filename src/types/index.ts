@@ -1,7 +1,7 @@
 
 export interface StudySession {
   id: string;
-  type: 'Stopwatch' | 'Pomodoro Focus' | 'Pomodoro Break';
+  type: 'Stopwatch' | 'Pomodoro Focus' | 'Pomodoro Break' | 'Countdown';
   startTime: number; // Unix timestamp in milliseconds
   endTime: number;   // Unix timestamp in milliseconds
   duration: number;  // in seconds
@@ -10,7 +10,7 @@ export interface StudySession {
   isFullPomodoroCycle?: boolean; // True if a Pomodoro focus session completed its full intended duration
 }
 
-export type TimerMode = 'stopwatch' | 'pomodoro';
+export type TimerMode = 'stopwatch' | 'pomodoro' | 'countdown';
 
 export interface Business {
   id: 'startup' | 'farm' | 'mine' | 'industry';
@@ -227,7 +227,6 @@ export type FeatureKey =
   | 'challenges'
   | 'shop'
   | 'capitalist'
-  | 'countdown'
   | 'achievements'
   | 'about'
   | 'notepadChecklist'
@@ -284,4 +283,11 @@ export interface StopwatchState {
   timeElapsedOnPause: number; // Time in ms accumulated before the current run.
   isRunning: boolean;
   sessionStartTime: number | null; // Timestamp in ms of when the current run started.
+}
+
+export interface CountdownState {
+  isRunning: boolean;
+  timeLeftOnPause: number; // in ms
+  initialDuration: number; // in ms
+  sessionStartTime: number | null;
 }
