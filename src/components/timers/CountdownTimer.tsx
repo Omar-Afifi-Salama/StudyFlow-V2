@@ -83,7 +83,7 @@ export default function CountdownTimer() {
     };
 
     const handleSetTimer = () => {
-        const totalSeconds = (durationInput.hours * 3600) + (durationInput.minutes * 60) + durationInput.seconds;
+        const totalSeconds = (durationInput.hours * 3600) + (durationInput.minutes * 60) + (durationInput.seconds);
         if (totalSeconds <= 0) {
             toast({ title: "Invalid Duration", description: "Please set a duration greater than 0.", variant: "destructive"});
             return;
@@ -158,14 +158,14 @@ export default function CountdownTimer() {
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center space-y-6 py-8">
                 {!hasTimerBeenSet ? (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30 w-full">
-                        <h3 className="text-lg font-semibold">Set Duration</h3>
-                        <div className="flex items-end space-x-2">
-                        <div><Label htmlFor="hours">Hours</Label><Input id="hours" type="number" value={durationInput.hours} onChange={(e) => handleInputChange('hours', e.target.value)} min="0" max="99" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
-                        <span className="text-2xl font-bold pb-1">:</span>
-                        <div><Label htmlFor="minutes">Minutes</Label><Input id="minutes" type="number" value={durationInput.minutes} onChange={(e) => handleInputChange('minutes', e.target.value)} min="0" max="59" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
-                        <span className="text-2xl font-bold pb-1">:</span>
-                        <div><Label htmlFor="seconds">Seconds</Label><Input id="seconds" type="number" value={durationInput.seconds} onChange={(e) => handleInputChange('seconds', e.target.value)} min="0" max="59" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30 w-full max-w-sm">
+                        <h3 className="text-lg font-semibold text-center">Set Duration</h3>
+                        <div className="flex items-end justify-center space-x-2">
+                            <div><Label htmlFor="hours" className="text-xs text-muted-foreground">Hours</Label><Input id="hours" type="number" value={durationInput.hours} onChange={(e) => handleInputChange('hours', e.target.value)} min="0" max="99" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
+                            <span className="text-2xl font-bold pb-1">:</span>
+                            <div><Label htmlFor="minutes" className="text-xs text-muted-foreground">Minutes</Label><Input id="minutes" type="number" value={durationInput.minutes} onChange={(e) => handleInputChange('minutes', e.target.value)} min="0" max="59" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
+                            <span className="text-2xl font-bold pb-1">:</span>
+                            <div><Label htmlFor="seconds" className="text-xs text-muted-foreground">Seconds</Label><Input id="seconds" type="number" value={durationInput.seconds} onChange={(e) => handleInputChange('seconds', e.target.value)} min="0" max="59" className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"/></div>
                         </div>
                         <Button onClick={handleSetTimer} className="w-full btn-animated">Set Timer</Button>
                     </div>

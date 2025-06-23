@@ -605,7 +605,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             updateChallengeProgress('studyStreak', 1);
         }
         
-        const newXp = prevProfile.xp + awardedXp;
+        const newXp = Math.max(0, prevProfile.xp + awardedXp);
         const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newXp, prevProfile.level);
         
         const finalCash = prevProfile.cash + awardedCash + cashGained;
@@ -972,12 +972,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         let xpToAdd = xpReward + bonusXp;
         let cashToAdd = cashReward + bonusCash;
         
-        const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(prevProfile.xp + xpToAdd, prevProfile.level);
+        const newXp = Math.max(0, prevProfile.xp + xpToAdd);
+        const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newXp, prevProfile.level);
         cashToAdd += cashGained;
 
         const finalProfile = {
             ...prevProfile,
-            xp: prevProfile.xp + xpToAdd,
+            xp: newXp,
             cash: prevProfile.cash + cashToAdd,
             completedChallengeIds: [...(prevProfile.completedChallengeIds || []), challengeId],
             ...(leveledUp && {

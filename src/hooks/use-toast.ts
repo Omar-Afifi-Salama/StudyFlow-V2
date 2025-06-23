@@ -119,8 +119,20 @@ export const reducer = (state: State, action: Action): State => {
 
 const listeners: Array<(state: State) => void> = []
 let memoryState: State = { toasts: [] }
+let lastToast = { message: '', time: 0 }; // Add a tracker for the last toast
 
 function dispatch(action: Action) {
+  if (action.type === "ADD_TOAST") {
+    const now = Date.now();
+    // Create a simple string representation of the toast content
+    const message = `${action.toast.title?.toString() || ''}${action.toast.description?.toString() || ''}`;
+    // If an identical message was dispatched in the last 1s, ignore it.
+    if (message && message === lastToast.message && (now - lastToast.time) < 1000) {
+      return;
+    }
+    lastToast = { message, time: now };
+  }
+
   memoryState = reducer(memoryState, action)
   for (const listener of listeners) {
     listener(memoryState)

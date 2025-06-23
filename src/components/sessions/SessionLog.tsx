@@ -31,7 +31,7 @@ export default function SessionLog() {
             <p className="text-center text-sm">Start a timer or add one manually!</p>
           </div>
         ) : (
-          <ScrollArea className="max-h-72 h-full px-6 pb-2">
+          <ScrollArea className="h-96 px-6 pb-2">
             {sessions.map((session) => (
               <SessionItem key={session.id} session={session} />
             ))}
