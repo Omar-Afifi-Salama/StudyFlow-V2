@@ -8,7 +8,7 @@ import { CalendarCheck, Gift, Sparkles } from 'lucide-react';
 import OfferCard from './OfferCard';
 
 export default function ChallengesPage() {
-  const { dailyChallenges, claimChallengeReward, dailyOffers, selectDailyOffer, userProfile } = useSessions();
+  const { dailyChallenges, claimChallengeReward, dailyOffers, selectDailyOffer, userProfile, deactivateOffer } = useSessions();
   
   const allChallengesClaimed = dailyChallenges.every(c => c.rewardClaimed);
 
@@ -66,6 +66,7 @@ export default function ChallengesPage() {
                   key={offer.id} 
                   offer={offer} 
                   onSelect={() => selectDailyOffer(offer.id)}
+                  onDeactivate={() => deactivateOffer(offer.id)}
                   isSelected={userProfile.activeOfferId === offer.id}
                   canSelect={!userProfile.activeOfferId || allChallengesClaimed}
                 />
@@ -79,5 +80,3 @@ export default function ChallengesPage() {
     </div>
   );
 }
-
-    

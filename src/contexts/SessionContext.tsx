@@ -293,6 +293,7 @@ interface SessionContextType {
 
   dailyOffers: DailyOffer[];
   selectDailyOffer: (offerId: string) => void;
+  deactivateOffer: (offerId: string) => void;
 
   dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
@@ -530,6 +531,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         if (sessionDetails.type === 'Pomodoro Focus' || sessionDetails.type === 'Stopwatch') {
           awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
           awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
+          
+          const activeOffer = prevProfile.activeOfferId && prevProfile.activeOfferEndTime && prevProfile.activeOfferEndTime > Date.now()
+            ? DAILY_OFFERS_POOL.find(o => o.id === prevProfile.activeOfferId)
+            : null;
+    
+          if (activeOffer && activeOffer.id === 'high_stakes') {
+            awardedXp = 0; // Force XP to 0 for High Stakes offer
+          }
+        
           if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
         }
 
@@ -864,13 +874,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile(prev => ({...prev, activeOfferId: offerId, activeOfferEndTime: endTime}));
     toast({title: "Offer Activated!", description: `${offer.title} is now active for ${offer.durationMinutes} minutes.`});
   }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, dailyChallenges, toast]);
+  
+  const deactivateOffer = useCallback((offerId: string) => {
+    if (userProfile.activeOfferId !== offerId) return;
+    setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null}));
+    toast({title: "Offer Deactivated", description: "The active offer has been cancelled for the day."});
+  }, [userProfile.activeOfferId, toast]);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     if(!isFeatureUnlocked('challenges')) return;
-    let wasLastChallenge = false;
     
     let challengeToClaim: DailyChallenge | undefined;
-    
     const updatedChallenges = dailyChallenges.map(challenge => {
         if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
             challengeToClaim = challenge;
@@ -879,45 +893,54 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return challenge;
     });
 
-    if (challengeToClaim) {
-        const { xpReward, cashReward, title } = challengeToClaim;
-        
-        let newProfile: UserProfile | null = null;
-        setUserProfile(prevProfile => {
-            const {newLevel, newTitle, leveledUp, skillPointsGained, cashGained} = checkForLevelUp(prevProfile.xp + xpReward, prevProfile.level);
-            const finalCashReward = cashReward + cashGained;
-
-            toast({title: "Challenge Reward!", description: `+${xpReward} XP, +$${cashReward.toLocaleString()} for '${title}'`, icon: <Gift/>});
-            addFloatingGain('xp', xpReward);
-            addFloatingGain('cash', finalCashReward);
-
-            const updatedCompletedIds = [...(prevProfile.completedChallengeIds || []), challengeId];
-            newProfile = {
-                ...prevProfile, xp: prevProfile.xp + xpReward, cash: prevProfile.cash + finalCashReward,
-                level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained,
-                completedChallengeIds: updatedCompletedIds,
-            };
-            return newProfile;
-        });
-
-        setDailyChallenges(updatedChallenges);
-
-        if (newProfile) {
-            checkAndUnlockAchievements(newProfile, sessionsRef.current);
-        }
-
-        const numClaimed = updatedChallenges.filter(c => c.rewardClaimed).length;
-        const totalChallenges = updatedChallenges.length;
-        if(totalChallenges > 0 && numClaimed === totalChallenges) {
-             wasLastChallenge = true;
-        }
-    }
+    if (!challengeToClaim) return;
     
-
-    if (wasLastChallenge) {
-        setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null}));
-        toast({title: "Challenges Complete!", description: "Bonus: You can now select another Daily Offer!", icon: <Sparkles/>});
+    setDailyChallenges(updatedChallenges);
+    
+    const { xpReward, cashReward, title } = challengeToClaim;
+    
+    toast({title: "Challenge Reward!", description: `+${xpReward} XP, +$${cashReward.toLocaleString()} for '${title}'`, icon: <Gift/>});
+    addFloatingGain('xp', xpReward);
+    addFloatingGain('cash', cashReward);
+    
+    const allChallengesNowClaimed = updatedChallenges.every(c => c.rewardClaimed);
+    let bonusXp = 0;
+    let bonusCash = 0;
+    
+    if (allChallengesNowClaimed) {
+        bonusXp = 250;
+        bonusCash = 2500;
+        toast({title: "All Challenges Complete!", description: `Bonus: +${bonusXp} XP & +$${bonusCash.toLocaleString()}! You can also select another offer.`, icon: <Sparkles/>});
+        addFloatingGain('xp', bonusXp);
+        addFloatingGain('cash', bonusCash);
     }
+
+    setUserProfile(prevProfile => {
+        let xpToAdd = xpReward + bonusXp;
+        let cashToAdd = cashReward + bonusCash;
+        
+        const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(prevProfile.xp + xpToAdd, prevProfile.level);
+        cashToAdd += cashGained;
+
+        const finalProfile = {
+            ...prevProfile,
+            xp: prevProfile.xp + xpToAdd,
+            cash: prevProfile.cash + cashToAdd,
+            completedChallengeIds: [...(prevProfile.completedChallengeIds || []), challengeId],
+            ...(leveledUp && {
+                level: newLevel,
+                title: newTitle,
+                skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained
+            }),
+            ...(allChallengesNowClaimed && {
+                activeOfferId: null,
+                activeOfferEndTime: null
+            })
+        };
+        
+        checkAndUnlockAchievements(finalProfile, sessionsRef.current);
+        return finalProfile;
+    });
 
   }, [isFeatureUnlocked, toast, dailyChallenges, checkForLevelUp, addFloatingGain, checkAndUnlockAchievements]);
   
@@ -1427,7 +1450,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
       unlockBusiness, upgradeBusiness, collectBusinessIncome,
       getSkinById, buySkin, equipSkin, isSkinOwned,
-      dailyOffers, selectDailyOffer,
+      dailyOffers, selectDailyOffer, deactivateOffer,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, 
       isLoaded,
@@ -1444,7 +1467,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
       unlockBusiness, upgradeBusiness, collectBusinessIncome,
       getSkinById, buySkin, equipSkin, isSkinOwned,
-      dailyOffers, selectDailyOffer,
+      dailyOffers, selectDailyOffer, deactivateOffer,
       dailyChallenges, claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, 
       isLoaded,

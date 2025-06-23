@@ -5,8 +5,8 @@ import * as React from "react"
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 5000 // Adjusted to 5 seconds
-const TOAST_STAGGER_DELAY = 250; 
+const TOAST_REMOVE_DELAY = 5000
+const TOAST_STAGGER_DELAY = 150; // A bit faster stagger
 
 type ToasterToast = ToastProps & {
   id: string
@@ -55,9 +55,6 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-const toastQueue: Array<Omit<ToasterToast, "id">> = [];
-let isProcessingQueue = false;
-
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -125,49 +122,41 @@ let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
+  for (const listener of listeners) {
     listener(memoryState)
-  })
+  }
 }
 
 type Toast = Omit<ToasterToast, "id">;
 
-async function processToastQueue() {
-  if (isProcessingQueue || toastQueue.length === 0) {
-    return;
-  }
-  isProcessingQueue = true;
-
-  const toastProps = toastQueue.shift();
-  if (toastProps) {
-    const id = genId();
-    const update = (props: ToasterToast) => dispatch({ type: "UPDATE_TOAST", toast: { ...props, id } });
-    const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
-
-    dispatch({
-      type: "ADD_TOAST",
-      toast: {
-        ...toastProps,
-        id,
-        open: true,
-        onOpenChange: (open) => { if (!open) dismiss(); },
-      },
-    });
-    
-     addToRemoveQueue(id); 
-  }
-  
-  await new Promise(resolve => setTimeout(resolve, TOAST_STAGGER_DELAY));
-  isProcessingQueue = false;
-  processToastQueue(); 
-}
-
-
 function toast(props: Toast) {
-  toastQueue.push(props);
-  processToastQueue();
-}
+  const id = genId()
 
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
+      },
+    },
+  })
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  }
+}
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
@@ -190,4 +179,3 @@ function useToast() {
 }
 
 export { useToast, toast }
-

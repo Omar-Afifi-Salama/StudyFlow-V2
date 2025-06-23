@@ -4,12 +4,13 @@
 import type { DailyOffer } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, DollarSign, Timer, Shield, Sparkles, CheckCircle, Ban } from 'lucide-react';
+import { Zap, DollarSign, Timer, Shield, Sparkles, CheckCircle, Ban, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OfferCardProps {
   offer: DailyOffer;
   onSelect: () => void;
+  onDeactivate: () => void;
   isSelected: boolean;
   canSelect: boolean;
 }
@@ -23,7 +24,7 @@ const getIconForEffect = (type: DailyOffer['effect']['type']) => {
   }
 };
 
-export default function OfferCard({ offer, onSelect, isSelected, canSelect }: OfferCardProps) {
+export default function OfferCard({ offer, onSelect, onDeactivate, isSelected, canSelect }: OfferCardProps) {
   const isDebuff = (offer.effect.modifier < 1);
 
   return (
@@ -51,9 +52,14 @@ export default function OfferCard({ offer, onSelect, isSelected, canSelect }: Of
       </CardContent>
       <CardFooter className="p-4 border-t">
         {isSelected ? (
-          <Button disabled variant="outline" className="w-full">
-            <CheckCircle className="mr-2 h-4 w-4" /> Activated
-          </Button>
+           <div className="w-full flex flex-col sm:flex-row gap-2">
+              <Button disabled variant="outline" className="flex-1">
+                <CheckCircle className="mr-2 h-4 w-4" /> Activated
+              </Button>
+              <Button onClick={onDeactivate} variant="destructive" className="flex-1 btn-animated">
+                <XCircle className="mr-2 h-4 w-4" /> Deactivate
+              </Button>
+            </div>
         ) : (
           <Button 
             onClick={onSelect} 
@@ -69,5 +75,3 @@ export default function OfferCard({ offer, onSelect, isSelected, canSelect }: Of
     </Card>
   );
 }
-
-    
