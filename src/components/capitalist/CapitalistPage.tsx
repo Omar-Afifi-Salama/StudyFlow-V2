@@ -15,8 +15,8 @@ export default function CapitalistPage() {
   const totalIncomePerHour = useMemo(() => {
     return Object.values(businesses).reduce((total, business) => {
       if (business.unlocked) {
-        // This is an approximation as it doesn't account for volatility, but it's good for a dashboard.
-        const income = business.baseIncome * Math.pow(1.15, business.level - 1) * (1 - (business.maintenanceCost || 0));
+        // Show gross income potential. Net income is handled on collection.
+        const income = business.baseIncome * Math.pow(1.15, business.level - 1);
         return total + income;
       }
       return total;
