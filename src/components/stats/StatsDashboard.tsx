@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSessions, ALL_ACHIEVEMENTS } from '@/contexts/SessionContext';
@@ -8,7 +7,7 @@ import { BarChartBig, Clock, Coffee, TrendingUp, ListChecks, Sigma, Timer as Tim
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip as ChartTooltip, Legend, CartesianGrid } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import React, { useMemo } from 'react';
-import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday, getMonth } from 'date-fns';
+import { format, subDays, eachDayOfInterval, parseISO, startOfWeek, endOfWeek, addDays, isToday, getMonth, differenceInDays } from 'date-fns';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent as ShadTooltipContent } from '@/components/ui/tooltip';
 import SessionLog from '@/components/sessions/SessionLog';
 
