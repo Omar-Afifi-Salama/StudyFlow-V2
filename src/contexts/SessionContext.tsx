@@ -1175,16 +1175,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     const elapsedTime = Date.now() - sessionStartTime;
     if (elapsedTime > 1000) { // Log if more than a second passed
-      addSession({ 
-        type: mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break', 
-        startTime: sessionStartTime, 
-        durationInSeconds: Math.floor(elapsedTime / 1000), 
-        isFullPomodoroCycle: false 
+      addSession({
+        type: mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break',
+        startTime: sessionStartTime,
+        durationInSeconds: Math.floor(elapsedTime / 1000),
+        isFullPomodoroCycle: false
       });
       resetPomodoro();
-      toast({ title: "Progress Logged", description: `Your current session progress has been logged.`});
     }
-  }, [pomodoroState, addSession, resetPomodoro, toast]);
+  }, [pomodoroState, addSession, resetPomodoro]);
 
   const startStopwatch = useCallback(() => {
     setStopwatchState(prev => {
@@ -1220,9 +1219,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           durationInSeconds: Math.floor(finalTimeElapsedMs / 1000) 
         });
         resetStopwatch();
-        toast({ title: "Session Logged", description: "Your stopwatch session has been saved."});
     }
-  }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch, toast]);
+  }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch]);
 
   const setCountdownDuration = useCallback((durationMs: number) => {
     setCountdownState(prev => ({
@@ -1282,9 +1280,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             durationInSeconds: Math.floor(timeStudiedMs / 1000)
         });
         resetCountdown(initialDuration);
-        toast({ title: "Session Logged", description: "Your countdown session has been saved." });
     }
-  }, [countdownState, addSession, resetCountdown, toast]);
+  }, [countdownState, addSession, resetCountdown]);
 
 
   const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {

@@ -4,7 +4,7 @@ import type { StudySession } from '@/types';
 import { formatTime, formatDateTime } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Timer, Coffee, Edit3, Trash2 } from 'lucide-react';
+import { Clock, Timer, Coffee, Edit3, Trash2, Hourglass } from 'lucide-react';
 import { useSessions } from '@/contexts/SessionContext';
 import { useState } from 'react';
 import { Input } from '../ui/input';
@@ -28,6 +28,8 @@ export default function SessionItem({ session }: SessionItemProps) {
         return <Clock className="h-4 w-4 text-green-500" />;
       case 'Pomodoro Break':
         return <Coffee className="h-4 w-4 text-blue-500" />;
+      case 'Countdown':
+        return <Hourglass className="h-4 w-4 text-purple-500" />;
       default:
         return null;
     }
@@ -52,7 +54,7 @@ export default function SessionItem({ session }: SessionItemProps) {
             <span className="ml-2">{session.type}</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
-            <Badge variant={session.type.includes('Focus') || session.type === 'Stopwatch' ? 'default' : 'secondary'} className="text-xs">
+            <Badge variant={session.type.includes('Focus') || session.type === 'Stopwatch' || session.type === 'Countdown' ? 'default' : 'secondary'} className="text-xs">
               {formatTime(session.duration)}
             </Badge>
              <AlertDialog>
