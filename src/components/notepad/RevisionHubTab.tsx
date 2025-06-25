@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { PlusCircle, Trash2, CalendarIcon, CheckCircle, Edit3, Save, XCircle } from 'lucide-react';
-import { format, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid, differenceInDays, differenceInSeconds } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
@@ -144,51 +145,78 @@ export default function RevisionHubTab() {
                 if (!isValid(dateB)) return -1;
                 return dateA.getTime() - dateB.getTime();
             }).map(concept => {
-              const nextRevision = parseISO(concept.nextRevisionDate);
-              const isDue = isValid(nextRevision) && nextRevision <= new Date();
+                const lastRevised = parseISO(concept.lastRevisedDate);
+                const nextRevision = parseISO(concept.nextRevisionDate);
+                const now = new Date();
+
+                let progress = 0;
+                let progressText = "";
+                let isDue = false;
+
+                if (isValid(nextRevision) && isValid(lastRevised)) {
+                    isDue = now >= nextRevision;
+                    if (isDue) {
+                        progress = 100;
+                        const daysOverdue = differenceInDays(now, nextRevision);
+                        progressText = daysOverdue === 0 ? "Due today" : `${daysOverdue} day(s) overdue`;
+                    } else {
+                        const totalDuration = differenceInSeconds(nextRevision, lastRevised);
+                        const elapsed = differenceInSeconds(now, lastRevised);
+                        progress = totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
+                        const daysRemaining = differenceInDays(nextRevision, now);
+                        progressText = `Due in ${daysRemaining + 1} day(s)`;
+                    }
+                } else {
+                    progressText = "Invalid date data.";
+                }
+
+
               return (
                 <li key={concept.id} className={`p-4 rounded-md border ${isDue ? 'border-primary bg-primary/10' : 'bg-card'} ${editingConcept?.id === concept.id ? 'ring-2 ring-primary' : ''}`}>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                    <div className="flex-grow mb-2 sm:mb-0">
-                      <h4 className="font-semibold text-lg">{concept.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Learned: {formatDateSafe(concept.learnedDate)}
-                      </p>
-                      <p className={`text-sm font-medium ${isDue ? 'text-primary animate-pulse' : 'text-foreground'}`}>
-                        Next Revision: {formatDateSafe(concept.nextRevisionDate)} (Stage {concept.revisionStage + 1})
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Last Revised: {formatDateSafe(concept.lastRevisedDate)}
-                      </p>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div className="flex-grow mb-3 sm:mb-0">
+                            <h4 className="font-semibold text-lg">{concept.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                                Learned: {formatDateSafe(concept.learnedDate)} | Last Revised: {formatDateSafe(concept.lastRevisedDate)}
+                            </p>
+                        </div>
+                        <div className="flex space-x-1 self-start sm:self-center">
+                            <Button variant="ghost" size="icon" onClick={() => startEditing(concept)} disabled={!!editingConcept && editingConcept.id !== concept.id} aria-label={`Edit concept ${concept.name}`}>
+                                <Edit3 className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" disabled={!!editingConcept} aria-label={`Delete concept ${concept.name}`}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the concept "{concept.name}".
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(concept.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            <Button onClick={() => handleMarkRevised(concept.id)} size="sm" variant={isDue ? "default" : "outline"} aria-label={`Mark ${concept.name} as revised`}>
+                                <CheckCircle className="mr-2 h-4 w-4" /> Revised
+                            </Button>
+                        </div>
                     </div>
-                    <div className="flex space-x-1 self-start sm:self-center">
-                       <Button variant="ghost" size="icon" onClick={() => startEditing(concept)} disabled={!!editingConcept && editingConcept.id !== concept.id} aria-label={`Edit concept ${concept.name}`}>
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" disabled={!!editingConcept} aria-label={`Delete concept ${concept.name}`}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the concept "{concept.name}".
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(concept.id)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      <Button onClick={() => handleMarkRevised(concept.id)} size="sm" variant={isDue ? "default" : "outline"} aria-label={`Mark ${concept.name} as revised`}>
-                        <CheckCircle className="mr-2 h-4 w-4" /> Revised
-                      </Button>
+                    <div className="mt-3">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-medium text-muted-foreground">Revision Progress</span>
+                             <span className={`text-xs font-semibold ${isDue ? 'text-primary animate-pulse' : 'text-foreground'}`}>
+                                {progressText} (Stage {concept.revisionStage + 1})
+                            </span>
+                        </div>
+                        <Progress value={progress} aria-label={`Revision progress for ${concept.name}`} />
                     </div>
-                  </div>
                 </li>
               );
             })}

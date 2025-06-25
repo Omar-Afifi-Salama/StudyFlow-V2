@@ -43,22 +43,22 @@ export default function EisenhowerMatrixTab() {
             action="Do First"
             description="Tasks with significant consequences for not completing them or that have immediate deadlines. These are your top priorities."
             bgColorClass="bg-destructive/10 border-destructive border"
-            textColorClass="text-destructive-foreground"
+            textColorClass="text-destructive"
           />
           <Quadrant 
             title="Not Urgent & Important" 
             action="Schedule"
             description="Tasks that are important for long-term goals but don't have an immediate deadline. Schedule time to work on these proactively."
             bgColorClass="bg-primary/10 border-primary border"
-            textColorClass="text-primary-foreground"
+            textColorClass="text-primary"
           />
           {/* Row 2 */}
           <Quadrant 
             title="Urgent & Not Important" 
             action="Delegate"
             description="Tasks that need to be done soon but don't require your specific skills or input. Delegate them if possible, or minimize time spent."
-            bgColorClass="bg-amber-500/10 border-amber-500 border" // Using amber for a distinct color
-            textColorClass="text-amber-700 dark:text-amber-400"
+            bgColorClass="bg-yellow-500/10 border-yellow-500 border"
+            textColorClass="text-yellow-600 dark:text-yellow-400"
           />
           <Quadrant 
             title="Not Urgent & Not Important" 

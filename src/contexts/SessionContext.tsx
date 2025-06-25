@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business } from '@/types';
+import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark } from 'lucide-react';
@@ -112,6 +112,9 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], skillLevels: {},
   businesses: DEFAULT_BUSINESSES,
   dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null, offerDeactivatedToday: false,
+  manualLogTimeToday: { date: '', duration: 0 },
+  bonds: [],
+  lastBondGenerationTime: 0,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -275,42 +278,42 @@ const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90];
 
 interface SessionContextType {
   sessions: StudySession[];
-  addSession: (sessionDetails: { type: StudySession['type']; startTime: number; durationInSeconds: number; tags?: string[], isFullPomodoroCycle?: boolean }) => void;
-  addManualSession: (details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => void;
+  userProfile: UserProfile;
+  pomodoroState: PomodoroState;
+  stopwatchState: StopwatchState;
+  countdownState: CountdownState;
+  dailyChallenges: DailyChallenge[];
+  dailyOffers: DailyOffer[];
+  floatingGains: FloatingGain[];
+  activeTimer: TimerMode | null;
+  isLoaded: boolean;
+  afkCheckVisible: boolean;
+
+  startTimer: (timerType: TimerMode) => void;
+  pauseTimer: (timerType: TimerMode) => void;
+  resetTimer: (timerType: TimerMode) => void;
+  logSession: (timerType: TimerMode) => void;
+  confirmAfk: (isStillHere: boolean) => void;
+  
+  switchPomodoroMode: (mode?: PomodoroMode) => void;
+  updatePomodoroSettings: (newSettings: Partial<PomodoroSettings>) => void;
+  setCountdownDuration: (durationMs: number) => void;
+
+  addManualSession: (details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch' | 'Countdown'; description: string; }) => boolean;
   deleteSession: (sessionId: string) => void;
   addTestSession: () => void;
   clearSessions: () => void;
+  hardReset: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   
-  userProfile: UserProfile;
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
   updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
 
-  pomodoroState: PomodoroState;
-  startPomodoro: () => void;
-  pausePomodoro: () => void;
-  resetPomodoro: () => void;
-  switchPomodoroMode: (mode?: PomodoroMode) => void;
-  updatePomodoroSettings: (newSettings: Partial<PomodoroSettings>) => void;
-  logPomodoroSession: () => void;
-  
-  stopwatchState: StopwatchState;
-  startStopwatch: () => void;
-  pauseStopwatch: () => void;
-  resetStopwatch: () => void;
-  logStopwatchSession: () => void;
-
-  countdownState: CountdownState;
-  startCountdown: () => void;
-  pauseCountdown: () => void;
-  resetCountdown: (newDurationMs?: number) => void;
-  setCountdownDuration: (durationMs: number) => void;
-  logCountdownSession: () => void;
-
-
+  updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
   deleteNotepadNote: (noteId: string) => void;
+
   addRevisionConcept: (name: string, learnedDate: Date) => void;
   markConceptRevised: (conceptId: string) => void;
   deleteRevisionConcept: (conceptId: string) => void;
@@ -325,38 +328,32 @@ interface SessionContextType {
   addNotepadCountdownEvent: (event: Omit<NotepadCountdownEvent, 'id' | 'createdAt'>) => void;
   updateNotepadCountdownEvent: (event: NotepadCountdownEvent) => void;
   deleteNotepadCountdownEvent: (eventId: string) => void;
-  updateNotepadEisenhowerMatrix: (matrix: UserProfile['notepadData']['eisenhowerMatrix']) => void;
-
+  
   unlockBusiness: (businessId: keyof UserProfile['businesses']) => void;
   upgradeBusiness: (businessId: keyof UserProfile['businesses']) => void;
   collectBusinessIncome: (businessId: keyof UserProfile['businesses'], rawAmount: number, secondsPassed: number) => void;
+  
+  buyBond: (bondId: string) => void;
+  claimMaturedBonds: () => void;
 
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
   isSkinOwned: (skinId: string) => boolean;
 
-  dailyOffers: DailyOffer[];
   selectDailyOffer: (offerId: string) => void;
   deactivateOffer: (offerId: string) => void;
 
-  dailyChallenges: DailyChallenge[];
   claimChallengeReward: (challengeId: string) => void;
   updateChallengeProgress: (type: DailyChallenge['type'], value: number, absoluteValue?: boolean) => void;
+  
   getUnlockedAchievements: () => Achievement[];
-  isLoaded: boolean;
-  updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
-
-  getAllSkills: () => Skill[];
   isSkillUnlocked: (skillId: string) => boolean;
   canUnlockSkill: (skillId: string) => { can: boolean, reason?: string };
   unlockSkill: (skillId: string) => boolean;
   isFeatureUnlocked: (featureKey: FeatureKey) => boolean;
   getAppliedBoost: (type: 'xp' | 'cash' | 'shopDiscount') => number;
   getSkillBoost: (type: 'xp' | 'cash') => number;
-  refundAllSkillPoints: () => void;
-
-  floatingGains: FloatingGain[];
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -370,12 +367,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
+  
+  const [afkCheckVisible, setAfkCheckVisible] = useState(false);
+  const afkTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timer States
   const [pomodoroState, setPomodoroState] = useState<PomodoroState>(DEFAULT_POMODORO_STATE);
   const [stopwatchState, setStopwatchState] = useState<StopwatchState>(DEFAULT_STOPWATCH_STATE);
   const [countdownState, setCountdownState] = useState<CountdownState>(DEFAULT_COUNTDOWN_STATE);
-
+  const [activeTimer, setActiveTimer] = useState<TimerMode | null>(null);
 
   const lastGainTime = useRef({ xp: 0, cash: 0 });
   const sessionsRef = useRef(sessions);
@@ -383,11 +382,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const addFloatingGain = useCallback((type: 'xp' | 'cash', amount: number) => {
     const now = Date.now();
-    if (now - lastGainTime.current[type] < 500) { // 500ms debounce window
-        return;
-    }
+    if (now - lastGainTime.current[type] < 500) return;
     lastGainTime.current[type] = now;
-
     if (amount === 0) return;
     const newGain: FloatingGain = { id: crypto.randomUUID(), type, amount, timestamp: Date.now() };
     setFloatingGains(prev => [...prev, newGain]);
@@ -396,10 +392,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAndUnlockAchievements = useCallback((profile: UserProfile, currentSessions: StudySession[]) => {
       if (!profile.unlockedSkillIds.includes('unlockAchievements')) return;
-          
       const newlyUnlockedIds: string[] = [];
       let totalCashRewardFromAchievements = 0;
-
       for (const ach of ALL_ACHIEVEMENTS) {
         if (!profile.unlockedAchievementIds.includes(ach.id) && ach.criteria(profile, currentSessions)) {
           newlyUnlockedIds.push(ach.id);
@@ -408,7 +402,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           addFloatingGain('cash', ach.cashReward);
         }
       }
-      
       if (newlyUnlockedIds.length > 0) {
         setUserProfile(prev => ({ 
             ...prev, 
@@ -418,29 +411,20 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [addFloatingGain, toast]);
 
-
   const updateUserProfile = useCallback((updatedProfileData: Partial<UserProfile>) => {
-    const newProfile = {...userProfile, ...updatedProfileData};
-    setUserProfile(newProfile);
-    checkAndUnlockAchievements(newProfile, sessionsRef.current);
-  }, [userProfile, checkAndUnlockAchievements]);
-
-  const clearSessions = useCallback(() => {
-    setSessions([]);
-    toast({ title: "Session Log Cleared", description: "All study sessions have been removed.", icon: <Trash2/> });
-  }, [toast]);
-
-  const isSkillUnlocked = useCallback((skillId: string) => {
-    return userProfile.unlockedSkillIds.includes(skillId);
-  }, [userProfile.unlockedSkillIds]);
-
+    setUserProfile(prevProfile => {
+      const newProfile = { ...prevProfile, ...updatedProfileData };
+      checkAndUnlockAchievements(newProfile, sessionsRef.current);
+      return newProfile;
+    });
+  }, [checkAndUnlockAchievements]);
+  
+  const isSkillUnlocked = useCallback((skillId: string) => userProfile.unlockedSkillIds.includes(skillId), [userProfile.unlockedSkillIds]);
+  
   const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
     if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
     const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
-    if (!skill) {
-      return false; 
-    }
-    return isSkillUnlocked(skill.id);
+    return !skill || isSkillUnlocked(skill.id);
   }, [isSkillUnlocked]);
   
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
@@ -486,17 +470,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             if (skill && skill.shopDiscountPercent) boost += skill.shopDiscountPercent;
         });
     }
-    
     if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
         const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
         if(offer && offer.effect.type === type) {
             boost += (offer.effect.modifier - 1);
         }
     }
-    
     return boost;
   }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, userProfile.activeOfferEndTime, getSkillBoost]);
-
   
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -523,7 +504,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (cashGained > 0) addFloatingGain('cash', cashGained);
       return { newLevel, newTitle, leveledUp, skillPointsGained, cashGained };
     }
-    
     return { newLevel: currentLevel, newTitle: TITLES[currentLevel -1], leveledUp, skillPointsGained, cashGained };
   }, [toast, addFloatingGain]);
 
@@ -536,22 +516,20 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     if (lastStudyDay) {
       const lastDate = parseISO(lastStudyDay);
-      const diff = differenceInDays(today, lastDate);
-      if (diff === 1) {
+      if (isToday(lastDate)) {
+        // No change if already studied today
+      } else if (isYesterday(lastDate)) {
         currentStudyStreak++;
-      } else if (diff > 1) {
-        currentStudyStreak = 1; 
+      } else {
+        currentStudyStreak = 1;
       }
     } else { 
       currentStudyStreak = 1;
     }
 
-    let newLastStudyDate = lastStudyDay;
-    if (lastStudyDay !== todayStr) { 
-        if (currentStudyStreak > longestStudyStreak) {
-            longestStudyStreak = currentStudyStreak;
-        }
-        newLastStudyDate = todayStr;
+    let newLastStudyDate = todayStr;
+    if (currentStudyStreak > longestStudyStreak) {
+        longestStudyStreak = currentStudyStreak;
     }
     
     return {
@@ -597,9 +575,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             const totalCashMultiplier = 1 + baseStreakBonus + skillCashBonus + offerCashBonus;
 
             awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
-            if (xpDisabledByOffer) {
-                awardedXp = 0;
-            }
+            if (xpDisabledByOffer) awardedXp = 0;
             awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
             
             if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
@@ -621,20 +597,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
         if (awardedXp > 0) addFloatingGain('xp', awardedXp);
         if (awardedCash > 0) addFloatingGain('cash', awardedCash);
-
-        const rewardParts: string[] = [];
-        if (awardedXp > 0) rewardParts.push(`${awardedXp} XP`);
-        if (awardedCash > 0) rewardParts.push(`$${awardedCash.toLocaleString()}`);
-        
-        const totalXpBonusPercent = ( (1 + Math.min(updatedCurrentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS) + getSkillBoost('xp')) - 1) * 100;
-        if (totalXpBonusPercent > 0.1 && awardedXp > 0) { 
-            rewardParts.push(`(+${totalXpBonusPercent.toFixed(0)}% bonus)`);
-        }
-        
-        if (rewardParts.length > 0) {
-            // This toast is being removed to prevent duplicates
-            // toast({ title: "Session Rewards!", description: `Gained: ${rewardParts.join(', ')}`, icon: <Gift /> });
-        }
         
         newProfile = {
           ...prevProfile, xp: newXp, cash: finalCash, level: newLevel, title: newTitle,
@@ -647,14 +609,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setSessions(prevSessions => {
       const updatedSessions = [newSession, ...prevSessions].sort((a, b) => b.startTime - a.startTime);
       sessionsRef.current = updatedSessions;
-      if (newProfile) {
-        checkAndUnlockAchievements(newProfile, updatedSessions);
-      }
+      if (newProfile) checkAndUnlockAchievements(newProfile, updatedSessions);
       return updatedSessions;
     });
   }, [updateStreakAndGetBonus, getSkillBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
-  const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch'; description: string; }) => {
+  const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: StudySession['type']; description: string; }) => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const { date, duration } = userProfile.manualLogTimeToday || { date: '', duration: 0 };
+    if (date === todayStr && duration >= 4 * 3600) {
+      toast({ title: "Limit Reached", description: "You can only log up to 4 hours of manual time per day.", variant: "destructive" });
+      return false;
+    }
+    
     addSession({
       type: details.type,
       startTime: details.endTime - details.durationInSeconds * 1000,
@@ -662,28 +629,31 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       description: details.description,
       isFullPomodoroCycle: details.type === 'Pomodoro Focus' ? (details.durationInSeconds / 60) >= pomodoroState.settings.workDuration : false,
     });
-    toast({
-      title: "Session Logged",
-      description: `Manually added a ${details.type} session.`,
-    });
-  }, [addSession, pomodoroState.settings.workDuration, toast]);
+    
+    const newDuration = (date === todayStr ? duration : 0) + details.durationInSeconds;
+    setUserProfile(prev => ({ ...prev, manualLogTimeToday: { date: todayStr, duration: newDuration } }));
+    return true;
+  }, [addSession, pomodoroState.settings.workDuration, toast, userProfile.manualLogTimeToday]);
 
   const addTestSession = useCallback(() => {
     addSession({
-      type: 'Pomodoro Focus',
-      startTime: Date.now() - (30 * 60 * 1000),
-      durationInSeconds: 30 * 60,
-      isFullPomodoroCycle: true,
+      type: 'Pomodoro Focus', startTime: Date.now() - (30 * 60 * 1000), durationInSeconds: 30 * 60, isFullPomodoroCycle: true,
     });
-    toast({title: "Test Session Added", description: "A 30-minute focus session has been logged.", icon: <Zap />});
-  }, [addSession, toast]);
+  }, [addSession]);
+
+  const clearSessions = useCallback(() => {
+    setSessions([]);
+    toast({
+      title: "Session Log Cleared",
+      description: "All your study sessions have been removed.",
+      icon: <Trash2 />,
+    });
+  }, [toast]);
 
   const deleteSession = useCallback((sessionId: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionId);
     setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
-    if (sessionToDelete) {
-      toast({ title: "Session Deleted", description: `Session type "${sessionToDelete.type}" removed.`, icon: <Trash2 /> });
-    }
+    if (sessionToDelete) toast({ title: "Session Deleted", description: `Session type "${sessionToDelete.type}" removed.`, icon: <Trash2 /> });
   }, [sessions, toast]);
 
   const updateSessionDescription = useCallback((sessionId: string, description: string) => {
@@ -692,10 +662,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const updateNotepadData = useCallback((updatedNotepadData: Partial<NotepadData>) => {
     setUserProfile(prev => {
-      const newNotepadData = {
-        ...(prev.notepadData || DEFAULT_NOTEPAD_DATA),
-        ...updatedNotepadData,
-      };
+      const newNotepadData = { ...(prev.notepadData || DEFAULT_NOTEPAD_DATA), ...updatedNotepadData };
       const newProfile = {...prev, notepadData: newNotepadData };
       checkAndUnlockAchievements(newProfile, sessionsRef.current);
       return newProfile;
@@ -885,13 +852,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (eventToDelete) toast({ title: "Event Deleted", description: `"${eventToDelete.name}" removed.`, icon: <Trash2/> });
   }, [isFeatureUnlocked, userProfile.notepadData.countdownEvents, updateNotepadField, toast]);
 
-  const updateNotepadEisenhowerMatrix = useCallback((matrix: UserProfile['notepadData']['eisenhowerMatrix']) => {
-    if(!isFeatureUnlocked('notepadEisenhower')) { toast({ title: "Feature Locked", description: "Unlock Eisenhower Matrix in Skill Tree.", icon: <XCircle/> }); return; }
-    updateNotepadData({ eisenhowerMatrix: matrix });
-  }, [isFeatureUnlocked, updateNotepadData, toast]);
-
   const getSkinById = useCallback((id: string) => PREDEFINED_SKINS.find(skin => skin.id === id), []);
-  
   const isSkinOwned = useCallback((skinId: string) => userProfile.ownedSkinIds.includes(skinId), [userProfile.ownedSkinIds]);
 
   const buySkin = useCallback((skinId: string) => {
@@ -917,7 +878,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (!isSkinOwned(skinId)) { toast({ title: "Error", description: "You don't own this skin.", variant: "destructive", icon: <XCircle/> }); return; }
     const skinToEquip = getSkinById(skinId);
     if (!skinToEquip) return;
-    
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
   }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
@@ -949,7 +909,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     if(!isFeatureUnlocked('challenges')) return;
-    
     let challengeToClaim: DailyChallenge | undefined;
     const updatedChallenges = dailyChallenges.map(challenge => {
         if (challenge.id === challengeId && challenge.isCompleted && !challenge.rewardClaimed) {
@@ -960,67 +919,40 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     });
 
     if (!challengeToClaim) return;
-    
     setDailyChallenges(updatedChallenges);
-    
     const { xpReward, cashReward, title } = challengeToClaim;
-    
-    toast({title: "Challenge Reward!", description: `+${xpReward} XP, +$${cashReward.toLocaleString()} for '${title}'`, icon: <Gift/>});
-    addFloatingGain('xp', xpReward);
-    addFloatingGain('cash', cashReward);
-    
+    let bonusXp = 0, bonusCash = 0;
     const allChallengesNowClaimed = updatedChallenges.every(c => c.rewardClaimed);
-    let bonusXp = 0;
-    let bonusCash = 0;
-    
     if (allChallengesNowClaimed) {
-        bonusXp = 250;
-        bonusCash = 2500;
+        bonusXp = 250; bonusCash = 2500;
         toast({title: "All Challenges Complete!", description: `Bonus: +${bonusXp} XP & +$${bonusCash.toLocaleString()}! You can also select another offer.`, icon: <Sparkles/>});
-        addFloatingGain('xp', bonusXp);
-        addFloatingGain('cash', bonusCash);
+        addFloatingGain('xp', bonusXp); addFloatingGain('cash', bonusCash);
     }
 
     setUserProfile(prevProfile => {
         let xpToAdd = xpReward + bonusXp;
         let cashToAdd = cashReward + bonusCash;
-        
         const newXp = Math.max(0, prevProfile.xp + xpToAdd);
         const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newXp, prevProfile.level);
         cashToAdd += cashGained;
 
         const finalProfile = {
-            ...prevProfile,
-            xp: newXp,
-            cash: prevProfile.cash + cashToAdd,
+            ...prevProfile, xp: newXp, cash: prevProfile.cash + cashToAdd,
             completedChallengeIds: [...(prevProfile.completedChallengeIds || []), challengeId],
-            ...(leveledUp && {
-                level: newLevel,
-                title: newTitle,
-                skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained
-            }),
-            ...(allChallengesNowClaimed && {
-                activeOfferId: null,
-                activeOfferEndTime: null
-            })
+            ...(leveledUp && { level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained }),
+            ...(allChallengesNowClaimed && { activeOfferId: null, activeOfferEndTime: null })
         };
-        
         checkAndUnlockAchievements(finalProfile, sessionsRef.current);
         return finalProfile;
     });
-
   }, [isFeatureUnlocked, toast, dailyChallenges, checkForLevelUp, addFloatingGain, checkAndUnlockAchievements]);
   
   const getUnlockedAchievements = useCallback((): Achievement[] => ALL_ACHIEVEMENTS.filter(ach => userProfile.unlockedAchievementIds?.includes(ach.id)), [userProfile.unlockedAchievementIds]);
-
-  const getAllSkills = useCallback(() => ALL_SKILLS, []);
   
   const canUnlockSkill = useCallback((skillId: string): { can: boolean, reason?: string } => {
     const skill = ALL_SKILLS.find(s => s.id === skillId);
     if (!skill) return { can: false, reason: "Skill not found."};
-    
     if (skill.category !== 'Infinite' && isSkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
-
     if (userProfile.skillPoints < skill.cost) return { can: false, reason: `Not enough skill points. Needs ${skill.cost}, has ${userProfile.skillPoints}.`};
     if (skill.prerequisiteLevel && userProfile.level < skill.prerequisiteLevel) return { can: false, reason: `Requires Level ${skill.prerequisiteLevel}.`};
     if (skill.prerequisiteSkillIds) {
@@ -1034,51 +966,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return { can: true };
   }, [userProfile.skillPoints, userProfile.level, isSkillUnlocked]);
 
-  const refundAllSkillPoints = useCallback(() => {
-    const skillToRefund = ALL_SKILLS.find(s => s.id === 'skillPointRefund');
-    if (!skillToRefund || !isSkillUnlocked(skillToRefund.id)) {
-      toast({ title: "Respec Not Unlocked", description: "You must unlock 'Strategic Respec' first.", variant: "destructive", icon: <XCircle/> });
-      return;
-    }
-    let pointsToRefund = 0;
-    const skillsToKeep = [skillToRefund.id, 'unlockTimers', 'unlockSkillTree']; 
-    userProfile.unlockedSkillIds.forEach(id => {
-      if (!skillsToKeep.includes(id)) {
-        const skill = ALL_SKILLS.find(s => s.id === id);
-        if (skill) pointsToRefund += skill.cost;
-      }
-    });
-    setUserProfile(prev => ({
-      ...prev,
-      skillPoints: prev.skillPoints + pointsToRefund,
-      unlockedSkillIds: skillsToKeep,
-    }));
-    toast({ title: "Skill Points Refunded!", description: `All skill points (except for Respec & core skills) have been refunded. You gained ${pointsToRefund} points. Features will need to be re-unlocked.`, icon: <RepeatIcon /> });
-  }, [userProfile.unlockedSkillIds, isSkillUnlocked, toast]);
-
   const unlockSkill = useCallback((skillId: string) => {
     const unlockCheck = canUnlockSkill(skillId);
     if (!unlockCheck.can) { toast({ title: "Cannot Unlock Skill", description: unlockCheck.reason, variant: "destructive", icon: <XCircle/> }); return false; }
     const skill = ALL_SKILLS.find(s => s.id === skillId);
     if (!skill) return false;
-    
     let newUnlockedSkills = userProfile.unlockedSkillIds;
     let newSkillLevels = { ...(userProfile.skillLevels || {}) };
-
     if(skill.category === 'Infinite') {
         newSkillLevels[skillId] = (newSkillLevels[skillId] || 0) + 1;
-    } else {
-        if (!newUnlockedSkills.includes(skillId)) {
-            newUnlockedSkills = [...newUnlockedSkills, skillId];
-        }
+    } else if (!newUnlockedSkills.includes(skillId)) {
+        newUnlockedSkills = [...newUnlockedSkills, skillId];
     }
-    
-    const newProfile = {
-        ...userProfile,
-        skillPoints: userProfile.skillPoints - skill.cost,
-        unlockedSkillIds: newUnlockedSkills,
-        skillLevels: newSkillLevels,
-    };
+    const newProfile = { ...userProfile, skillPoints: userProfile.skillPoints - skill.cost, unlockedSkillIds: newUnlockedSkills, skillLevels: newSkillLevels };
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
     toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
@@ -1099,222 +999,160 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const pausePomodoro = useCallback(() => {
-    setPomodoroState(prev => ({ ...prev, isRunning: false }));
-  }, []);
-
   const switchPomodoroMode = useCallback((newMode?: PomodoroMode) => {
-    pausePomodoro();
+    let nextMode: PomodoroMode = 'work';
     setPomodoroState(prev => {
-        let nextMode: PomodoroMode = 'work';
         let newCyclesCompleted = prev.cyclesCompleted;
-
         if (newMode) {
             nextMode = newMode;
-            if (prev.mode === 'work' && (nextMode === 'shortBreak' || nextMode === 'longBreak')) {
-                newCyclesCompleted++;
-            }
+            if (prev.mode === 'work' && (nextMode === 'shortBreak' || nextMode === 'longBreak')) newCyclesCompleted++;
         } else {
             if (prev.mode === 'work') {
                 newCyclesCompleted = prev.cyclesCompleted + 1;
                 nextMode = newCyclesCompleted % prev.settings.cyclesPerLongBreak === 0 ? 'longBreak' : 'shortBreak';
-            } else {
-                nextMode = 'work';
-            }
+            } else { nextMode = 'work'; }
         }
-        
         let durationMs = getDurationForMode(nextMode, prev.settings) * 1000;
         if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
             const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
-            if(offer?.effect.type === 'timer_speed') {
-                durationMs *= offer.effect.modifier;
-            }
+            if(offer?.effect.type === 'timer_speed') durationMs *= offer.effect.modifier;
         }
-
-        return {
-            ...prev,
-            mode: nextMode,
-            cyclesCompleted: newCyclesCompleted,
-            sessionStartTime: 0,
-            sessionEndTime: Date.now() + durationMs,
-            isRunning: false,
-        };
+        return { ...prev, mode: nextMode, cyclesCompleted: newCyclesCompleted, sessionEndTime: Date.now() + durationMs };
     });
-  }, [pausePomodoro, getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
-
-  const startPomodoro = useCallback(() => {
-      setPomodoroState(prev => {
-        if (prev.isRunning) return prev;
-        const now = Date.now();
-        const timeRemainingMs = prev.sessionEndTime > now ? prev.sessionEndTime - now : getDurationForMode(prev.mode, prev.settings) * 1000;
-        
-        return { 
-          ...prev, 
-          isRunning: true, 
-          sessionStartTime: now - ((getDurationForMode(prev.mode, prev.settings) * 1000) - timeRemainingMs),
-          sessionEndTime: now + timeRemainingMs
-        };
-      });
-  }, [getDurationForMode]);
-
-  const resetPomodoro = useCallback(() => {
-    setPomodoroState(prev => {
-      const durationMs = getDurationForMode(prev.mode, prev.settings) * 1000;
-      return {
-        ...prev,
-        isRunning: false,
-        sessionStartTime: 0,
-        sessionEndTime: Date.now() + durationMs,
-      }
-    });
-  }, [getDurationForMode]);
+  }, [getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
 
   const updatePomodoroSettings = useCallback((newSettings: Partial<PomodoroSettings>) => {
     setPomodoroState(prev => {
         const updatedSettings = { ...prev.settings, ...newSettings };
-        const durationMs = getDurationForMode(prev.mode, updatedSettings) * 1000;
-        return { 
-          ...prev, 
-          settings: updatedSettings, 
-          isRunning: false,
-          sessionStartTime: 0,
-          sessionEndTime: Date.now() + durationMs
+        let newSessionEndTime = prev.sessionEndTime;
+        if (!prev.isRunning) {
+            const durationMs = getDurationForMode(prev.mode, updatedSettings) * 1000;
+            newSessionEndTime = Date.now() + durationMs;
+        }
+        return {
+            ...prev,
+            settings: updatedSettings,
+            sessionEndTime: newSessionEndTime
         };
     });
   }, [getDurationForMode]);
+
+  const getTimerState = (timerType: TimerMode) => ({ pomodoro: pomodoroState, stopwatch: stopwatchState, countdown: countdownState })[timerType];
   
-  const logPomodoroSession = useCallback(() => {
-    const { isRunning, sessionStartTime, mode } = pomodoroState;
-    if (isRunning || !sessionStartTime) return;
-
-    const elapsedTime = Date.now() - sessionStartTime;
-    if (elapsedTime > 1000) { // Log if more than a second passed
-      addSession({
-        type: mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break',
-        startTime: sessionStartTime,
-        durationInSeconds: Math.floor(elapsedTime / 1000),
-        isFullPomodoroCycle: false
-      });
-      resetPomodoro();
-    }
-  }, [pomodoroState, addSession, resetPomodoro]);
-
-  const startStopwatch = useCallback(() => {
-    setStopwatchState(prev => {
-        if (prev.isRunning) return prev;
-        return { ...prev, isRunning: true, sessionStartTime: Date.now() };
-    });
-  }, []);
-
-  const pauseStopwatch = useCallback(() => {
-    setStopwatchState(prev => {
-      if (!prev.isRunning || !prev.sessionStartTime) return prev;
-      const elapsedSinceStart = Date.now() - prev.sessionStartTime;
-      return { 
-        ...prev, 
-        isRunning: false, 
-        timeElapsedOnPause: prev.timeElapsedOnPause + elapsedSinceStart,
-        sessionStartTime: null
+  const startTimer = useCallback((timerType: TimerMode) => {
+      if (activeTimer && activeTimer !== timerType) {
+        toast({ title: "Timer Active", description: `The ${activeTimer} is already running.`, variant: 'destructive'}); return;
+      }
+      setActiveTimer(timerType);
+      
+      const startAfkCheck = () => {
+        if (afkTimerRef.current) clearTimeout(afkTimerRef.current);
+        afkTimerRef.current = setTimeout(() => { setAfkCheckVisible(true); }, 3600 * 1000); // 1 hour
       };
-    });
-  }, []);
 
-  const resetStopwatch = useCallback(() => {
-    setStopwatchState({ isRunning: false, timeElapsedOnPause: 0, sessionStartTime: null });
-  }, []);
+      if (timerType === 'pomodoro') {
+          setPomodoroState(prev => {
+            const now = Date.now();
+            const timeRemainingMs = prev.sessionEndTime > now ? prev.sessionEndTime - now : getDurationForMode(prev.mode, prev.settings) * 1000;
+            return { ...prev, isRunning: true, sessionStartTime: now, sessionEndTime: now + timeRemainingMs };
+          });
+          startAfkCheck();
+      } else if (timerType === 'stopwatch') {
+          setStopwatchState(prev => ({ ...prev, isRunning: true, sessionStartTime: Date.now() }));
+          startAfkCheck();
+      } else if (timerType === 'countdown') {
+          setCountdownState(prev => {
+              if (prev.timeLeftOnPause <= 0) return prev;
+              return { ...prev, isRunning: true, sessionStartTime: Date.now() }
+          });
+          startAfkCheck();
+      }
+  }, [activeTimer, toast, getDurationForMode]);
 
-  const logStopwatchSession = useCallback(() => {
-    pauseStopwatch();
-    const finalTimeElapsedMs = stopwatchState.timeElapsedOnPause;
-    if (finalTimeElapsedMs > 1000) {
-        addSession({ 
-          type: 'Stopwatch', 
-          startTime: Date.now() - finalTimeElapsedMs, 
-          durationInSeconds: Math.floor(finalTimeElapsedMs / 1000) 
+  const pauseTimer = useCallback((timerType: TimerMode) => {
+    setActiveTimer(null);
+    if (afkTimerRef.current) clearTimeout(afkTimerRef.current);
+
+    if (timerType === 'pomodoro') {
+        setPomodoroState(prev => {
+            if (!prev.isRunning) return prev;
+            return { ...prev, isRunning: false, sessionEndTime: prev.sessionEndTime };
         });
-        resetStopwatch();
+    } else if (timerType === 'stopwatch') {
+        setStopwatchState(prev => {
+            if (!prev.isRunning || !prev.sessionStartTime) return prev;
+            const elapsedSinceStart = Date.now() - prev.sessionStartTime;
+            return { ...prev, isRunning: false, timeElapsedOnPause: prev.timeElapsedOnPause + elapsedSinceStart, sessionStartTime: null };
+        });
+    } else if (timerType === 'countdown') {
+        setCountdownState(prev => {
+            if (!prev.isRunning || !prev.sessionStartTime) return prev;
+            const elapsedSinceStart = Date.now() - prev.sessionStartTime;
+            return { ...prev, isRunning: false, timeLeftOnPause: prev.timeLeftOnPause - elapsedSinceStart, sessionStartTime: null };
+        });
     }
-  }, [stopwatchState.timeElapsedOnPause, pauseStopwatch, addSession, resetStopwatch]);
-
-  const setCountdownDuration = useCallback((durationMs: number) => {
-    setCountdownState(prev => ({
-        ...prev,
-        isRunning: false,
-        timeLeftOnPause: durationMs,
-        initialDuration: durationMs,
-        sessionStartTime: null
-    }));
   }, []);
 
-  const startCountdown = useCallback(() => {
-    setCountdownState(prev => {
-        if (prev.isRunning || prev.timeLeftOnPause <= 0) return prev;
-        return { ...prev, isRunning: true, sessionStartTime: Date.now() };
-    });
-  }, []);
+  const resetTimer = useCallback((timerType: TimerMode) => {
+    if (activeTimer === timerType) setActiveTimer(null);
+    if (afkTimerRef.current) clearTimeout(afkTimerRef.current);
 
-  const pauseCountdown = useCallback(() => {
-    setCountdownState(prev => {
-        if (!prev.isRunning || !prev.sessionStartTime) return prev;
-        const elapsedSinceStart = Date.now() - prev.sessionStartTime;
-        return {
-            ...prev,
-            isRunning: false,
-            timeLeftOnPause: prev.timeLeftOnPause - elapsedSinceStart,
-            sessionStartTime: null
-        };
-    });
-  }, []);
-
-  const resetCountdown = useCallback((newDurationMs?: number) => {
-    setCountdownState(prev => ({
-        ...prev,
-        isRunning: false,
-        timeLeftOnPause: newDurationMs ?? prev.initialDuration,
-        initialDuration: newDurationMs ?? prev.initialDuration,
-        sessionStartTime: null,
-    }));
-  }, []);
+    if (timerType === 'pomodoro') {
+      setPomodoroState(prev => ({...prev, isRunning: false, sessionEndTime: Date.now() + getDurationForMode(prev.mode, prev.settings) * 1000}));
+    } else if (timerType === 'stopwatch') {
+      setStopwatchState(DEFAULT_STOPWATCH_STATE);
+    } else if (timerType === 'countdown') {
+      setCountdownState(prev => ({...DEFAULT_COUNTDOWN_STATE, initialDuration: prev.initialDuration, timeLeftOnPause: prev.initialDuration}));
+    }
+  }, [activeTimer, getDurationForMode]);
   
-  const logCountdownSession = useCallback(() => {
-    const { isRunning, initialDuration, timeLeftOnPause, sessionStartTime } = countdownState;
-    if (isRunning) return; // Can only log when paused
+  const logSession = useCallback((timerType: TimerMode) => {
+    pauseTimer(timerType);
+    let sessionDetails: { type: StudySession['type'], startTime: number, durationInSeconds: number, isFullPomodoroCycle?: boolean } | null = null;
     
-    let timeStudiedMs = initialDuration - timeLeftOnPause;
+    if (timerType === 'pomodoro') {
+        const { sessionStartTime, mode, sessionEndTime } = pomodoroState;
+        const totalDuration = getDurationForMode(mode, pomodoroState.settings);
+        const elapsedDuration = totalDuration - Math.max(0, (sessionEndTime - Date.now()) / 1000);
+        if (elapsedDuration > 1) sessionDetails = { type: mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break', startTime: sessionStartTime, durationInSeconds: Math.floor(elapsedDuration), isFullPomodoroCycle: false };
+        resetTimer('pomodoro');
+    } else if (timerType === 'stopwatch') {
+        const { timeElapsedOnPause } = stopwatchState;
+        if (timeElapsedOnPause > 1000) sessionDetails = { type: 'Stopwatch', startTime: Date.now() - timeElapsedOnPause, durationInSeconds: Math.floor(timeElapsedOnPause / 1000) };
+        resetTimer('stopwatch');
+    } else if (timerType === 'countdown') {
+        const { initialDuration, timeLeftOnPause } = countdownState;
+        const timeStudiedMs = initialDuration - timeLeftOnPause;
+        if (timeStudiedMs > 1000) sessionDetails = { type: 'Countdown', startTime: Date.now() - timeStudiedMs, durationInSeconds: Math.floor(timeStudiedMs / 1000) };
+        resetTimer('countdown');
+    }
     
-    if(sessionStartTime && !isRunning) {
-        // This case shouldn't happen if pause is always called, but as a safeguard.
-        timeStudiedMs = initialDuration - (timeLeftOnPause - (Date.now() - sessionStartTime));
+    if (sessionDetails) {
+        addSession(sessionDetails);
     }
-
-    if (timeStudiedMs > 1000) {
-        addSession({
-            type: 'Countdown',
-            startTime: Date.now() - timeStudiedMs,
-            durationInSeconds: Math.floor(timeStudiedMs / 1000)
-        });
-        resetCountdown(initialDuration);
-    }
-  }, [countdownState, addSession, resetCountdown]);
-
+  }, [pauseTimer, resetTimer, addSession, pomodoroState, stopwatchState, countdownState, getDurationForMode]);
+  
+  const confirmAfk = (isStillHere: boolean) => {
+    setAfkCheckVisible(false);
+    if (!isStillHere && activeTimer) { logSession(activeTimer); } 
+    else { if (afkTimerRef.current) clearTimeout(afkTimerRef.current); }
+  };
+  
+  const setCountdownDuration = useCallback((durationMs: number) => {
+    if(activeTimer && activeTimer !== 'countdown') { toast({title: "Timer Active", description: `Cannot set countdown while ${activeTimer} is running.`, variant: 'destructive'}); return; }
+    setCountdownState(prev => ({ ...prev, isRunning: false, timeLeftOnPause: durationMs, initialDuration: durationMs, sessionStartTime: null }));
+  }, [activeTimer, toast]);
 
   const unlockBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
     if(!isFeatureUnlocked('capitalist')) { toast({ title: "Capitalist Corner Locked", description: "Unlock this feature from the Skill Tree first.", icon: <XCircle/> }); return; }
-    
     const business = userProfile.businesses[businessId];
     if(business.unlocked) { toast({ title: "Already Unlocked", description: "You already own this business." }); return; }
     if(userProfile.cash < business.unlockCost) { toast({ title: "Not Enough Cash", description: `You need $${business.unlockCost.toLocaleString()}.`, icon: <DollarSign/> }); return; }
-    
     addFloatingGain('cash', -business.unlockCost);
-    const newProfile = {
-      ...userProfile,
-      cash: userProfile.cash - business.unlockCost,
-      businesses: { ...userProfile.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() } }
-    };
+    const newProfile = { ...userProfile, cash: userProfile.cash - business.unlockCost, businesses: { ...userProfile.businesses, [businessId]: { ...business, unlocked: true, lastCollected: Date.now() } } };
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
     toast({ title: "Business Unlocked!", description: `You are now the proud owner of a ${business.name}.`, icon: <CheckCircle/> });
-
   }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
 
   const upgradeBusiness = useCallback((businessId: keyof UserProfile['businesses']) => {
@@ -1323,170 +1161,125 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if(!business.unlocked) return;
     const upgradeCost = business.level * 1000 * Math.pow(1.2, business.level);
     if(userProfile.cash < upgradeCost) { toast({ title: "Not Enough Cash", description: `You need $${upgradeCost.toLocaleString()} to upgrade.`, icon: <DollarSign/> }); return; }
-    
     let updatedBusiness = { ...business, level: business.level + 1 };
-    // For the mine, upgrading should also reset the depletion timer
-    if (updatedBusiness.id === 'mine') {
-        updatedBusiness.lastCollected = Date.now();
-    }
-    
+    if (updatedBusiness.id === 'mine') updatedBusiness.lastCollected = Date.now();
     addFloatingGain('cash', -upgradeCost);
-    const newProfile = {
-      ...userProfile,
-      cash: userProfile.cash - upgradeCost,
-      businesses: { ...userProfile.businesses, [businessId]: updatedBusiness }
-    };
+    const newProfile = { ...userProfile, cash: userProfile.cash - upgradeCost, businesses: { ...userProfile.businesses, [businessId]: updatedBusiness } };
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
     toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
-
   }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
   
   const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], rawAmount: number, secondsPassed: number) => {
     if(!isFeatureUnlocked('capitalist')) return;
     if (rawAmount < 1) return;
-
     const business = userProfile.businesses[businessId];
     if (!business.unlocked) return;
-    
     let finalIncome = rawAmount;
-    
-    // Apply business-specific gimmicks
     switch(business.id) {
         case 'startup':
             const roll = Math.random();
-            if (roll < 0.4) {
-                toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'});
-                finalIncome = 0;
-            } else if (roll > 0.9) {
-                 toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>});
-                 finalIncome *= 5;
-            }
+            if (roll < 0.4) { toast({ title: "Bad Luck!", description: `Your ${business.name} had a setback and produced no income this time.`, variant: 'destructive'}); finalIncome = 0; } 
+            else if (roll > 0.9) { toast({ title: "Viral Hit!", description: `Your ${business.name} went viral! 5x income bonus!`, icon: <Sparkles/>}); finalIncome *= 5; }
             break;
         case 'farm':
-            if (Math.random() < 0.15) {
-                 toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'});
-                 finalIncome *= 0.5;
-            }
+            if (Math.random() < 0.15) { toast({ title: "Low Yield", description: `Your ${business.name} had a small harvest. 50% income.`, variant: 'destructive'}); finalIncome *= 0.5; }
             break;
         case 'mine':
-            if (business.depletionRate) {
-                const hoursPassed = secondsPassed / 3600;
-                finalIncome *= Math.pow(1 - business.depletionRate, hoursPassed);
-            }
+            if (business.depletionRate) finalIncome *= Math.pow(1 - business.depletionRate, secondsPassed / 3600);
             break;
         case 'industry':
-            if (business.maintenanceCost) {
-                finalIncome *= (1 - business.maintenanceCost);
-            }
+            if (business.maintenanceCost) finalIncome *= (1 - business.maintenanceCost);
             break;
     }
-
-    // Safeguard against negative income and floor the result
     const incomeToCollect = Math.floor(Math.max(0, finalIncome));
-
     const newBusiness = { ...business, lastCollected: Date.now() };
     const newBusinesses = { ...userProfile.businesses, [businessId]: newBusiness };
-    
     if (incomeToCollect > 0) {
         toast({ title: "Income Collected!", description: `You collected $${incomeToCollect.toLocaleString()} from ${business.name}.`, icon: <DollarSign/> });
         addFloatingGain('cash', incomeToCollect);
     }
-
     setUserProfile(prev => ({ ...prev, cash: prev.cash + incomeToCollect, businesses: newBusinesses }));
   }, [isFeatureUnlocked, userProfile, toast, addFloatingGain]);
+  
+  const buyBond = useCallback((bondId: string) => {
+    const bond = userProfile.bonds.find(b => b.id === bondId);
+    if (!bond || bond.purchaseTime > 0) return;
+    if (userProfile.cash < bond.cost) { toast({title: "Not Enough Cash", description: "You cannot afford this bond.", variant: 'destructive'}); return; }
+    
+    addFloatingGain('cash', -bond.cost);
+    const updatedBond = { ...bond, purchaseTime: Date.now(), maturityTime: Date.now() + 60 * 60 * 1000 };
+    setUserProfile(prev => ({
+        ...prev,
+        cash: prev.cash - bond.cost,
+        bonds: prev.bonds.map(b => b.id === bondId ? updatedBond : b)
+    }));
+  }, [userProfile, toast, addFloatingGain]);
+
+  const claimMaturedBonds = useCallback(() => {
+    let cashFromBonds = 0;
+    const now = Date.now();
+    let madeChanges = false;
+    const newBonds = userProfile.bonds.filter(bond => {
+        if (bond.purchaseTime > 0 && !bond.claimed && now >= bond.maturityTime) {
+            cashFromBonds += bond.returnValue;
+            madeChanges = true;
+            return false;
+        }
+        return true;
+    });
+    if (madeChanges) {
+        setUserProfile(prev => ({...prev, cash: prev.cash + cashFromBonds, bonds: newBonds}));
+        toast({title: "Bonds Matured!", description: `You collected $${cashFromBonds.toLocaleString()} from matured bonds.`, icon: <DollarSign/>});
+        addFloatingGain('cash', cashFromBonds);
+    }
+  }, [userProfile.bonds, toast, addFloatingGain]);
 
   const loadData = useCallback(() => {
     try {
       const storedSessions = localStorage.getItem('studySessions');
-      if (storedSessions) {
-        const parsedSessions = JSON.parse(storedSessions) as StudySession[];
-        setSessions(parsedSessions.sort((a, b) => b.startTime - a.startTime));
-      }
+      if (storedSessions) setSessions(JSON.parse(storedSessions).sort((a, b) => b.startTime - a.startTime));
 
+      let profileToLoad: UserProfile = DEFAULT_USER_PROFILE;
       const storedProfile = localStorage.getItem('userProfile');
-      let parsedProfile = DEFAULT_USER_PROFILE;
       if (storedProfile) {
-        const tempProfile = JSON.parse(storedProfile) as UserProfile;
-        const ensuredNotepadData: NotepadData = {
-            ...DEFAULT_NOTEPAD_DATA,
-            ...(tempProfile.notepadData || {}),
-            tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : DEFAULT_NOTEPAD_DATA.tasks,
-            notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : DEFAULT_NOTEPAD_DATA.notes,
-            goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : DEFAULT_NOTEPAD_DATA.goals,
-            links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : DEFAULT_NOTEPAD_DATA.links,
-            revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : DEFAULT_NOTEPAD_DATA.revisionConcepts,
-            habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
-            countdownEvents: Array.isArray(tempProfile.notepadData?.countdownEvents) ? tempProfile.notepadData.countdownEvents : DEFAULT_NOTEPAD_DATA.countdownEvents,
-            eisenhowerMatrix: tempProfile.notepadData?.eisenhowerMatrix || DEFAULT_NOTEPAD_DATA.eisenhowerMatrix,
-        };
-
-        parsedProfile = {
-            ...DEFAULT_USER_PROFILE,
-            ...tempProfile,
-            xp: (tempProfile.xp === undefined || typeof tempProfile.xp !== 'number' || isNaN(tempProfile.xp)) ? 0 : Math.max(0, tempProfile.xp),
-            businesses: {...DEFAULT_BUSINESSES, ...(tempProfile.businesses || {})},
-            cash: (tempProfile.cash === undefined || typeof tempProfile.cash !== 'number' || isNaN(tempProfile.cash)) ? DEFAULT_USER_PROFILE.cash : tempProfile.cash,
-            ownedSkinIds: Array.isArray(tempProfile.ownedSkinIds) ? tempProfile.ownedSkinIds : [...DEFAULT_USER_PROFILE.ownedSkinIds],
-            completedChallengeIds: Array.isArray(tempProfile.completedChallengeIds) ? tempProfile.completedChallengeIds : [],
-            unlockedAchievementIds: Array.isArray(tempProfile.unlockedAchievementIds) ? tempProfile.unlockedAchievementIds : [],
-            notepadData: ensuredNotepadData,
-            skillPoints: typeof tempProfile.skillPoints === 'number' ? tempProfile.skillPoints : DEFAULT_USER_PROFILE.skillPoints,
-            unlockedSkillIds: Array.isArray(tempProfile.unlockedSkillIds) ? tempProfile.unlockedSkillIds : DEFAULT_USER_PROFILE.unlockedSkillIds,
-            skillLevels: tempProfile.skillLevels || {},
-            dailyOffers: tempProfile.dailyOffers || { date: '', offers: [] },
-            activeOfferId: tempProfile.activeOfferId || null,
-            activeOfferEndTime: tempProfile.activeOfferEndTime || null,
-            offerDeactivatedToday: tempProfile.offerDeactivatedToday || false,
-        };
-        
-        const coreSkillsToEnsure = ['unlockTimers', 'unlockSkillTree'];
-        coreSkillsToEnsure.forEach(coreSkillId => {
-            if (!parsedProfile.unlockedSkillIds.includes(coreSkillId)) {
-                parsedProfile.unlockedSkillIds.push(coreSkillId);
-            }
-        });
-
-        // Recalculate level based on XP to fix any data desync
-        let correctLevel = 1;
-        for (let i = 1; i < ACTUAL_LEVEL_THRESHOLDS.length; i++) {
-          if (parsedProfile.xp >= ACTUAL_LEVEL_THRESHOLDS[i]) {
-            correctLevel = i + 1;
-          } else {
-            break;
+          const tempProfile = JSON.parse(storedProfile);
+          const ensuredNotepadData: NotepadData = {
+              ...DEFAULT_NOTEPAD_DATA, ...(tempProfile.notepadData || {}),
+              tasks: Array.isArray(tempProfile.notepadData?.tasks) ? tempProfile.notepadData.tasks : DEFAULT_NOTEPAD_DATA.tasks,
+              notes: Array.isArray(tempProfile.notepadData?.notes) ? tempProfile.notepadData.notes : DEFAULT_NOTEPAD_DATA.notes,
+              goals: Array.isArray(tempProfile.notepadData?.goals) ? tempProfile.notepadData.goals : DEFAULT_NOTEPAD_DATA.goals,
+              links: Array.isArray(tempProfile.notepadData?.links) ? tempProfile.notepadData.links : DEFAULT_NOTEPAD_DATA.links,
+              revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : DEFAULT_NOTEPAD_DATA.revisionConcepts,
+              habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
+              countdownEvents: Array.isArray(tempProfile.notepadData?.countdownEvents) ? tempProfile.notepadData.countdownEvents : DEFAULT_NOTEPAD_DATA.countdownEvents,
+              eisenhowerMatrix: tempProfile.notepadData?.eisenhowerMatrix || DEFAULT_NOTEPAD_DATA.eisenhowerMatrix,
+          };
+          profileToLoad = { ...DEFAULT_USER_PROFILE, ...tempProfile, notepadData: ensuredNotepadData, xp: Math.max(0, tempProfile.xp || 0) };
+          let correctLevel = 1;
+          for (let i = 1; i < ACTUAL_LEVEL_THRESHOLDS.length; i++) {
+            if (profileToLoad.xp >= ACTUAL_LEVEL_THRESHOLDS[i]) correctLevel = i + 1; else break;
           }
-        }
-        if (parsedProfile.level !== correctLevel) {
-            console.warn(`Correcting user level from ${parsedProfile.level} to ${correctLevel} based on XP to prevent data inconsistencies.`);
-            parsedProfile.level = correctLevel;
-            parsedProfile.title = TITLES[correctLevel - 1] || TITLES[TITLES.length - 1];
-        }
+          if (profileToLoad.level !== correctLevel) {
+            profileToLoad.level = correctLevel;
+            profileToLoad.title = TITLES[correctLevel - 1] || TITLES[TITLES.length - 1];
+          }
+          const coreSkills = ['unlockTimers', 'unlockSkillTree'];
+          coreSkills.forEach(id => { if (!profileToLoad.unlockedSkillIds.includes(id)) profileToLoad.unlockedSkillIds.push(id) });
       }
-
+      
       const storedPomoSettings = localStorage.getItem('pomodoroSettings');
-      if (storedPomoSettings) {
-        const settings = JSON.parse(storedPomoSettings);
-        setPomodoroState(p => ({...p, settings, sessionEndTime: Date.now() + getDurationForMode(p.mode, settings) * 1000 }));
+      if(storedPomoSettings) setPomodoroState(prev => ({...prev, settings: JSON.parse(storedPomoSettings)}));
+      
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const lastReset = localStorage.getItem('lastChallengeResetDate');
+      if (lastReset === todayStr) {
+          setDailyChallenges(JSON.parse(localStorage.getItem('dailyChallenges') || '[]'));
       } else {
-        setPomodoroState(p => ({...p, sessionEndTime: Date.now() + getDurationForMode(p.mode, p.settings) * 1000 }));
-      }
-
-      const storedChallenges = localStorage.getItem('dailyChallenges');
-      const storedResetDate = localStorage.getItem('lastChallengeResetDate');
-      const todayDateString = format(new Date(), 'yyyy-MM-dd');
-
-      if (storedChallenges && storedResetDate === todayDateString) {
-        setDailyChallenges(JSON.parse(storedChallenges));
-        setLastChallengeResetDate(todayDateString);
-      } else {
-        const numChallenges = parsedProfile.level >= 50 ? 6 : 3;
-        const tempIsFeatureUnlocked = (featureKey: FeatureKey) => {
-            const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
-            return !skill || parsedProfile.unlockedSkillIds.includes(skill.id);
-        };
-
-        const availableChallenges = INITIAL_DAILY_CHALLENGES_POOL.filter(challenge => {
-            switch(challenge.type) {
+        const numChallenges = profileToLoad.level >= 50 ? 6 : 3;
+        const tempIsFeatureUnlocked = (featureKey: FeatureKey) => !ALL_SKILLS.find(s => s.unlocksFeature === featureKey) || profileToLoad.unlockedSkillIds.includes(ALL_SKILLS.find(s => s.unlocksFeature === featureKey)!.id);
+        const availableChallenges = INITIAL_DAILY_CHALLENGES_POOL.filter(ch => {
+            switch(ch.type){
                 case 'tasksCompleted': return tempIsFeatureUnlocked('notepadChecklist');
                 case 'ambianceUsage': return tempIsFeatureUnlocked('ambiance');
                 case 'notepadEntry': return tempIsFeatureUnlocked('notepadNotes') || tempIsFeatureUnlocked('notepadRevision');
@@ -1494,70 +1287,39 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 default: return true;
             }
         });
-        const shuffledChallenges = [...availableChallenges].sort(() => 0.5 - Math.random());
-        const freshChallenges = shuffledChallenges.slice(0, numChallenges).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
-        setDailyChallenges(freshChallenges);
-        setLastChallengeResetDate(todayDateString);
-        localStorage.setItem('dailyChallenges', JSON.stringify(freshChallenges));
-        localStorage.setItem('lastChallengeResetDate', todayDateString);
+        const newChallenges = [...availableChallenges].sort(() => 0.5 - Math.random()).slice(0, numChallenges).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+        setDailyChallenges(newChallenges);
+        setLastChallengeResetDate(todayStr);
       }
       
-      const todayStr = format(new Date(), 'yyyy-MM-dd');
-      if (parsedProfile.dailyOffers?.date !== todayStr) {
-          const shuffledOffers = [...DAILY_OFFERS_POOL].sort(() => 0.5 - Math.random());
-          const newOffers = shuffledOffers.slice(0, 3);
+      if (profileToLoad.dailyOffers?.date !== todayStr) {
+          const newOffers = [...DAILY_OFFERS_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
           setDailyOffers(newOffers);
-          parsedProfile.dailyOffers = { date: todayStr, offers: newOffers };
-          parsedProfile.activeOfferId = null;
-          parsedProfile.activeOfferEndTime = null;
-          parsedProfile.offerDeactivatedToday = false;
-      } else {
-          setDailyOffers(parsedProfile.dailyOffers.offers);
-      }
+          profileToLoad.dailyOffers = { date: todayStr, offers: newOffers };
+          profileToLoad.activeOfferId = null;
+          profileToLoad.activeOfferEndTime = null;
+          profileToLoad.offerDeactivatedToday = false;
+      } else { setDailyOffers(profileToLoad.dailyOffers.offers); }
       
-      setUserProfile(parsedProfile);
+      const now = Date.now();
+      if(now - (profileToLoad.lastBondGenerationTime || 0) > 3600 * 1000) {
+          const newBondCost = 500 * Math.pow(1.2, profileToLoad.level);
+          const newBond: Bond = { id: crypto.randomUUID(), cost: newBondCost, returnValue: newBondCost * 1.1, purchaseTime: 0, maturityTime: 0, claimed: false };
+          profileToLoad.bonds = [newBond];
+          profileToLoad.lastBondGenerationTime = now;
+      }
+      setUserProfile(profileToLoad);
+    } catch (error) { console.error("Failed to load data:", error); hardReset(); } 
+    finally { setIsLoaded(true); }
+  }, []);
 
-    } catch (error) {
-      console.error("Failed to load data from localStorage:", error);
-      setUserProfile(DEFAULT_USER_PROFILE); 
-      const freshChallenges = INITIAL_DAILY_CHALLENGES_POOL.slice(0,3).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
-      setDailyChallenges(freshChallenges);
-      setLastChallengeResetDate(format(new Date(), 'yyyy-MM-dd'));
-    } finally {
-        setIsLoaded(true);
-    }
-  }, [getDurationForMode]);
+  const hardReset = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
 
   useEffect(() => { loadData(); }, [loadData]);
   
-  const pomodoroStateRef = useRef(pomodoroState);
-  pomodoroStateRef.current = pomodoroState;
-  const addSessionRef = useRef(addSession);
-  addSessionRef.current = addSession;
-  const toastRef = useRef(toast);
-  toastRef.current = toast;
-  const switchPomodoroModeRef = useRef(switchPomodoroMode);
-  switchPomodoroModeRef.current = switchPomodoroMode;
-  const getDurationForModeRef = useRef(getDurationForMode);
-  getDurationForModeRef.current = getDurationForMode;
-  
-  useEffect(() => {
-    if (!isLoaded) return;
-    const timerWorker = () => {
-      const currentPomodoroState = pomodoroStateRef.current;
-      if (currentPomodoroState.isRunning && Date.now() >= currentPomodoroState.sessionEndTime) {
-        const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
-        const duration = getDurationForModeRef.current(currentPomodoroState.mode, currentPomodoroState.settings);
-        addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
-        toastRef.current({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
-        switchPomodoroModeRef.current(); 
-      }
-    };
-    
-    const intervalId = setInterval(timerWorker, 1000);
-    return () => clearInterval(intervalId);
-  }, [isLoaded]);
-
   useEffect(() => {
     if(isLoaded && userProfile.lastLoginDate !== format(new Date(), 'yyyy-MM-dd')) {
         const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -1573,14 +1335,38 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isLoaded, userProfile.lastLoginDate, userProfile.dailyLoginStreak, userProfile.cash, toast, addFloatingGain]);
 
+  const pomodoroStateRef = useRef(pomodoroState);
+  pomodoroStateRef.current = pomodoroState;
+  const addSessionRef = useRef(addSession);
+  addSessionRef.current = addSession;
+  const switchPomodoroModeRef = useRef(switchPomodoroMode);
+  switchPomodoroModeRef.current = switchPomodoroMode;
+  
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timerWorker = () => {
+      const currentPomodoroState = pomodoroStateRef.current;
+      if (currentPomodoroState.isRunning && Date.now() >= currentPomodoroState.sessionEndTime) {
+        const sessionType: StudySession['type'] = currentPomodoroState.mode === 'work' ? 'Pomodoro Focus' : 'Pomodoro Break';
+        const duration = getDurationForMode(currentPomodoroState.mode, currentPomodoroState.settings);
+        addSessionRef.current({ type: sessionType, startTime: currentPomodoroState.sessionStartTime, durationInSeconds: duration, isFullPomodoroCycle: currentPomodoroState.mode === 'work' });
+        toast({ title: `Time's up!`, description: `Your ${currentPomodoroState.mode} session has ended.` });
+        new Audio('/sounds/notification.mp3').play().catch(e => console.error("Error playing sound:", e));
+        switchPomodoroModeRef.current(); 
+      }
+    };
+    const intervalId = setInterval(timerWorker, 1000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded, getDurationForMode]);
+
   const applyThemePreference = useCallback((skinId: string | null) => {
     if (typeof window === 'undefined') return;
     const root = window.document.documentElement;
-    const themeClasses = ['dark', 'sepia', 'theme-forest', 'theme-sunset', 'theme-galaxy'];
-    root.classList.remove(...themeClasses);
-    const skinToApply = PREDEFINED_SKINS.find(s => s.id === skinId);
-    if (skinToApply && skinToApply.isTheme && skinToApply.themeClass && skinToApply.themeClass !== 'classic') {
-        root.classList.add(skinToApply.themeClass);
+    const themes = ['dark', 'sepia', 'theme-forest', 'theme-sunset', 'theme-galaxy'];
+    root.classList.remove(...themes);
+    const skin = PREDEFINED_SKINS.find(s => s.id === skinId);
+    if (skin && skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') {
+      root.classList.add(skin.themeClass);
     }
   }, []);
 
@@ -1592,58 +1378,31 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('pomodoroSettings', JSON.stringify(pomodoroState.settings));
         localStorage.setItem('dailyChallenges', JSON.stringify(dailyChallenges));
         if (lastChallengeResetDate) localStorage.setItem('lastChallengeResetDate', lastChallengeResetDate);
-      } catch (error) { console.error("Failed to save data to localStorage:", error); }
+      } catch (error) { console.error("Failed to save data:", error); }
     }
   }, [sessions, userProfile, pomodoroState.settings, dailyChallenges, lastChallengeResetDate, isLoaded]);
 
   useEffect(() => {
-    if (isLoaded) {
-        applyThemePreference(userProfile.equippedSkinId);
-    }
+    if (isLoaded) applyThemePreference(userProfile.equippedSkinId);
   }, [userProfile.equippedSkinId, isLoaded, applyThemePreference]);
 
-  const contextValue = useMemo(() => ({
-      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
-      userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
-      pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
-      stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
-      countdownState, startCountdown, pauseCountdown, resetCountdown, setCountdownDuration, logCountdownSession,
-      addNotepadNote, updateNotepadNote, deleteNotepadNote,
-      addRevisionConcept, markConceptRevised, deleteRevisionConcept,
-      addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
-      addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
-      unlockBusiness, upgradeBusiness, collectBusinessIncome,
-      getSkinById, buySkin, equipSkin, isSkinOwned,
-      dailyOffers, selectDailyOffer, deactivateOffer,
-      dailyChallenges, claimChallengeReward, updateChallengeProgress,
-      getUnlockedAchievements, 
-      isLoaded,
-      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost, refundAllSkillPoints,
-      floatingGains,
-  }), [
-      sessions, addSession, deleteSession, addTestSession, clearSessions, updateSessionDescription, addManualSession,
-      userProfile, updateUserProfile, updateSleepWakeTimes, updateNotepadData,
-      pomodoroState, startPomodoro, pausePomodoro, resetPomodoro, switchPomodoroMode, updatePomodoroSettings, logPomodoroSession,
-      stopwatchState, startStopwatch, pauseStopwatch, resetStopwatch, logStopwatchSession,
-      countdownState, startCountdown, pauseCountdown, resetCountdown, setCountdownDuration, logCountdownSession,
-      addNotepadNote, updateNotepadNote, deleteNotepadNote,
-      addRevisionConcept, markConceptRevised, deleteRevisionConcept,
-      addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
-      addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent, updateNotepadEisenhowerMatrix,
-      unlockBusiness, upgradeBusiness, collectBusinessIncome,
-      getSkinById, buySkin, equipSkin, isSkinOwned,
-      dailyOffers, selectDailyOffer, deactivateOffer,
-      dailyChallenges, claimChallengeReward, updateChallengeProgress,
-      getUnlockedAchievements, 
-      isLoaded,
-      getAllSkills, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost, refundAllSkillPoints,
-      floatingGains,
-  ]);
-
-  if (!isLoaded) { return null; }
-
   return (
-    <SessionContext.Provider value={contextValue}>
+    <SessionContext.Provider value={{
+      sessions, userProfile, pomodoroState, stopwatchState, countdownState, dailyChallenges, dailyOffers, floatingGains, activeTimer, isLoaded, afkCheckVisible,
+      startTimer, pauseTimer, resetTimer, logSession, confirmAfk,
+      switchPomodoroMode, updatePomodoroSettings, setCountdownDuration,
+      addManualSession, deleteSession, addTestSession, clearSessions, hardReset, updateSessionDescription,
+      updateUserProfile, updateSleepWakeTimes,
+      updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
+      addRevisionConcept, markConceptRevised, deleteRevisionConcept,
+      addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
+      addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent,
+      unlockBusiness, upgradeBusiness, collectBusinessIncome, buyBond, claimMaturedBonds,
+      getSkinById, buySkin, equipSkin, isSkinOwned,
+      selectDailyOffer, deactivateOffer,
+      claimChallengeReward, updateChallengeProgress,
+      getUnlockedAchievements, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost,
+    }}>
       {children}
     </SessionContext.Provider>
   );
@@ -1651,8 +1410,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
 export const useSessions = () => {
   const context = useContext(SessionContext);
-  if (context === undefined) {
-    throw new Error('useSessions must be used within a SessionProvider');
-  }
+  if (context === undefined) throw new Error('useSessions must be used within a SessionProvider');
   return context;
 };

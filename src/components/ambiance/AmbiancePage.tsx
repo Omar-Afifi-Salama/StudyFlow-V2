@@ -5,7 +5,7 @@ import type { AmbientSound } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, SunMedium, Moon } from 'lucide-react'; 
+import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, Moon, TreePine, Flame } from 'lucide-react'; 
 import { useSessions } from '@/contexts/SessionContext';
 
 // Example sounds from archive.org. 
@@ -15,6 +15,8 @@ const AVAILABLE_SOUNDS: AmbientSound[] = [
   { id: 'cafe', name: 'Busy Cafe', filePath: 'https://archive.org/download/RestaurantAmbiance/Restaurant%20Ambiance.mp3', icon: CoffeeIcon },
   { id: 'waves', name: 'Ocean Waves', filePath: 'https://archive.org/download/Sounds_of_Sea_Waves/Sounds_of_Sea_Waves.mp3', icon: Waves },
   { id: 'wind', name: 'Soft Wind', filePath: 'https://archive.org/download/LightWindSound/Light%20Wind%20Sound.mp3', icon: Wind },
+  { id: 'forest', name: 'Forest Night', filePath: 'https://archive.org/download/forest-at-night-and-crickets-sound-for-sleep/forest-at-night-and-crickets-sound-for-sleep.mp3', icon: TreePine },
+  { id: 'fireplace', name: 'Crackling Fire', filePath: 'https://archive.org/download/fireplace-sound/fireplace-sound.mp3', icon: Flame },
   { id: 'whitenoise', name: 'White Noise', filePath: 'https://archive.org/download/WhiteNoiseSound/White%20Noise%20Sound.mp3', icon: Moon },
 ];
 

@@ -136,6 +136,19 @@ export default function GuidePage() {
               </ul>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="item-4">
+            <AccordionTrigger className="text-xl font-semibold">A Big Thank You!</AccordionTrigger>
+            <AccordionContent>
+                <p className="text-muted-foreground">
+                    This app wouldn't be what it is without the invaluable feedback and brilliant ideas from its dedicated playtesters. Your insights have helped shape features, squash bugs, and make StudyFlow a better tool for everyone.
+                </p>
+                <br/>
+                <p className="font-semibold text-center text-primary">
+                    A special shoutout to all of you!
+                </p>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
 
         <section className="text-sm text-muted-foreground text-center pt-4">
