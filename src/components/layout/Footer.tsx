@@ -29,59 +29,16 @@ const quotes = [
 
 export default function Footer() {
   const [currentQuote, setCurrentQuote] = useState<{ quote: string; author: string } | null>(null);
-  const { addDevLevels, hardReset, userProfile, requestHardReset, cancelHardReset } = useSessions();
-  const [resetTimeLeft, setResetTimeLeft] = useState(0);
-
+  const { addDevLevels, userProfile } = useSessions();
+  
   useEffect(() => {
     setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
   }, []);
   
-  useEffect(() => {
-      if (userProfile.hardResetRequestTime) {
-          const interval = setInterval(() => {
-              const timeLeft = Math.max(0, userProfile.hardResetRequestTime! + 24 * 60 * 60 * 1000 - Date.now());
-              setResetTimeLeft(timeLeft / 1000);
-          }, 1000);
-          return () => clearInterval(interval);
-      }
-  }, [userProfile.hardResetRequestTime]);
-
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   if (!currentQuote && !isDevelopment) { 
     return null;
-  }
-
-  const HardResetButton = () => {
-    if (userProfile.hardResetRequestTime) {
-      return (
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-destructive text-sm font-semibold">Hard reset pending! Time left: {formatTime(resetTimeLeft, true)}</p>
-          <Button onClick={cancelHardReset} variant="secondary" size="sm" className="btn-animated">Cancel Reset</Button>
-        </div>
-      );
-    }
-    return (
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm" className="btn-animated">
-            <Trash2 className="mr-2 h-4 w-4" /> Hard Reset
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will permanently delete ALL data associated with your profile, including achievements, skills, and notepad entries. This process will take 24 hours to complete and can be cancelled at any time before then. Are you sure you want to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={requestHardReset}>Yes, start the 24-hour reset</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    )
   }
 
   return (
@@ -107,7 +64,6 @@ export default function Footer() {
               <PlusSquare className="mr-2 h-4 w-4" /> Dev: Add 50 Levels
             </Button>
           )}
-          <HardResetButton />
         </div>
       </div>
     </footer>

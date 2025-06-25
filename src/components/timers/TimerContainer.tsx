@@ -32,7 +32,7 @@ export default function TimerContainer() {
         localStorage.setItem('lastTimerTab', value);
     }
   };
-
+    
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Tabs value={activeTimer || activeTab} onValueChange={handleTabChange} className="w-full">

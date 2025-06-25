@@ -31,7 +31,7 @@ export default function PomodoroTimer() {
     activeTimer
   } = useSessions();
 
-  const { mode, isRunning, settings, sessionEndTime } = pomodoroState;
+  const { mode, isRunning, settings, sessionEndTime, cyclesCompleted, cyclesPerLongBreak } = pomodoroState;
   const [timeLeft, setTimeLeft] = useState(0);
   
   const { toast } = useToast();
@@ -96,6 +96,8 @@ export default function PomodoroTimer() {
   
   const canStart = activeTimer === null || activeTimer === 'pomodoro';
 
+  const currentCycle = (cyclesCompleted % cyclesPerLongBreak) + 1;
+
 
   return (
     <Card className="shadow-lg card-animated">
@@ -134,8 +136,13 @@ export default function PomodoroTimer() {
             </p>
         )}
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-8 py-8">
+      <CardContent className="flex flex-col items-center justify-center space-y-6 py-8">
         <TimerDisplay seconds={timeLeft} />
+        {mode === 'work' && (
+          <p className="font-semibold text-muted-foreground">
+            Focus Cycle: {currentCycle} / {cyclesPerLongBreak}
+          </p>
+        )}
         <div className="flex space-x-3">
           {!isRunning ? (
             <TooltipProvider delayDuration={300}>

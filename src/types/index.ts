@@ -42,18 +42,15 @@ export interface Business {
   maintenanceCost?: number;
 }
 
-export interface DailyOfferEffect {
-    type: 'xp' | 'cash' | 'timer_speed' | 'risk';
-    modifier: number;
-    description: string;
-}
-
 export interface DailyOffer {
     id: string;
     title: string;
     description: string;
-    positiveEffect: DailyOfferEffect;
-    negativeEffect: DailyOfferEffect;
+    effectType: 'xp_gain' | 'cash_gain' | 'timer_efficiency' | 'capitalist_income' | 'bond_risk';
+    positiveEffectModifier: number;
+    negativeEffectModifier: number;
+    positiveDescription: string;
+    negativeDescription: string;
 }
 
 
@@ -104,6 +101,7 @@ export interface Skin {
   imageUrl: string;
   dataAiHint: string;
   isTheme?: boolean;
+  isLightTheme?: boolean;
   themeClass?: string;
 }
 
@@ -294,6 +292,7 @@ export interface PomodoroState {
   mode: PomodoroMode;
   isRunning: boolean;
   cyclesCompleted: number;
+  cyclesPerLongBreak: number;
   settings: PomodoroSettings;
   sessionStartTime: number;
   sessionEndTime: number;

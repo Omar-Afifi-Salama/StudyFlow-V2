@@ -2,13 +2,87 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TITLES, ACTUAL_LEVEL_THRESHOLDS, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS } from "@/contexts/SessionContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useSessions } from "@/contexts/SessionContext";
+import { Button } from "../ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { Input } from "../ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { formatTime } from "@/lib/utils";
 
 const CASH_REWARD_PER_LEVEL = 500;
+const RESET_PASSWORD = "studyflowreset"; // Hardcoded password
+
+function HardResetSection() {
+    const { userProfile, requestHardReset, cancelHardReset } = useSessions();
+    const [resetTimeLeft, setResetTimeLeft] = useState(0);
+    const [passwordInput, setPasswordInput] = useState("");
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (userProfile.hardResetRequestTime) {
+            const interval = setInterval(() => {
+                const timeLeft = Math.max(0, userProfile.hardResetRequestTime! + 24 * 60 * 60 * 1000 - Date.now());
+                setResetTimeLeft(timeLeft / 1000);
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [userProfile.hardResetRequestTime]);
+
+    const handleResetRequest = () => {
+        if (passwordInput === RESET_PASSWORD) {
+            requestHardReset();
+            setPasswordInput("");
+        } else {
+            toast({
+                title: "Incorrect Password",
+                description: "The password for the hard reset is incorrect.",
+                variant: "destructive",
+            });
+        }
+    };
+    
+    if (userProfile.hardResetRequestTime) {
+      return (
+        <div className="flex flex-col items-center gap-2 mt-4 p-4 border border-destructive rounded-lg">
+          <p className="text-destructive text-sm font-semibold text-center">Hard reset pending! Time left: {formatTime(resetTimeLeft, true)}</p>
+          <Button onClick={cancelHardReset} variant="secondary" size="sm" className="btn-animated">Cancel Reset</Button>
+        </div>
+      );
+    }
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="mt-4 w-full md:w-auto">
+                    <Trash2 className="mr-2 h-4 w-4" /> Hard Reset All Data
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete ALL data. This is irreversible and will take 24 hours to complete. Please enter the master password to proceed.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input 
+                    type="password"
+                    placeholder="Enter reset password"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                />
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetRequest}>Confirm & Start Reset</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
 
 export default function GuidePage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
@@ -20,23 +94,7 @@ export default function GuidePage() {
   const levelData = TITLES.map((title, index) => {
     const level = index + 1;
     const xpRequired = ACTUAL_LEVEL_THRESHOLDS[index];
-    
-    // Correctly calculate total minutes based on the arithmetic progression
-    let totalMinutes = 0;
-    if (index > 0) {
-      for (let i = 1; i <= index; i++) {
-        // Minutes to get from level `i` to `i+1` is `25 + (i-1)*15`
-        const minutesForLevel = 25 + (i - 1) * 15;
-        totalMinutes += minutesForLevel;
-      }
-    } else {
-      // Level 1 requires 0 minutes, but the first focus session starts the journey.
-      // The time to reach level 2 is 25 minutes.
-      // So to be precise, time to reach level 1 is 0.
-      totalMinutes = 0;
-    }
-
-    const hoursToReach = totalMinutes / 60;
+    const hoursToReach = xpRequired / XP_PER_MINUTE_FOCUS / 60;
     
     return {
       level,
@@ -63,7 +121,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-xl font-semibold">What is StudyFlow?</AccordionTrigger>
             <AccordionContent>
                 <p className="text-muted-foreground">
-                    StudyFlow is a gamified productivity application designed to make studying more engaging and rewarding. By tracking your focus time with our built-in timers (Pomodoro and Stopwatch), you earn Experience Points (XP) and Cash.
+                    StudyFlow is a gamified productivity application designed to make studying more engaging and rewarding. By tracking your focus time with our built-in timers (Pomodoro, Stopwatch, and Countdown), you earn Experience Points (XP) and Cash.
                 </p>
                 <br/>
                 <p className="text-muted-foreground">
@@ -75,7 +133,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-xl font-semibold">Levels, Titles & Hours</AccordionTrigger>
             <AccordionContent>
               <p className="mb-4 text-muted-foreground">
-                Level up by earning XP from study sessions. Each new level grants you a new title, Skill Points, and a cash reward. The cash reward for reaching level 'N' is <span className="font-semibold text-primary">N * ${CASH_REWARD_PER_LEVEL}</span>.
+                Level up by earning XP from study sessions. Each level requires 60 minutes of focus. Each new level also grants you a new title, Skill Points, and a cash reward. The cash reward for reaching level 'N' is <span className="font-semibold text-primary">N * ${CASH_REWARD_PER_LEVEL}</span>.
               </p>
               <div className="max-h-[500px] overflow-y-auto pr-2">
                  <Table>
@@ -84,7 +142,7 @@ export default function GuidePage() {
                         <TableHead className="w-[100px]">Level</TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead className="text-right">Total XP</TableHead>
-                        <TableHead className="text-right">Total Hours (approx.)</TableHead>
+                        <TableHead className="text-right">Total Hours</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -106,11 +164,12 @@ export default function GuidePage() {
             <AccordionTrigger className="text-xl font-semibold">Earning XP & Cash</AccordionTrigger>
             <AccordionContent>
                  <ul className="list-disc list-inside space-y-2 pl-4">
-                    <li><strong>XP from Study:</strong> You earn <span className="font-semibold text-primary">{XP_PER_MINUTE_FOCUS} XP per minute</span> of focused study (Pomodoro Focus & Stopwatch).</li>
+                    <li><strong>XP from Study:</strong> You earn <span className="font-semibold text-primary">{XP_PER_MINUTE_FOCUS} XP per minute</span> of focused study (Pomodoro Focus, Stopwatch, and Countdown).</li>
                     <li><strong>Cash from Study:</strong> You earn <span className="font-semibold text-primary">${CASH_PER_5_MINUTES_FOCUS.toLocaleString()} Cash per 5 minutes</span> of focused study.</li>
+                    <li><strong>Daily Login Bonus:</strong> Get <span className="font-semibold text-primary">$200</span> just for logging in, plus a bonus for your login streak!</li>
                     <li><strong>Level Up Bonus:</strong> Receive a cash reward equal to your <span className="font-semibold text-primary">New Level x ${CASH_REWARD_PER_LEVEL}</span>.</li>
                     <li><strong>Streak Bonus:</strong> For each consecutive day you study, you gain a +1% bonus to XP and Cash, up to a maximum of +20%.</li>
-                    <li><strong>Daily Challenges:</strong> Complete daily challenges for significant XP and Cash rewards.</li>
+                    <li><strong>Daily Challenges:</strong> Complete daily challenges for significant XP and Cash rewards. Rewards scale with your level!</li>
                     <li><strong>Achievements:</strong> Unlock achievements for one-time cash rewards.</li>
                     <li><strong>Capitalist Corner:</strong> Invest your cash for potential high returns (or losses!).</li>
                  </ul>
@@ -121,22 +180,22 @@ export default function GuidePage() {
             <AccordionTrigger className="text-xl font-semibold">Key Features</AccordionTrigger>
             <AccordionContent>
                <ul className="list-disc list-inside space-y-2 pl-4">
-                <li><strong>Flexible Timers:</strong> Pomodoro, Stopwatch, and a simple Countdown timer.</li>
+                <li><strong>Flexible Timers:</strong> Pomodoro, Stopwatch, and a simple Countdown timer. Only one can run at a time to ensure focus.</li>
                 <li><strong>Session Logging & Stats:</strong> Track your efforts and visualize your habits with a detailed dashboard and heatmap.</li>
                 <li><strong>XP & Leveling System:</strong> Earn experience points and cash for studying, level up, and unlock titles.</li>
                 <li><strong>Skill Tree:</strong> Unlock app features and passive bonuses using Skill Points earned from leveling up.</li>
                 <li><strong>Ambiance Mixer:</strong> Create your perfect study soundscape with various ambient sounds.</li>
-                <li><strong>Skin Shop:</strong> Personalize your app with cosmetic skins, including Dark and Sepia themes.</li>
-                <li><strong>Capitalist Corner:</strong> A fun minigame to invest your earnings.</li>
-                <li><strong>Digital Notepad:</strong> Includes Checklist, Notes, Goals, Links, Revision Hub, Habits, and Events Countdown.</li>
-                <li><strong>Daily Challenges:</strong> Complete varied tasks for bonus XP and cash rewards.</li>
+                <li><strong>Skin Shop:</strong> Personalize your app with a variety of Light and Dark themes.</li>
+                <li><strong>Capitalist Corner:</strong> A fun minigame to invest your earnings in businesses and hourly bonds.</li>
+                <li><strong>Productivity Hub:</strong> Includes Checklist, Notes, Goals, Links, Revision Hub, Habits, Events Countdown, and Eisenhower Matrix.</li>
+                <li><strong>Daily Challenges & Offers:</strong> Complete varied tasks for bonus rewards and choose strategic daily trade-offs.</li>
                 <li><strong>Achievements & Badges:</strong> Unlock milestones and showcase your dedication.</li>
-                <li><strong>PWA Support:</strong> Install StudyFlow on your device for an app-like experience.</li>
+                <li><strong>Infamy System:</strong> After reaching Level 100, reset for powerful, permanent upgrades.</li>
                 <li><strong>Hotkeys:</strong> Navigate and control timers efficiently with keyboard shortcuts.</li>
               </ul>
             </AccordionContent>
           </AccordionItem>
-
+            
           <AccordionItem value="item-4">
             <AccordionTrigger className="text-xl font-semibold">A Big Thank You!</AccordionTrigger>
             <AccordionContent>
@@ -149,6 +208,17 @@ export default function GuidePage() {
                 </p>
             </AccordionContent>
           </AccordionItem>
+          
+          <AccordionItem value="item-5">
+            <AccordionTrigger className="text-xl font-semibold">Advanced Options</AccordionTrigger>
+            <AccordionContent className="flex flex-col items-center">
+              <p className="text-muted-foreground mb-4 text-center">
+                  Need to start fresh? This button will begin the 24-hour process to permanently delete all your data. This cannot be undone once completed.
+              </p>
+              <HardResetSection />
+            </AccordionContent>
+          </AccordionItem>
+
         </Accordion>
 
         <section className="text-sm text-muted-foreground text-center pt-4">

@@ -68,7 +68,7 @@ export default function BondCard({ bond, userCash, onBuy, isPurchased, hasMadeCh
       <CardContent className="flex-grow space-y-2 p-4">
         <p className="flex items-center text-sm"><DollarSign className="h-4 w-4 mr-2 text-green-500" />Cost: ${bond.cost.toLocaleString()}</p>
         <p className="flex items-center text-sm"><TrendingUp className="h-4 w-4 mr-2 text-primary" />Potential Return: ${bond.potentialReturnValue.toLocaleString()}</p>
-        <p className="flex items-center text-sm"><TrendingDown className="h-4 w-4 mr-2 text-destructive" />Potential Loss: -${bond.potentialLossValue.toLocaleString()}</p>
+        <p className="flex items-center text-sm"><TrendingDown className="h-4 w-4 mr-2 text-destructive" />Potential Loss: ${bond.potentialLossValue.toLocaleString()}</p>
 
         {isPurchased && (
           <p className="flex items-center text-sm font-semibold pt-2 text-primary"><Hourglass className="h-4 w-4 mr-2 animate-spin" />Matures in: {formatTime(timeLeft, true)}</p>

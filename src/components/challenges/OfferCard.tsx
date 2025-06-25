@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Zap, DollarSign, Timer, Shield, Sparkles, CheckCircle, Ban, XCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface OfferCardProps {
   offer: DailyOffer;
@@ -14,22 +15,26 @@ interface OfferCardProps {
   canSelect: boolean;
 }
 
-const getIconForType = (type: 'xp' | 'cash' | 'timer_speed' | 'risk') => {
+const getIconForType = (type: DailyOffer['effectType']) => {
   switch (type) {
-    case 'xp': return <Zap className="h-5 w-5 text-yellow-400" />;
-    case 'cash': return <DollarSign className="h-5 w-5 text-green-500" />;
-    case 'timer_speed': return <Timer className="h-5 w-5 text-blue-400" />;
-    case 'risk': return <Shield className="h-5 w-5 text-purple-400"/>;
+    case 'xp_gain': return <Zap className="h-5 w-5 text-yellow-400" />;
+    case 'cash_gain': return <DollarSign className="h-5 w-5 text-green-500" />;
+    case 'timer_efficiency': return <Timer className="h-5 w-5 text-blue-400" />;
+    case 'capitalist_income': return <Shield className="h-5 w-5 text-purple-400"/>;
+    case 'bond_risk': return <Shield className="h-5 w-5 text-red-400"/>;
     default: return <Sparkles className="h-5 w-5 text-purple-400" />;
   }
 };
 
-const EffectDisplay = ({ effect }: { effect: DailyOffer['positiveEffect']}) => {
+const EffectDisplay = ({ effect, isPositive }: { effect: string, isPositive: boolean}) => {
     return (
         <div className="flex items-center space-x-2">
-            {getIconForType(effect.type)}
-            <span className={cn(effect.modifier > 1 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                {effect.description}
+            {isPositive 
+                ? <TrendingUp className="h-5 w-5 text-green-500"/>
+                : <TrendingDown className="h-5 w-5 text-destructive"/>
+            }
+            <span className={cn(isPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                {effect}
             </span>
         </div>
     )
@@ -45,21 +50,27 @@ export default function OfferCard({ offer, onSelect, isSelected, canSelect }: Of
       )}
     >
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">
-          {offer.title}
-        </CardTitle>
-        <CardDescription className="h-10">{offer.description}</CardDescription>
+        <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                 {getIconForType(offer.effectType)}
+                 {offer.title}
+            </CardTitle>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6"><XCircle className="h-4 w-4"/></Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="text-sm max-w-xs">{offer.description}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">
         <div className="text-sm font-medium p-3 rounded-md bg-muted/50 border space-y-2">
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-green-500"/>
-            <EffectDisplay effect={offer.positiveEffect} />
-          </div>
-          <div className="flex items-center space-x-2">
-            <TrendingDown className="h-5 w-5 text-destructive"/>
-            <EffectDisplay effect={offer.negativeEffect} />
-          </div>
+            <EffectDisplay effect={offer.positiveDescription} isPositive={true} />
+            <EffectDisplay effect={offer.negativeDescription} isPositive={false} />
         </div>
       </CardContent>
       <CardFooter className="p-4 border-t">
