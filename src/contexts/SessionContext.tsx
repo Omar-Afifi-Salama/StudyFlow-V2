@@ -277,6 +277,15 @@ export const ALL_SKILLS: Skill[] = [
   { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteLevel: 25, prerequisiteSkillIds: ['infiniteXpBoost', 'infiniteCashBoost'], category: 'Infinite' },
 ];
 
+export const ALL_INFAMY_SKILLS: Skill[] = [
+  { id: 'infamyXpBoost', name: 'Perpetual Learner', description: 'Permanently gain +10% more XP from all sources.', cost: 1, iconName: 'Zap', xpBoostPercent: 0.10, category: 'Infamy' },
+  { id: 'infamyCashBoost', name: 'Golden Touch', description: 'Permanently gain +10% more Cash from all sources.', cost: 1, iconName: 'DollarSign', cashBoostPercent: 0.10, category: 'Infamy' },
+  { id: 'infamyStartingBonus', name: 'Head Start', description: 'Start each new run after Infamy with $50,000 cash and 5 Skill Points.', cost: 1, iconName: 'Rocket', otherEffect: 'starting_bonus', category: 'Infamy' },
+  { id: 'infamyBusinessBoost', name: 'Capitalist Legacy', description: 'All businesses start at Level 2 after going infamous.', cost: 2, prerequisiteLevel: 2, iconName: 'Building2', otherEffect: 'business_legacy', category: 'Infamy' },
+  { id: 'infamyChallengeSlot', name: 'Extra Endeavor', description: 'Gain one additional Daily Challenge slot.', cost: 2, prerequisiteLevel: 3, iconName: 'CalendarPlus', otherEffect: 'challenge_slot', category: 'Infamy' },
+];
+
+
 const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; 
 
 interface SessionContextType {
@@ -356,10 +365,10 @@ interface SessionContextType {
   isSkillUnlocked: (skillId: string) => boolean;
   canUnlockSkill: (skillId: string) => { can: boolean, reason?: string };
   unlockSkill: (skillId: string) => boolean;
+  goInfamous: () => void;
   isInfamySkillUnlocked: (skillId: string) => boolean;
   canUnlockInfamySkill: (skillId: string) => { can: boolean, reason?: string };
   unlockInfamySkill: (skillId: string) => boolean;
-  goInfamous: () => void;
   isFeatureUnlocked: (featureKey: FeatureKey) => boolean;
   getAppliedBoost: (type: 'xp' | 'cash' | 'shopDiscount') => number;
   getSkillBoost: (type: 'xp' | 'cash') => number;
@@ -1015,6 +1024,87 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [canUnlockSkill, toast, userProfile, checkAndUnlockAchievements]);
 
+  const isInfamySkillUnlocked = useCallback((skillId: string) => {
+    return userProfile.unlockedInfamySkillIds.includes(skillId);
+  }, [userProfile.unlockedInfamySkillIds]);
+
+  const canUnlockInfamySkill = useCallback((skillId: string): { can: boolean, reason?: string } => {
+    const skill = ALL_INFAMY_SKILLS.find(s => s.id === skillId);
+    if (!skill) return { can: false, reason: "Skill not found." };
+    if (isInfamySkillUnlocked(skillId)) return { can: false, reason: "Already unlocked." };
+    if (userProfile.infamyPoints < skill.cost) return { can: false, reason: `Not enough Infamy Points. Needs ${skill.cost}, has ${userProfile.infamyPoints}.` };
+    if (skill.prerequisiteLevel && userProfile.infamyLevel < skill.prerequisiteLevel) return { can: false, reason: `Requires Infamy Level ${skill.prerequisiteLevel}.` };
+    return { can: true };
+  }, [userProfile.infamyPoints, userProfile.infamyLevel, isInfamySkillUnlocked]);
+
+  const unlockInfamySkill = useCallback((skillId: string) => {
+    const unlockCheck = canUnlockInfamySkill(skillId);
+    if (!unlockCheck.can) {
+      toast({ title: "Cannot Unlock Infamy Skill", description: unlockCheck.reason, variant: "destructive" });
+      return false;
+    }
+    const skill = ALL_INFAMY_SKILLS.find(s => s.id === skillId);
+    if (!skill) return false;
+
+    const newUnlockedSkills = [...userProfile.unlockedInfamySkillIds, skillId];
+    const newProfile = { ...userProfile, infamyPoints: userProfile.infamyPoints - skill.cost, unlockedInfamySkillIds: newUnlockedSkills };
+    setUserProfile(newProfile);
+    toast({ title: "Infamy Skill Unlocked!", description: `You have learned: ${skill.name}` });
+    return true;
+  }, [canUnlockInfamySkill, userProfile, toast]);
+
+  const goInfamous = useCallback(() => {
+    if (userProfile.level < 100) {
+      toast({ title: "Not Ready", description: "You must reach Level 100 to go infamous.", variant: "destructive" });
+      return;
+    }
+
+    let startingCash = DEFAULT_USER_PROFILE.cash;
+    let startingSkillPoints = 0;
+    if (isInfamySkillUnlocked('infamyStartingBonus')) {
+      startingCash += 50000;
+      startingSkillPoints += 5;
+    }
+
+    let startingBusinesses = DEFAULT_BUSINESSES;
+    if (isInfamySkillUnlocked('infamyBusinessBoost')) {
+        const now = Date.now();
+        startingBusinesses = {
+            farm: { ...DEFAULT_BUSINESSES.farm, level: 2, lastCollected: now },
+            startup: { ...DEFAULT_BUSINESSES.startup, level: 2, lastCollected: now },
+            mine: { ...DEFAULT_BUSINESSES.mine, level: 2, lastCollected: now },
+            industry: { ...DEFAULT_BUSINESSES.industry, level: 2, lastCollected: now },
+        };
+    }
+
+    setUserProfile(prev => ({
+      ...prev,
+      // Reset progress
+      xp: 0,
+      level: 1,
+      title: TITLES[0],
+      cash: startingCash,
+      skillPoints: startingSkillPoints,
+      businesses: startingBusinesses,
+      // Infamy progression
+      infamyLevel: prev.infamyLevel + 1,
+      infamyPoints: prev.infamyPoints + 1,
+      // Reset timers and other volatile state
+      bonds: [],
+      lastBondGenerationTime: 0,
+      activeOfferId: null,
+      offerDeactivatedToday: false,
+    }));
+    
+    // Clear sessions from state and storage
+    setSessions([]);
+    localStorage.removeItem('studySessions');
+
+    toast({ title: "You Have Gone Infamous!", description: "Your journey begins anew, but with greater power. You earned 1 Infamy Point." });
+
+  }, [userProfile.level, toast, isInfamySkillUnlocked]);
+
+
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
     updateUserProfile({ wakeUpTime, sleepTime });
     toast({ title: "Preferences Updated", description: "Your wake-up and sleep times have been saved.", icon: <Settings/> });
@@ -1471,6 +1561,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       selectDailyOffer, deactivateOffer,
       claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost,
+      goInfamous, isInfamySkillUnlocked, canUnlockInfamySkill, unlockInfamySkill,
     }}>
       {children}
     </SessionContext.Provider>
