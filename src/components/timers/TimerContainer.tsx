@@ -29,13 +29,13 @@ export default function TimerContainer() {
     <div className="w-full max-w-2xl mx-auto">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="pomodoro" className="py-2 text-base md:py-3">
+          <TabsTrigger value="pomodoro" className="py-2 text-base md:py-3 btn-animated">
             <Clock4 className="mr-2 h-5 w-5" /> Pomodoro
           </TabsTrigger>
-          <TabsTrigger value="stopwatch" className="py-2 text-base md:py-3">
+          <TabsTrigger value="stopwatch" className="py-2 text-base md:py-3 btn-animated">
             <Timer className="mr-2 h-5 w-5" /> Stopwatch
           </TabsTrigger>
-          <TabsTrigger value="countdown" className="py-2 text-base md:py-3">
+          <TabsTrigger value="countdown" className="py-2 text-base md:py-3 btn-animated">
             <Hourglass className="mr-2 h-5 w-5" /> Countdown
           </TabsTrigger>
         </TabsList>

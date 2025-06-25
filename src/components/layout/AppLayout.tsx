@@ -4,13 +4,15 @@
 import React from 'react';
 import Header from './Header';
 import { useSessions } from '@/contexts/SessionContext';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { isLoaded } = useSessions(); 
+  const { isLoaded, afkCheckVisible, confirmAfk } = useSessions(); 
 
   if (!isLoaded) { 
     return (
@@ -23,7 +25,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     );
   }
 
-
   return (
     <>
       <Header />
@@ -32,6 +33,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {children}
         </main>
       </div>
+      <AlertDialog open={afkCheckVisible}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Are you still there?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Your study timer has been running for a while. Please confirm you're still focused to continue earning rewards.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <Button onClick={() => confirmAfk(true)}>I'm still here!</Button>
+                  <AlertDialogAction onClick={() => confirmAfk(false)}>End Session</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

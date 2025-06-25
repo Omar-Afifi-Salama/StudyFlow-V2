@@ -1,4 +1,6 @@
+
 import { formatTime } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface TimerDisplayProps {
   seconds: number;
@@ -8,7 +10,7 @@ interface TimerDisplayProps {
 
 export default function TimerDisplay({ seconds, className, forceHours = false }: TimerDisplayProps) {
   return (
-    <div className={`font-mono text-7xl md:text-8xl font-bold text-center text-foreground ${className || ''}`}>
+    <div className={cn('font-mono text-7xl md:text-8xl font-bold text-center text-foreground', className)}>
       {formatTime(seconds, forceHours)}
     </div>
   );

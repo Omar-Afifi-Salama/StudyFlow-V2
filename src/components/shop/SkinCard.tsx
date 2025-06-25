@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Skin } from '@/types';
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { useSessions } from '@/contexts/SessionContext';
 
 interface SkinCardProps {
   skin: Skin;
@@ -17,12 +19,16 @@ interface SkinCardProps {
 }
 
 export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquipped, onBuy, onEquip }: SkinCardProps) {
-  const canAfford = userCash >= skin.price;
+  const { getAppliedBoost } = useSessions();
+  const shopDiscount = getAppliedBoost('shopDiscount');
+  const effectivePrice = Math.round(skin.price * (1 - shopDiscount));
+
+  const canAfford = userCash >= effectivePrice;
   const meetsLevelRequirement = userLevel >= skin.levelRequirement;
   const canBuy = !isOwned && canAfford && meetsLevelRequirement;
 
   return (
-    <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+    <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow card-animated">
       <CardHeader className="p-0">
         <div className="relative w-full h-40">
           <Image 
@@ -43,7 +49,15 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
         <CardTitle className="text-xl font-semibold mb-1">{skin.name}</CardTitle>
         <CardDescription className="text-sm text-muted-foreground mb-2">{skin.description}</CardDescription>
         <div className="flex items-center text-sm mb-1">
-          <DollarSign className="h-4 w-4 mr-1 text-green-500" /> Price: {skin.price > 0 ? `$${skin.price.toLocaleString()}` : 'Free'}
+          <DollarSign className="h-4 w-4 mr-1 text-green-500" /> Price: 
+          {shopDiscount > 0 && skin.price > 0 ? (
+            <>
+              <span className="line-through text-muted-foreground ml-1">${skin.price.toLocaleString()}</span>
+              <span className="font-semibold ml-1">${effectivePrice.toLocaleString()}</span>
+            </>
+          ) : (
+            <span className="ml-1">{skin.price > 0 ? `$${skin.price.toLocaleString()}` : 'Free'}</span>
+          )}
         </div>
         <div className="flex items-center text-sm">
           <Lock className="h-4 w-4 mr-1 text-gray-500" /> Requires Level: {skin.levelRequirement}
@@ -56,15 +70,15 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
               <CheckCircle className="mr-2 h-4 w-4" /> Equipped
             </Button>
           ) : (
-            <Button onClick={onEquip} className="w-full" variant="outline">
+            <Button onClick={onEquip} className="w-full btn-animated" variant="outline">
               Equip Skin
             </Button>
           )
         ) : (
-          <Button onClick={onBuy} disabled={!canBuy} className="w-full">
+          <Button onClick={onBuy} disabled={!canBuy} className="w-full btn-animated">
             <ShoppingCart className="mr-2 h-4 w-4" /> Buy Skin
             {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
-            {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(Need ${(skin.price - userCash).toLocaleString()} more)</span>}
+            {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(Need ${(effectivePrice - userCash).toLocaleString()} more)</span>}
           </Button>
         )}
       </CardFooter>

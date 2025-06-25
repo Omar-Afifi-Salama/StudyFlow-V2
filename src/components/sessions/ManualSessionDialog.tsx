@@ -23,7 +23,7 @@ const manualSessionSchema = z.object({
   hours: z.coerce.number().min(0).max(23).default(0),
   minutes: z.coerce.number().min(0).max(59).default(30),
   date: z.date({ required_error: "A date is required." }),
-  type: z.enum(['Pomodoro Focus', 'Stopwatch'], { required_error: "Session type is required." }),
+  type: z.enum(['Pomodoro Focus', 'Stopwatch', 'Countdown'], { required_error: "Session type is required." }),
   description: z.string().max(100).optional(),
 }).refine(data => (data.hours * 60 + data.minutes) > 0, {
   message: "Total duration must be at least 1 minute.",
@@ -50,18 +50,21 @@ export default function ManualSessionDialog() {
 
   const onSubmit = (data: ManualSessionFormValues) => {
     const durationInSeconds = data.hours * 3600 + data.minutes * 60;
-    addManualSession({
+    const success = addManualSession({
       durationInSeconds,
       endTime: data.date.getTime(), // Use the selected date as the end time
       type: data.type,
       description: data.description || 'Manual Entry',
     });
-    toast({
-      title: "Session Logged",
-      description: `Manually added a ${data.type} session.`,
-    });
-    setIsOpen(false);
-    form.reset();
+
+    if (success) {
+      toast({
+        title: "Session Logged",
+        description: `Manually added a ${data.type} session.`,
+      });
+      setIsOpen(false);
+      form.reset();
+    }
   };
 
   return (
@@ -75,7 +78,7 @@ export default function ManualSessionDialog() {
         <DialogHeader>
           <DialogTitle>Log a Past Study Session</DialogTitle>
           <DialogDescription>
-            Manually add a session you completed without the timer.
+            Manually add a session you completed without the timer. A maximum of 4 hours can be logged per day.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -156,6 +159,7 @@ export default function ManualSessionDialog() {
                     <SelectContent>
                       <SelectItem value="Pomodoro Focus">Pomodoro Focus</SelectItem>
                       <SelectItem value="Stopwatch">Stopwatch</SelectItem>
+                      <SelectItem value="Countdown">Countdown</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

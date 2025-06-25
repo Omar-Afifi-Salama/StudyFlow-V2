@@ -25,7 +25,7 @@ const getIconForEffect = (type: DailyOffer['effect']['type']) => {
 };
 
 export default function OfferCard({ offer, onSelect, onDeactivate, isSelected, canSelect }: OfferCardProps) {
-  const isDebuff = (offer.effect.modifier < 1);
+  const isDebuff = (offer.effect.modifier < 1 && offer.effect.type !== 'timer_speed');
 
   return (
     <Card 

@@ -36,7 +36,7 @@ const allPossibleNavItems: NavItem[] = [
     { href: '/capitalist', label: 'Capitalist', icon: LucideIcons.Briefcase, hotkey: 'c', featureKey: 'capitalist' },
     { href: '/shop', label: 'Shop', icon: LucideIcons.ShoppingCart, hotkey: 'x', featureKey: 'shop' },
     { href: '/achievements', label: 'Achievements', icon: LucideIcons.Award, hotkey: 'v', featureKey: 'achievements' },
-    { href: '/about', label: 'Guide', icon: LucideIcons.HelpCircle, hotkey: 'g', featureKey: 'about' },
+    { href: '/about', label: 'Guide', icon: LucideIcons.HelpCircle, hotkey: 'g', featureKey: 'about', alwaysVisible: true },
 ];
 
 const hotkeyNavMap = allPossibleNavItems.reduce((acc, item) => {

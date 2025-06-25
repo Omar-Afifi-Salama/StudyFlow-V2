@@ -1,30 +1,9 @@
 
 "use client";
 
-import { useSessions } from '@/contexts/SessionContext'; 
 import GuidePage from '@/components/guide/GuidePage';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { HelpCircle } from 'lucide-react';
 
 export default function AboutRoute() {
-  const { isFeatureUnlocked } = useSessions();
-
-  if (!isFeatureUnlocked('about')) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <HelpCircle className="h-16 w-16 text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-semibold mb-4">Guide Page Locked</h1>
-        <p className="text-muted-foreground mb-6">
-          Unlock this feature through the Skill Tree to learn more about StudyFlow.
-        </p>
-        <Button asChild>
-          <Link href="/skill-tree">Go to Skill Tree</Link>
-        </Button>
-      </div>
-    );
-  }
-  
   return (
     <div className="w-full">
       <GuidePage />

@@ -6,7 +6,6 @@ import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 5000
-const TOAST_STAGGER_DELAY = 150; // A bit faster stagger
 
 type ToasterToast = ToastProps & {
   id: string

@@ -172,7 +172,7 @@ export default function CountdownTimer() {
                     </div>
                 ) : (
                     <>
-                        <TimerDisplay seconds={timeLeft} forceHours={initialDuration >= 3600 * 1000} />
+                        <TimerDisplay seconds={timeLeft} forceHours={initialDuration >= 3600000} className="text-primary"/>
                         {isFinished && <p className="text-2xl font-semibold text-primary animate-pulse"><BellRing className="inline h-7 w-7 mr-2"/>Time's Up!</p>}
                         <div className="flex space-x-3">
                             {!isRunning ? (

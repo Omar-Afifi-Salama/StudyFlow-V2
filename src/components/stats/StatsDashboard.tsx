@@ -118,15 +118,15 @@ export default function StatsDashboard() {
   }, [heatmapData, isLoaded]);
 
 
-  const totalStudyTime = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').reduce((acc, s) => acc + s.duration, 0);
-  const totalFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').length;
+  const totalStudyTime = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch' || s.type === 'Countdown').reduce((acc, s) => acc + s.duration, 0);
+  const totalFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch' || s.type === 'Countdown').length;
   const averageSessionLength = totalFocusSessions > 0 ? totalStudyTime / totalFocusSessions : 0;
   const completedPomodoroFocusSessions = sessions.filter(s => s.type === 'Pomodoro Focus' && s.isFullPomodoroCycle).length;
   const pomodoroBreakSessions = sessions.filter(s => s.type === 'Pomodoro Break').length;
   const stopwatchSessions = sessions.filter(s => s.type === 'Stopwatch').length;
-  const longestSession = Math.max(0, ...sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch').map(s => s.duration));
+  const longestSession = Math.max(0, ...sessions.filter(s => s.type === 'Pomodoro Focus' || s.type === 'Stopwatch' || s.type === 'Countdown').map(s => s.duration));
   const studyDaysThisYear = new Set(sessions.map(s => format(new Date(s.startTime), 'yyyy-MM-dd'))).size;
-  const todayStudyTime = sessions.filter(s => isToday(new Date(s.startTime)) && (s.type === 'Pomodoro Focus' || s.type === 'Stopwatch')).reduce((acc, s) => acc + s.duration, 0);
+  const todayStudyTime = sessions.filter(s => isToday(new Date(s.startTime)) && (s.type === 'Pomodoro Focus' || s.type === 'Stopwatch' || s.type === 'Countdown')).reduce((acc, s) => acc + s.duration, 0);
   const achievementsTotal = ALL_ACHIEVEMENTS.length;
 
 
@@ -186,7 +186,7 @@ export default function StatsDashboard() {
             
             <StatCard title="Total XP Earned" value={userProfile.xp.toLocaleString()} icon={<Zap className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Total Cash Earned" value={`$${userProfile.cash.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} />
-            <StatCard title="Study Days (Year)" value={studyDaysThisYear.toString()} icon={<CalendarCheck className="h-5 w-g text-muted-foreground" />} />
+            <StatCard title="Study Days (Year)" value={studyDaysThisYear.toString()} icon={<CalendarCheck className="h-5 w-5 text-muted-foreground" />} />
             <StatCard title="Achievements Unlocked" value={`${userProfile.unlockedAchievementIds.length} / ${achievementsTotal}`} icon={<Trophy className="h-5 w-5 text-muted-foreground" />} />
           </div>
           
@@ -208,7 +208,7 @@ export default function StatsDashboard() {
                                       if (!day) {
                                           return <div key={`blank-${index}`} className="h-4 w-4 rounded-sm" />;
                                       }
-                                      let colorClass = 'bg-muted';
+                                      let colorClass = 'bg-muted/30';
                                       if (day.level > 0) colorClass = `bg-primary/20`;
                                       if (day.level > 1) colorClass = `bg-primary/40`;
                                       if (day.level > 2) colorClass = `bg-primary/70`;
@@ -218,7 +218,7 @@ export default function StatsDashboard() {
                                           <TooltipProvider key={day.date} delayDuration={100}>
                                               <Tooltip>
                                                   <TooltipTrigger asChild>
-                                                      <div className={cn("h-4 w-4 rounded-sm transition-all hover:ring-2 hover:ring-primary", colorClass)} />
+                                                      <div className={cn("h-4 w-4 rounded-sm transition-all hover:outline hover:outline-1 hover:outline-primary", colorClass)} />
                                                   </TooltipTrigger>
                                                   <ShadTooltipContent>
                                                       <p className="font-semibold">{day.count} minutes</p>
