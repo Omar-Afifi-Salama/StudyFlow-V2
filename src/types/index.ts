@@ -83,7 +83,6 @@ export interface UserProfile {
   };
   dailyOffers: DailyOffer[];
   activeOfferId: string | null;
-  offerDeactivatedToday: boolean;
   manualLogTimeToday: { date: string, duration: number };
   infamyLevel: number;
   infamyPoints: number;

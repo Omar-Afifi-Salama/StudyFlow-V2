@@ -4,14 +4,12 @@
 import { useSessions } from '@/contexts/SessionContext';
 import ChallengeCard from './ChallengeCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarCheck, Gift, Sparkles } from 'lucide-react';
+import { CalendarCheck, Sparkles } from 'lucide-react';
 import OfferCard from './OfferCard';
 
 export default function ChallengesPage() {
-  const { dailyChallenges, claimChallengeReward, dailyOffers, selectDailyOffer, userProfile, deactivateOffer } = useSessions();
+  const { dailyChallenges, claimChallengeReward, dailyOffers, selectDailyOffer, userProfile } = useSessions();
   
-  const allChallengesClaimed = dailyChallenges.every(c => c.rewardClaimed);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg card-animated">
@@ -21,7 +19,7 @@ export default function ChallengesPage() {
               <CalendarCheck className="h-8 w-8 text-primary" />
               <div>
                 <CardTitle className="text-3xl font-headline">Daily Challenges</CardTitle>
-                <CardDescription>Complete challenges for bonus XP and Cash!</CardDescription>
+                <CardDescription>Complete challenges for bonus XP and Cash! Rewards scale with your level.</CardDescription>
               </div>
             </div>
           </div>
@@ -52,7 +50,7 @@ export default function ChallengesPage() {
               <Sparkles className="h-8 w-8 text-yellow-400" />
               <div>
                 <CardTitle className="text-3xl font-headline">Daily Offers</CardTitle>
-                <CardDescription>Choose one offer to activate for the day. {allChallengesClaimed && "You've earned a bonus offer!"}</CardDescription>
+                <CardDescription>Choose one strategic trade-off to activate for the day.</CardDescription>
               </div>
             </div>
         </CardHeader>
@@ -67,7 +65,7 @@ export default function ChallengesPage() {
                   offer={offer} 
                   onSelect={() => selectDailyOffer(offer.id)}
                   isSelected={userProfile.activeOfferId === offer.id}
-                  canSelect={(!userProfile.activeOfferId || allChallengesClaimed) && !userProfile.offerDeactivatedToday}
+                  canSelect={!userProfile.activeOfferId}
                 />
               ))}
             </div>
