@@ -45,12 +45,35 @@ export const ACTUAL_LEVEL_THRESHOLDS = generateArithmeticLevelThresholds(100, XP
 
 
 export const PREDEFINED_SKINS: Skin[] = [
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/2c5282.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, themeClass: 'classic' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png?text=Sepia+Tone', dataAiHint: 'sepia tone', isTheme: true, themeClass: 'sepia' },
-  { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/f400a1/000000.png?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, themeClass: 'theme-cyberpunk' },
-  { id: 'solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/f5bf00/166534.png?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, themeClass: 'theme-solarpunk' },
-  { id: 'oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/0d9488/083344.png?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, themeClass: 'theme-oceanic' },
+  // Free Defaults
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/E5F1FC.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, themeClass: 'classic' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'A sleek dark theme for night owls.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/66b2ff/2d3748.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/c0a080/fdf6e3.png?text=Sepia', dataAiHint: 'sepia tone', isTheme: true, themeClass: 'sepia' },
+  
+  // Tier 1 (LVL 10)
+  { id: 'theme-solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/16a34a/fefce8.png?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, themeClass: 'theme-solarpunk' },
+  { id: 'theme-oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/2dd4bf/083344.png?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, themeClass: 'theme-oceanic' },
+  { id: 'theme-minty-fresh', name: 'Minty Fresh', description: 'A clean and refreshing mint green theme.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/22c55e/f0fdf4.png?text=Minty+Fresh', dataAiHint: 'mint leaf', isTheme: true, themeClass: 'theme-minty-fresh' },
+  { id: 'theme-sakura-season', name: 'Sakura Season', description: 'Soft pinks inspired by cherry blossoms.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/ec4899/fff5f7.png?text=Sakura+Season', dataAiHint: 'cherry blossom', isTheme: true, themeClass: 'theme-sakura-season' },
+
+  // Tier 2 (LVL 20)
+  { id: 'theme-cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/f400a1/0a0a0a.png?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, themeClass: 'theme-cyberpunk' },
+  { id: 'theme-desert-mirage', name: 'Desert Mirage', description: 'Warm oranges and sandy tones.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/f97316/fffbeb.png?text=Desert+Mirage', dataAiHint: 'desert sunset', isTheme: true, themeClass: 'theme-desert-mirage' },
+  { id: 'theme-arctic-dawn', name: 'Arctic Dawn', description: 'Cool blues and purples of a polar sunrise.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/06b6d4/ecfeff.png?text=Arctic+Dawn', dataAiHint: 'arctic sunrise', isTheme: true, themeClass: 'theme-arctic-dawn' },
+  { id: 'theme-lavender-haze', name: 'Lavender Haze', description: 'A dreamy and calming lavender theme.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/8b5cf6/f5f3ff.png?text=Lavender+Haze', dataAiHint: 'lavender field', isTheme: true, themeClass: 'theme-lavender-haze' },
+
+  // Tier 3 (LVL 30)
+  { id: 'theme-volcanic-ash', name: 'Volcanic Ash', description: 'A dark theme with fiery orange highlights.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/ea580c/262626.png?text=Volcanic+Ash', dataAiHint: 'volcano lava', isTheme: true, themeClass: 'theme-volcanic-ash' },
+  { id: 'theme-steampunk', name: 'Steampunk', description: 'Browns, brass, and verdigris for a mechanical feel.', price: 80000, levelRequirement: 32, imageUrl: 'https://placehold.co/400x225/c89b3c/4d3d30.png?text=Steampunk', dataAiHint: 'steampunk gears', isTheme: true, themeClass: 'theme-steampunk' },
+  { id: 'theme-emerald-grove', name: 'Emerald Grove', description: 'A rich, dark theme with deep green tones.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/10b981/1c2a2b.png?text=Emerald+Grove', dataAiHint: 'enchanted forest', isTheme: true, themeClass: 'theme-emerald-grove' },
+  { id: 'theme-monochrome', name: 'Monochrome', description: 'A minimalist black and white theme.', price: 65000, levelRequirement: 25, imageUrl: 'https://placehold.co/400x225/525252/ffffff.png?text=Monochrome', dataAiHint: 'black white', isTheme: true, themeClass: 'theme-monochrome' },
+
+  // Tier 4 (LVL 40+)
+  { id: 'theme-crimson-peak', name: 'Crimson Peak', description: 'A dark theme with stark crimson accents.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/dc2626/1a1a1a.png?text=Crimson+Peak', dataAiHint: 'red mountain', isTheme: true, themeClass: 'theme-crimson-peak' },
+  { id: 'theme-sapphire-depths', name: 'Sapphire Depths', description: 'A deep, dark blue theme with sapphire highlights.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/3b82f6/1e293b.png?text=Sapphire+Depths', dataAiHint: 'blue crystal', isTheme: true, themeClass: 'theme-sapphire-depths' },
+  { id: 'theme-8-bit-arcade', name: '8-Bit Arcade', description: 'A retro theme with pixel-perfect colors.', price: 120000, levelRequirement: 45, imageUrl: 'https://placehold.co/400x225/00ffff/1a1b26.png?text=8-Bit+Arcade', dataAiHint: 'pixel art', isTheme: true, themeClass: 'theme-8-bit-arcade' },
+  { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/88c0d0/2e3440.png?text=Nord', dataAiHint: 'nordic fjord', isTheme: true, themeClass: 'theme-nord' },
+  { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/ff79c6/282a36.png?text=Dracula', dataAiHint: 'vampire castle', isTheme: true, themeClass: 'theme-dracula' },
 ];
 
 
@@ -1523,16 +1546,22 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !isLoaded) return;
-
     const root = window.document.documentElement;
     const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
     
+    // Remove all potential theme attributes to prevent conflicts
+    PREDEFINED_SKINS.forEach(skin => {
+      if (skin.isTheme && skin.themeClass) {
+        root.removeAttribute(`data-theme`);
+      }
+    });
+
     const themeClass = equippedSkin?.isTheme ? equippedSkin.themeClass : null;
 
     if (themeClass && themeClass !== 'classic') {
       root.setAttribute('data-theme', themeClass);
     } else {
-      // If classic or no theme, remove the attribute to fall back to default :root styles
+      // If classic or no theme, ensure no theme attribute is set
       root.removeAttribute('data-theme');
     }
     
