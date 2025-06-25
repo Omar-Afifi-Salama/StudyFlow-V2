@@ -29,57 +29,46 @@ export const TITLES = [
   "Zenith Scholar", "Apex Sage", "Omega Mind", "Alpha Learner", "The Final Word", "Unending Query", "Silent Savant", "Void Thinker", "The Librarian", "One Who Knows"
 ];
 
-// New leveling curve: Level 1->2 takes 25 min. Each subsequent level takes 15 more minutes than the last.
-const generateArithmeticLevelThresholds = (numLevels: number, xpPerMinute: number): number[] => {
-  const thresholds: number[] = [0]; // Level 1 is 0 XP
-  let totalMinutes = 0;
-  for (let level = 2; level <= numLevels; level++) {
-    const minutesForThisLevel = 25 + (level - 2) * 15;
-    totalMinutes += minutesForThisLevel;
-    thresholds.push(Math.round(totalMinutes * xpPerMinute));
-  }
-  return thresholds;
-};
-
-export const ACTUAL_LEVEL_THRESHOLDS = generateArithmeticLevelThresholds(100, XP_PER_MINUTE_FOCUS);
+// Each level takes 1 hour of focused study
+export const ACTUAL_LEVEL_THRESHOLDS = Array.from({ length: 100 }, (_, i) => i * 60 * XP_PER_MINUTE_FOCUS);
+ACTUAL_LEVEL_THRESHOLDS.unshift(0); // Level 1 is 0 XP
 
 
 export const PREDEFINED_SKINS: Skin[] = [
   // Free Defaults
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/E5F1FC.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, themeClass: 'classic' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'A sleek dark theme for night owls.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/66b2ff/2d3748.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/c0a080/fdf6e3.png?text=Sepia', dataAiHint: 'sepia tone', isTheme: true, themeClass: 'sepia' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/0A2540.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, isLightTheme: true, themeClass: 'classic' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'A sleek dark theme for night owls.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/2d3748/e2e8f0.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, isLightTheme: false, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/c0a080/4a3f30.png?text=Sepia', dataAiHint: 'sepia tone', isTheme: true, isLightTheme: true, themeClass: 'sepia' },
   
   // Tier 1 (LVL 10)
-  { id: 'theme-solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/16a34a/fefce8.png?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, themeClass: 'theme-solarpunk' },
-  { id: 'theme-oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/2dd4bf/083344.png?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, themeClass: 'theme-oceanic' },
-  { id: 'theme-minty-fresh', name: 'Minty Fresh', description: 'A clean and refreshing mint green theme.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/22c55e/f0fdf4.png?text=Minty+Fresh', dataAiHint: 'mint leaf', isTheme: true, themeClass: 'theme-minty-fresh' },
-  { id: 'theme-sakura-season', name: 'Sakura Season', description: 'Soft pinks inspired by cherry blossoms.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/ec4899/fff5f7.png?text=Sakura+Season', dataAiHint: 'cherry blossom', isTheme: true, themeClass: 'theme-sakura-season' },
+  { id: 'theme-solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/fefce8/16a34a.png?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, isLightTheme: true, themeClass: 'theme-solarpunk' },
+  { id: 'theme-oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/083344/2dd4bf.png?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, isLightTheme: false, themeClass: 'theme-oceanic' },
+  { id: 'theme-minty-fresh', name: 'Minty Fresh', description: 'A clean and refreshing mint green theme.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/f0fdf4/22c55e.png?text=Minty+Fresh', dataAiHint: 'mint leaf', isTheme: true, isLightTheme: true, themeClass: 'theme-minty-fresh' },
+  { id: 'theme-sakura-season', name: 'Sakura Season', description: 'Soft pinks inspired by cherry blossoms.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/fff5f7/ec4899.png?text=Sakura+Season', dataAiHint: 'cherry blossom', isTheme: true, isLightTheme: true, themeClass: 'theme-sakura-season' },
 
   // Tier 2 (LVL 20)
-  { id: 'theme-cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/f400a1/0a0a0a.png?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, themeClass: 'theme-cyberpunk' },
-  { id: 'theme-desert-mirage', name: 'Desert Mirage', description: 'Warm oranges and sandy tones.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/f97316/fffbeb.png?text=Desert+Mirage', dataAiHint: 'desert sunset', isTheme: true, themeClass: 'theme-desert-mirage' },
-  { id: 'theme-arctic-dawn', name: 'Arctic Dawn', description: 'Cool blues and purples of a polar sunrise.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/06b6d4/ecfeff.png?text=Arctic+Dawn', dataAiHint: 'arctic sunrise', isTheme: true, themeClass: 'theme-arctic-dawn' },
-  { id: 'theme-lavender-haze', name: 'Lavender Haze', description: 'A dreamy and calming lavender theme.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/8b5cf6/f5f3ff.png?text=Lavender+Haze', dataAiHint: 'lavender field', isTheme: true, themeClass: 'theme-lavender-haze' },
+  { id: 'theme-cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/0a0a0a/f400a1.png?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, isLightTheme: false, themeClass: 'theme-cyberpunk' },
+  { id: 'theme-desert-mirage', name: 'Desert Mirage', description: 'Warm oranges and sandy tones.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/fffbeb/f97316.png?text=Desert+Mirage', dataAiHint: 'desert sunset', isTheme: true, isLightTheme: true, themeClass: 'theme-desert-mirage' },
+  { id: 'theme-arctic-dawn', name: 'Arctic Dawn', description: 'Cool blues and purples of a polar sunrise.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/ecfeff/06b6d4.png?text=Arctic+Dawn', dataAiHint: 'arctic sunrise', isTheme: true, isLightTheme: true, themeClass: 'theme-arctic-dawn' },
+  { id: 'theme-lavender-haze', name: 'Lavender Haze', description: 'A dreamy and calming lavender theme.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/f5f3ff/8b5cf6.png?text=Lavender+Haze', dataAiHint: 'lavender field', isTheme: true, isLightTheme: true, themeClass: 'theme-lavender-haze' },
 
   // Tier 3 (LVL 30)
-  { id: 'theme-volcanic-ash', name: 'Volcanic Ash', description: 'A dark theme with fiery orange highlights.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/ea580c/262626.png?text=Volcanic+Ash', dataAiHint: 'volcano lava', isTheme: true, themeClass: 'theme-volcanic-ash' },
-  { id: 'theme-steampunk', name: 'Steampunk', description: 'Browns, brass, and verdigris for a mechanical feel.', price: 80000, levelRequirement: 32, imageUrl: 'https://placehold.co/400x225/c89b3c/4d3d30.png?text=Steampunk', dataAiHint: 'steampunk gears', isTheme: true, themeClass: 'theme-steampunk' },
-  { id: 'theme-emerald-grove', name: 'Emerald Grove', description: 'A rich, dark theme with deep green tones.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/10b981/1c2a2b.png?text=Emerald+Grove', dataAiHint: 'enchanted forest', isTheme: true, themeClass: 'theme-emerald-grove' },
-  { id: 'theme-monochrome', name: 'Monochrome', description: 'A minimalist black and white theme.', price: 65000, levelRequirement: 25, imageUrl: 'https://placehold.co/400x225/525252/ffffff.png?text=Monochrome', dataAiHint: 'black white', isTheme: true, themeClass: 'theme-monochrome' },
+  { id: 'theme-volcanic-ash', name: 'Volcanic Ash', description: 'A dark theme with fiery orange highlights.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/262626/ea580c.png?text=Volcanic+Ash', dataAiHint: 'volcano lava', isTheme: true, isLightTheme: false, themeClass: 'theme-volcanic-ash' },
+  { id: 'theme-steampunk', name: 'Steampunk', description: 'Browns, brass, and verdigris for a mechanical feel.', price: 80000, levelRequirement: 32, imageUrl: 'https://placehold.co/400x225/4d3d30/c89b3c.png?text=Steampunk', dataAiHint: 'steampunk gears', isTheme: true, isLightTheme: true, themeClass: 'theme-steampunk' },
+  { id: 'theme-emerald-grove', name: 'Emerald Grove', description: 'A rich, dark theme with deep green tones.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/1c2a2b/10b981.png?text=Emerald+Grove', dataAiHint: 'enchanted forest', isTheme: true, isLightTheme: false, themeClass: 'theme-emerald-grove' },
+  { id: 'theme-monochrome', name: 'Monochrome', description: 'A minimalist black and white theme.', price: 65000, levelRequirement: 25, imageUrl: 'https://placehold.co/400x225/ffffff/525252.png?text=Monochrome', dataAiHint: 'black white', isTheme: true, isLightTheme: true, themeClass: 'theme-monochrome' },
 
   // Tier 4 (LVL 40+)
-  { id: 'theme-crimson-peak', name: 'Crimson Peak', description: 'A dark theme with stark crimson accents.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/dc2626/1a1a1a.png?text=Crimson+Peak', dataAiHint: 'red mountain', isTheme: true, themeClass: 'theme-crimson-peak' },
-  { id: 'theme-sapphire-depths', name: 'Sapphire Depths', description: 'A deep, dark blue theme with sapphire highlights.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/3b82f6/1e293b.png?text=Sapphire+Depths', dataAiHint: 'blue crystal', isTheme: true, themeClass: 'theme-sapphire-depths' },
-  { id: 'theme-8-bit-arcade', name: '8-Bit Arcade', description: 'A retro theme with pixel-perfect colors.', price: 120000, levelRequirement: 45, imageUrl: 'https://placehold.co/400x225/00ffff/1a1b26.png?text=8-Bit+Arcade', dataAiHint: 'pixel art', isTheme: true, themeClass: 'theme-8-bit-arcade' },
-  { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/88c0d0/2e3440.png?text=Nord', dataAiHint: 'nordic fjord', isTheme: true, themeClass: 'theme-nord' },
-  { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/ff79c6/282a36.png?text=Dracula', dataAiHint: 'vampire castle', isTheme: true, themeClass: 'theme-dracula' },
+  { id: 'theme-crimson-peak', name: 'Crimson Peak', description: 'A dark theme with stark crimson accents.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1a1a1a/dc2626.png?text=Crimson+Peak', dataAiHint: 'red mountain', isTheme: true, isLightTheme: false, themeClass: 'theme-crimson-peak' },
+  { id: 'theme-sapphire-depths', name: 'Sapphire Depths', description: 'A deep, dark blue theme with sapphire highlights.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1e293b/3b82f6.png?text=Sapphire+Depths', dataAiHint: 'blue crystal', isTheme: true, isLightTheme: false, themeClass: 'theme-sapphire-depths' },
+  { id: 'theme-8-bit-arcade', name: '8-Bit Arcade', description: 'A retro theme with pixel-perfect colors.', price: 120000, levelRequirement: 45, imageUrl: 'https://placehold.co/400x225/1a1b26/00ffff.png?text=8-Bit+Arcade', dataAiHint: 'pixel art', isTheme: true, isLightTheme: false, themeClass: 'theme-8-bit-arcade' },
+  { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/2e3440/88c0d0.png?text=Nord', dataAiHint: 'nordic fjord', isTheme: true, isLightTheme: false, themeClass: 'theme-nord' },
+  { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/282a36/ff79c6.png?text=Dracula', dataAiHint: 'vampire castle', isTheme: true, isLightTheme: false, themeClass: 'theme-dracula' },
 ];
 
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
   tasks: [], notes: [], goals: [], links: [], revisionConcepts: [], habits: [], countdownEvents: [],
-  eisenhowerMatrix: { urgentImportant: [], notUrgentImportant: [], urgentNotImportant: [], notUrgentNotImportant: [] }
 };
 
 const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
@@ -110,11 +99,11 @@ const DEFAULT_COUNTDOWN_STATE: CountdownState = {
 
 
 const DAILY_OFFERS_POOL: DailyOffer[] = [
-    { id: 'xp_boost_cash_cut', title: 'Intense Focus', description: 'Gain more XP, but earn less cash.', positiveEffect: { type: 'xp', modifier: 1.25, description: '+25% XP Gain' }, negativeEffect: { type: 'cash', modifier: 0.75, description: '-25% Cash Gain' } },
-    { id: 'cash_boost_xp_cut', title: 'Lucrative Grind', description: 'Earn much more cash, but learn less.', positiveEffect: { type: 'cash', modifier: 1.50, description: '+50% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.50, description: '-50% XP Gain' } },
-    { id: 'risky_bet', title: 'All or Nothing', description: 'A huge XP boost, but capitalist income is halved.', positiveEffect: { type: 'xp', modifier: 1.50, description: '+50% XP Gain' }, negativeEffect: { type: 'risk', modifier: 0.5, description: '-50% Capitalist Income' } },
-    { id: 'efficient_work', title: 'Efficient Cycles', description: 'Pomodoro focus is shorter, but so are the breaks.', positiveEffect: { type: 'timer_speed', modifier: 0.85, description: '15% shorter Focus time' }, negativeEffect: { type: 'timer_speed', modifier: 1.20, description: '20% longer Break time' } },
-    { id: 'slow_and_steady', title: 'Slow and Steady', description: 'Slightly less XP, but gain a protective cash bonus.', positiveEffect: { type: 'cash', modifier: 1.10, description: '+10% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.90, description: '-10% XP Gain' } },
+    { id: 'xp_boost_cash_cut', title: 'Intense Focus', description: 'Gain more XP, but earn less cash.', positiveEffect: { type: 'xp', modifier: 1.25, description: '+25% XP Gain' }, negativeEffect: { type: 'cash', modifier: 0.75, description: '-25% Cash Gain' }, effectType: 'xp_gain', positiveDescription: '+25% XP Gain', negativeDescription: '-25% Cash Gain' },
+    { id: 'cash_boost_xp_cut', title: 'Lucrative Grind', description: 'Earn much more cash, but learn less.', positiveEffect: { type: 'cash', modifier: 1.50, description: '+50% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.50, description: '-50% XP Gain' }, effectType: 'cash_gain', positiveDescription: '+50% Cash Gain', negativeDescription: '-50% XP Gain' },
+    { id: 'risky_bet', title: 'All or Nothing', description: 'A huge XP boost, but capitalist income is halved.', positiveEffect: { type: 'xp', modifier: 1.50, description: '+50% XP Gain' }, negativeEffect: { type: 'risk', modifier: 0.5, description: '-50% Capitalist Income' }, effectType: 'capitalist_income', positiveDescription: '+50% XP Gain', negativeDescription: '-50% Capitalist Income' },
+    { id: 'efficient_work', title: 'Efficient Cycles', description: 'Pomodoro focus is shorter, but so are the breaks.', positiveEffect: { type: 'timer_speed', modifier: 0.85, description: '15% shorter Focus time' }, negativeEffect: { type: 'timer_speed', modifier: 1.20, description: '20% longer Break time' }, effectType: 'timer_efficiency', positiveDescription: '15% shorter Focus time', negativeDescription: '20% longer Break time' },
+    { id: 'slow_and_steady', title: 'Slow and Steady', description: 'Slightly less XP, but gain a protective cash bonus.', positiveEffect: { type: 'cash', modifier: 1.10, description: '+10% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.90, description: '-10% XP Gain' }, effectType: 'xp_gain', positiveDescription: '+10% Cash Gain', negativeDescription: '-10% XP Gain' },
 ];
 
 
@@ -304,13 +293,15 @@ export const ALL_SKILLS: Skill[] = [
 export const ALL_INFAMY_SKILLS: Skill[] = [
   { id: 'infamyXpBoost', name: 'Perpetual Learner', description: 'Permanently gain +10% more XP from all sources.', cost: 1, iconName: 'Zap', xpBoostPercent: 0.10, category: 'Infamy' },
   { id: 'infamyCashBoost', name: 'Golden Touch', description: 'Permanently gain +10% more Cash from all sources.', cost: 1, iconName: 'DollarSign', cashBoostPercent: 0.10, category: 'Infamy' },
-  { id: 'infamyStartingBonus', name: 'Head Start', description: 'Start each new run after Infamy with $50,000 cash and 5 Skill Points.', cost: 1, iconName: 'Rocket', otherEffect: 'starting_bonus', category: 'Infamy' },
+  { id: 'infamyStartingBonus', name: 'Head Start', description: 'Start each new run after Infamy with $50,000 cash.', cost: 1, iconName: 'Rocket', otherEffect: 'starting_bonus', category: 'Infamy' },
   { id: 'infamyBusinessBoost', name: 'Capitalist Legacy', description: 'All businesses start at Level 2 after going infamous.', cost: 2, prerequisiteLevel: 2, iconName: 'Building2', otherEffect: 'business_legacy', category: 'Infamy' },
   { id: 'infamyChallengeSlot', name: 'Extra Endeavor', description: 'Gain one additional Daily Challenge slot.', cost: 2, prerequisiteLevel: 3, iconName: 'CalendarPlus', otherEffect: 'challenge_slot', category: 'Infamy' },
 ];
 
 
 const REVISION_INTERVALS = [1, 3, 7, 14, 30, 60, 90]; 
+
+type QuadrantKey = 'do' | 'schedule' | 'delegate' | 'eliminate';
 
 interface SessionContextType {
   sessions: StudySession[];
@@ -351,6 +342,7 @@ interface SessionContextType {
   addNotepadNote: (note: Omit<NotepadNote, 'id' | 'createdAt' | 'lastModified'>) => void;
   updateNotepadNote: (note: NotepadNote) => void;
   deleteNotepadNote: (noteId: string) => void;
+  updateItemQuadrant: (itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => void;
 
   addRevisionConcept: (name: string, learnedDate: Date) => void;
   markConceptRevised: (conceptId: string) => void;
@@ -759,6 +751,33 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     updateNotepadField('notes', (userProfile.notepadData.notes || []).filter(note => note.id !== noteId));
     if (noteToDelete) toast({ title: "Note Deleted", description: `"${noteToDelete.title}" removed.`, icon: <Trash2/> });
   }, [isFeatureUnlocked, userProfile.notepadData.notes, updateNotepadField, toast]);
+  
+  const updateItemQuadrant = useCallback((itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => {
+    if (!isFeatureUnlocked('notepadEisenhower')) {
+        toast({ title: "Feature Locked", description: "Unlock the Eisenhower Matrix in the Skill Tree.", icon: <XCircle/> });
+        return;
+    }
+    
+    if (itemType === 'task') {
+        const newTasks = (userProfile.notepadData.tasks || []).map(task => {
+            if (task.id === itemId) {
+                return { ...task, quadrant };
+            }
+            return task;
+        });
+        updateNotepadData({ tasks: newTasks });
+    } else if (itemType === 'goal') {
+        const newGoals = (userProfile.notepadData.goals || []).map(goal => {
+            if (goal.id === itemId) {
+                return { ...goal, quadrant };
+            }
+            return goal;
+        });
+        updateNotepadData({ goals: newGoals });
+    }
+
+    toast({ title: "Item Moved", description: `Item moved to ${quadrant ? quadrantDetails[quadrant].title : 'Uncategorized'}.`, icon: <Grid/> });
+  }, [isFeatureUnlocked, userProfile.notepadData.tasks, userProfile.notepadData.goals, updateNotepadData, toast]);
 
   const addRevisionConcept = useCallback((name: string, learnedDate: Date) => {
     if(!isFeatureUnlocked('notepadRevision')) { toast({ title: "Feature Locked", description: "Unlock Revision Hub in the Skill Tree.", icon: <XCircle/> }); return; }
@@ -1087,7 +1106,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let startingSkillPoints = userProfile.skillPoints; // Keep skill points
     if (isInfamySkillUnlocked('infamyStartingBonus')) {
       startingCash += 50000;
-      startingSkillPoints += 5;
     }
 
     let startingBusinesses = DEFAULT_BUSINESSES;
@@ -1410,7 +1428,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
               revisionConcepts: Array.isArray(tempProfile.notepadData?.revisionConcepts) ? tempProfile.notepadData.revisionConcepts : DEFAULT_NOTEPAD_DATA.revisionConcepts,
               habits: Array.isArray(tempProfile.notepadData?.habits) ? tempProfile.notepadData.habits : DEFAULT_NOTEPAD_DATA.habits,
               countdownEvents: Array.isArray(tempProfile.notepadData?.countdownEvents) ? tempProfile.notepadData.countdownEvents : DEFAULT_NOTEPAD_DATA.countdownEvents,
-              eisenhowerMatrix: tempProfile.notepadData?.eisenhowerMatrix || DEFAULT_NOTEPAD_DATA.eisenhowerMatrix,
           };
           profileToLoad = { ...DEFAULT_USER_PROFILE, ...tempProfile, notepadData: ensuredNotepadData, xp: Math.max(0, tempProfile.xp || 0) };
           let correctLevel = 1;
@@ -1587,7 +1604,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       switchPomodoroMode, updatePomodoroSettings, setCountdownDuration,
       addManualSession, deleteSession, addDevLevels, clearSessions, hardReset, requestHardReset, cancelHardReset, updateSessionDescription,
       updateUserProfile, updateSleepWakeTimes,
-      updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
+      updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote, updateItemQuadrant,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent,
@@ -1601,6 +1618,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </SessionContext.Provider>
   );
+};
+
+const quadrantDetails: Record<QuadrantKey, { title: string; description: string; action: string; bgColorClass: string; textColorClass: string }> = {
+  'do': { title: 'Urgent & Important', description: "Crises, deadlines, pressing problems.", action: 'Do First', bgColorClass: "bg-destructive/10 border-destructive", textColorClass: "text-destructive" },
+  'schedule': { title: 'Not Urgent & Important', description: "Long-term goals, relationship building, new opportunities.", action: 'Schedule', bgColorClass: "bg-primary/10 border-primary", textColorClass: "text-primary" },
+  'delegate': { title: 'Urgent & Not Important', description: "Interruptions, some meetings, popular activities.", action: 'Delegate', bgColorClass: "bg-yellow-500/10 border-yellow-500", textColorClass: "text-yellow-600 dark:text-yellow-400" },
+  'eliminate': { title: 'Not Urgent & Not Important', description: "Trivia, time wasters, some calls/emails.", action: 'Eliminate', bgColorClass: "bg-muted/50 border-muted-foreground/30", textColorClass: "text-muted-foreground" },
 };
 
 export const useSessions = () => {

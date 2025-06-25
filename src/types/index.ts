@@ -46,9 +46,9 @@ export interface DailyOffer {
     id: string;
     title: string;
     description: string;
+    positiveEffect: { type: 'xp' | 'cash' | 'risk' | 'timer_speed', modifier: number, description: string };
+    negativeEffect: { type: 'xp' | 'cash' | 'risk' | 'timer_speed', modifier: number, description: string };
     effectType: 'xp_gain' | 'cash_gain' | 'timer_efficiency' | 'capitalist_income' | 'bond_risk';
-    positiveEffectModifier: number;
-    negativeEffectModifier: number;
     positiveDescription: string;
     negativeDescription: string;
 }
@@ -111,6 +111,7 @@ export interface NotepadTask {
   completed: boolean;
   createdAt: number;
   tags?: string[];
+  quadrant?: 'do' | 'schedule' | 'delegate' | 'eliminate';
 }
 
 export interface NotepadNote {
@@ -129,6 +130,7 @@ export interface NotepadGoal {
   completed: boolean;
   createdAt: number;
   tags?: string[];
+  quadrant?: 'do' | 'schedule' | 'delegate' | 'eliminate';
 }
 
 export interface NotepadLink {
@@ -177,18 +179,6 @@ export interface NotepadCountdownEvent {
   tags?: string[];
 }
 
-export interface EisenhowerMatrixQuadrant {
-  taskIds: string[];
-  goalIds: string[];
-}
-
-export interface NotepadEisenhowerMatrix {
-  urgentImportant: string[];
-  notUrgentImportant: string[];
-  urgentNotImportant: string[];
-  notUrgentNotImportant: string[];
-}
-
 export interface NotepadData {
   tasks: NotepadTask[];
   notes: NotepadNote[];
@@ -197,7 +187,6 @@ export interface NotepadData {
   revisionConcepts: RevisionConcept[];
   habits: Habit[];
   countdownEvents: NotepadCountdownEvent[];
-  eisenhowerMatrix: NotepadEisenhowerMatrix;
 }
 
 export interface DailyChallenge {
@@ -292,7 +281,6 @@ export interface PomodoroState {
   mode: PomodoroMode;
   isRunning: boolean;
   cyclesCompleted: number;
-  cyclesPerLongBreak: number;
   settings: PomodoroSettings;
   sessionStartTime: number;
   sessionEndTime: number;
