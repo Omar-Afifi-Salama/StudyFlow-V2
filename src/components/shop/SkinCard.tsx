@@ -34,8 +34,8 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
           <Image 
             src={skin.imageUrl} 
             alt={skin.name} 
-            layout="fill" 
-            objectFit="cover" 
+            fill={true}
+            style={{objectFit: 'cover'}}
             data-ai-hint={skin.dataAiHint}
           />
           {isEquipped && (

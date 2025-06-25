@@ -48,10 +48,11 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/2c5282.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, themeClass: 'classic' },
   { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
   { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png?text=Sepia+Tone', dataAiHint: 'sepia tone', isTheme: true, themeClass: 'sepia' },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/4A5C46/E5E7EB.png?text=Forest+Whisper', dataAiHint: 'forest theme', isTheme: true, themeClass: 'theme-forest' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/F97316/FFE4B5.png?text=Sunset+Vibes', dataAiHint: 'sunset theme', isTheme: true, themeClass: 'theme-sunset' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/4338CA/E0E7FF.png?text=Galaxy+Quest', dataAiHint: 'galaxy theme', isTheme: true, themeClass: 'theme-galaxy' },
+  { id: 'cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/f400a1/000000.png?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, themeClass: 'theme-cyberpunk' },
+  { id: 'solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/f5bf00/166534.png?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, themeClass: 'theme-solarpunk' },
+  { id: 'oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/0d9488/083344.png?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, themeClass: 'theme-oceanic' },
 ];
+
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
   tasks: [], notes: [], goals: [], links: [], revisionConcepts: [], habits: [], countdownEvents: [],
@@ -1135,8 +1136,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         let durationMs = getDurationForMode(nextMode, prev.settings) * 1000;
         if(userProfile.activeOfferId) {
             const offer = dailyOffers.find(o => o.id === userProfile.activeOfferId);
-            if(offer?.positiveEffect.type === 'timer_speed') durationMs *= offer.positiveEffect.modifier;
-            if(offer?.negativeEffect.type === 'timer_speed' && nextMode !== 'work') durationMs *= offer.negativeEffect.modifier;
+            if (offer) {
+                if (offer.positiveEffect.type === 'timer_speed') durationMs *= offer.positiveEffect.modifier;
+                if (offer.negativeEffect.type === 'timer_speed' && nextMode !== 'work') durationMs *= offer.negativeEffect.modifier;
+            }
         }
         return { ...prev, mode: nextMode, cyclesCompleted: newCyclesCompleted, sessionEndTime: Date.now() + durationMs };
     });
@@ -1518,16 +1521,26 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(intervalId);
   }, [isLoaded, getDurationForMode, toast]);
 
-  const applyThemePreference = useCallback((skinId: string | null) => {
-    if (typeof window === 'undefined') return;
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isLoaded) return;
+
     const root = window.document.documentElement;
-    const themes = ['dark', 'sepia', 'theme-forest', 'theme-sunset', 'theme-galaxy'];
-    root.classList.remove(...themes);
-    const skin = PREDEFINED_SKINS.find(s => s.id === skinId);
-    if (skin && skin.isTheme && skin.themeClass && skin.themeClass !== 'classic') {
-      root.classList.add(skin.themeClass);
+    
+    // List of ALL possible theme classes to clean up
+    const ALL_THEME_CLASSES = ['dark', 'sepia', 'theme-cyberpunk', 'theme-solarpunk', 'theme-oceanic'];
+    
+    // Remove any existing theme class to prevent conflicts
+    root.classList.remove(...ALL_THEME_CLASSES);
+
+    // Find the currently equipped skin
+    const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
+
+    // Apply the new theme class if it's a valid theme
+    if (equippedSkin && equippedSkin.isTheme && equippedSkin.themeClass && equippedSkin.themeClass !== 'classic') {
+      root.classList.add(equippedSkin.themeClass);
     }
-  }, []);
+    
+  }, [userProfile.equippedSkinId, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -1541,9 +1554,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [sessions, userProfile, pomodoroState.settings, dailyChallenges, lastChallengeResetDate, isLoaded]);
 
-  useEffect(() => {
-    if (isLoaded) applyThemePreference(userProfile.equippedSkinId);
-  }, [userProfile.equippedSkinId, isLoaded, applyThemePreference]);
 
   return (
     <SessionContext.Provider value={{
