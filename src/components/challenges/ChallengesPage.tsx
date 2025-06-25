@@ -66,7 +66,6 @@ export default function ChallengesPage() {
                   key={offer.id} 
                   offer={offer} 
                   onSelect={() => selectDailyOffer(offer.id)}
-                  onDeactivate={() => deactivateOffer(offer.id)}
                   isSelected={userProfile.activeOfferId === offer.id}
                   canSelect={(!userProfile.activeOfferId || allChallengesClaimed) && !userProfile.offerDeactivatedToday}
                 />
