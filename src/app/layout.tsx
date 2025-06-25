@@ -6,6 +6,7 @@ import { SessionProvider } from '@/contexts/SessionContext';
 import AppLayout from '@/components/layout/AppLayout';
 import Footer from '@/components/layout/Footer';
 import FloatingGainIndicator from '@/components/FloatingGainIndicator';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'StudyFlow',
@@ -39,6 +40,7 @@ export default function RootLayout({
           <Toaster />
           <FloatingGainIndicator />
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
