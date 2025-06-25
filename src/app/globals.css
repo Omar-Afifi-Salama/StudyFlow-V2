@@ -54,7 +54,7 @@ body {
     --sidebar-ring: 207 82% 68%;
   }
 
-  html.dark {
+  html[data-theme="dark"] {
     --background: 220 13% 10%; 
     --foreground: 210 30% 90%; 
     --card: 220 13% 15%;
@@ -89,7 +89,7 @@ body {
     --chart-5: 27 75% 58%;
   }
 
-  html.sepia {
+  html[data-theme="sepia"] {
     --background: 40 30% 90%; 
     --foreground: 35 40% 20%; 
     --card: 40 30% 94%; 
@@ -124,7 +124,7 @@ body {
     --chart-5: 20 25% 55%;
   }
 
- html.theme-cyberpunk {
+ html[data-theme="theme-cyberpunk"] {
     --background: 240 10% 4%;
     --foreground: 210 40% 98%;
     --card: 240 10% 8%;
@@ -159,7 +159,7 @@ body {
     --sidebar-ring: 180 100% 50%;
   }
   
-  html.theme-solarpunk {
+  html[data-theme="theme-solarpunk"] {
     --background: 45 50% 98%;
     --foreground: 40 50% 15%;
     --card: 0 0% 100%;
@@ -194,7 +194,7 @@ body {
     --sidebar-ring: 140 60% 45%;
   }
 
-  html.theme-oceanic {
+  html[data-theme="theme-oceanic"] {
     --background: 200 60% 10%;
     --foreground: 190 40% 95%;
     --card: 200 55% 15%;

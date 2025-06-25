@@ -152,7 +152,7 @@ export default function CountdownTimer() {
                 </div>
                 <Progress value={xpProgressPercent} className="w-3/4 mx-auto h-2 mt-1" />
                 {xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-primary mt-1">
                         Approx. {formatTime(timeToLevelUpSeconds, true)} to next level
                     </p>
                 )}

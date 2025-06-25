@@ -1525,19 +1525,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined' || !isLoaded) return;
 
     const root = window.document.documentElement;
-    
-    // List of ALL possible theme classes to clean up
-    const ALL_THEME_CLASSES = ['dark', 'sepia', 'theme-cyberpunk', 'theme-solarpunk', 'theme-oceanic'];
-    
-    // Remove any existing theme class to prevent conflicts
-    root.classList.remove(...ALL_THEME_CLASSES);
-
-    // Find the currently equipped skin
     const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
+    
+    const themeClass = equippedSkin?.isTheme ? equippedSkin.themeClass : null;
 
-    // Apply the new theme class if it's a valid theme
-    if (equippedSkin && equippedSkin.isTheme && equippedSkin.themeClass && equippedSkin.themeClass !== 'classic') {
-      root.classList.add(equippedSkin.themeClass);
+    if (themeClass && themeClass !== 'classic') {
+      root.setAttribute('data-theme', themeClass);
+    } else {
+      // If classic or no theme, remove the attribute to fall back to default :root styles
+      root.removeAttribute('data-theme');
     }
     
   }, [userProfile.equippedSkinId, isLoaded]);
