@@ -14,8 +14,12 @@ export type TimerMode = 'pomodoro' | 'stopwatch' | 'countdown';
 
 export interface Bond {
   id: string;
+  name: string;
+  description: string;
   cost: number;
-  returnValue: number;
+  potentialReturnValue: number;
+  risk: 'low' | 'medium' | 'high';
+  isPurchased?: boolean;
   purchaseTime: number;
   maturityTime: number;
   claimed: boolean;
@@ -37,17 +41,18 @@ export interface Business {
   maintenanceCost?: number;
 }
 
+export interface DailyOfferEffect {
+    type: 'xp' | 'cash' | 'timer_speed' | 'risk';
+    modifier: number;
+    description: string;
+}
+
 export interface DailyOffer {
     id: string;
     title: string;
     description: string;
-    type: 'buff' | 'debuff';
-    durationMinutes: number;
-    effect: {
-        type: 'xp' | 'cash' | 'timer_speed';
-        modifier: number; // e.g., 1.1 for +10%, 0.9 for -10%
-        description: string;
-    };
+    positiveEffect: DailyOfferEffect;
+    negativeEffect: DailyOfferEffect;
 }
 
 
@@ -70,6 +75,7 @@ export interface UserProfile {
   notepadData: NotepadData;
   skillPoints: number;
   unlockedSkillIds: string[];
+  unlockedInfamySkillIds: string[];
   skillLevels: { [skillId: string]: number };
   businesses: {
     startup: Business;
@@ -82,12 +88,12 @@ export interface UserProfile {
       offers: DailyOffer[];
   };
   activeOfferId: string | null;
-  activeOfferEndTime: number | null;
-  offerDeactivatedToday?: boolean;
   manualLogTimeToday: { date: string, duration: number };
   infamyLevel: number;
+  infamyPoints: number;
   bonds: Bond[];
   lastBondGenerationTime: number;
+  hardResetRequestTime: number | null;
 }
 
 export interface Skin {
@@ -243,6 +249,7 @@ export type FeatureKey =
   | 'capitalist'
   | 'achievements'
   | 'about'
+  | 'infamy'
   | 'notepadChecklist'
   | 'notepadNotes'
   | 'notepadGoals'
@@ -265,7 +272,7 @@ export interface Skill {
   cashBoostPercent?: number;
   shopDiscountPercent?: number;
   otherEffect?: string;
-  category?: 'Core Feature' | 'Notepad Feature' | 'Passive Boost' | 'Utility' | 'Infinite';
+  category?: 'Core Feature' | 'Notepad Feature' | 'Passive Boost' | 'Utility' | 'Infinite' | 'Infamy';
 }
 
 export interface FloatingGain {

@@ -12,6 +12,12 @@ import BondCard from './BondCard';
 export default function CapitalistPage() {
   const { userProfile, unlockBusiness, upgradeBusiness, collectBusinessIncome, claimMaturedBonds, buyBond } = useSessions();
   const { businesses, bonds } = userProfile;
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000 * 60); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   const totalIncomePerHour = useMemo(() => {
     return Object.values(businesses).reduce((total, business) => {
@@ -31,6 +37,10 @@ export default function CapitalistPage() {
   }, [claimMaturedBonds]);
 
   const businessOrder: (keyof typeof businesses)[] = ['farm', 'startup', 'mine', 'industry'];
+
+  const timeUntilNextBond = 3600 - ((currentTime - (userProfile.lastBondGenerationTime || 0)) / 1000) % 3600;
+
+  const hasMadeBondChoiceThisCycle = bonds.some(b => b.isPurchased);
 
   return (
     <div className="space-y-6">
@@ -68,8 +78,16 @@ export default function CapitalistPage() {
       
       <Card className="shadow-lg card-animated">
         <CardHeader>
-            <CardTitle>Investment Bonds</CardTitle>
-            <CardDescription>A low-risk, time-based investment. A new bond is available for purchase every hour.</CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>Investment Bonds</CardTitle>
+                    <CardDescription>A low-risk, time-based investment. New opportunities available every hour.</CardDescription>
+                </div>
+                <div className="text-sm text-muted-foreground flex items-center">
+                    <Clock className="h-4 w-4 mr-2"/>
+                    New bonds in: {formatTime(timeUntilNextBond)}
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
             {bonds.length === 0 ? (
@@ -82,6 +100,8 @@ export default function CapitalistPage() {
                             bond={bond}
                             onBuy={() => buyBond(bond.id)}
                             userCash={userProfile.cash}
+                            isPurchased={bond.isPurchased || false}
+                            hasMadeChoice={hasMadeBondChoiceThisCycle}
                         />
                     ))}
                 </div>

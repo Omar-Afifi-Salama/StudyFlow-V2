@@ -4,8 +4,10 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { useSessions } from '@/contexts/SessionContext';
-import { PlusSquare, Trash2 } from 'lucide-react';
+import { PlusSquare, Trash2, Skull } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { formatTime } from '@/lib/utils';
+import Link from 'next/link';
 
 const quotes = [
   { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
@@ -27,16 +29,59 @@ const quotes = [
 
 export default function Footer() {
   const [currentQuote, setCurrentQuote] = useState<{ quote: string; author: string } | null>(null);
-  const { addTestSession, hardReset } = useSessions();
+  const { addDevLevels, hardReset, userProfile, requestHardReset, cancelHardReset } = useSessions();
+  const [resetTimeLeft, setResetTimeLeft] = useState(0);
 
   useEffect(() => {
     setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
   }, []);
+  
+  useEffect(() => {
+      if (userProfile.hardResetRequestTime) {
+          const interval = setInterval(() => {
+              const timeLeft = Math.max(0, userProfile.hardResetRequestTime! + 24 * 60 * 60 * 1000 - Date.now());
+              setResetTimeLeft(timeLeft / 1000);
+          }, 1000);
+          return () => clearInterval(interval);
+      }
+  }, [userProfile.hardResetRequestTime]);
 
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   if (!currentQuote && !isDevelopment) { 
     return null;
+  }
+
+  const HardResetButton = () => {
+    if (userProfile.hardResetRequestTime) {
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-destructive text-sm font-semibold">Hard reset pending! Time left: {formatTime(resetTimeLeft, true)}</p>
+          <Button onClick={cancelHardReset} variant="secondary" size="sm" className="btn-animated">Cancel Reset</Button>
+        </div>
+      );
+    }
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" size="sm" className="btn-animated">
+            <Trash2 className="mr-2 h-4 w-4" /> Hard Reset
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will permanently delete ALL data associated with your profile, including achievements, skills, and notepad entries. This process will take 24 hours to complete and can be cancelled at any time before then. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={requestHardReset}>Yes, start the 24-hour reset</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
   }
 
   return (
@@ -49,31 +94,20 @@ export default function Footer() {
           </>
         )}
         <p className="text-xs mt-3">&copy; {new Date().getFullYear()} StudyFlow App. All rights reserved.</p>
+        
+        {userProfile.level >= 100 && (
+          <Button asChild variant="link" className="mt-2 text-purple-500 animate-pulse">
+            <Link href="/infamy"><Skull className="mr-2 h-4 w-4"/> You have reached Level 100. The Path of Infamy awaits... </Link>
+          </Button>
+        )}
+
         <div className="flex items-center space-x-2 mt-3">
           {isDevelopment && (
-            <Button onClick={addTestSession} variant="outline" size="sm" className="btn-animated">
-              <PlusSquare className="mr-2 h-4 w-4" /> Dev: Add Test Session
+            <Button onClick={addDevLevels} variant="outline" size="sm" className="btn-animated">
+              <PlusSquare className="mr-2 h-4 w-4" /> Dev: Add 50 Levels
             </Button>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="btn-animated">
-                <Trash2 className="mr-2 h-4 w-4" /> Hard Reset
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete all your progress, including sessions, level, cash, achievements, and settings, and reload the application.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={hardReset}>Yes, delete everything</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <HardResetButton />
         </div>
       </div>
     </footer>

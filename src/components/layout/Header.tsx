@@ -29,6 +29,7 @@ interface NavItem {
 const allPossibleNavItems: NavItem[] = [
     { href: '/', label: 'Timers', icon: LucideIcons.BookOpen, hotkey: 't', featureKey: 'timers', alwaysVisible: true },
     { href: '/skill-tree', label: 'Skill Tree', icon: LucideIcons.Network, hotkey: 'k', featureKey: 'skill-tree', alwaysVisible: true },
+    { href: '/infamy', label: 'Infamy', icon: LucideIcons.Skull, hotkey: 'i', featureKey: 'infamy' },
     { href: '/stats', label: 'Stats', icon: LucideIcons.BarChart3, hotkey: 's', featureKey: 'stats' },
     { href: '/ambiance', label: 'Ambiance', icon: LucideIcons.Wind, hotkey: 'm', featureKey: 'ambiance' },
     { href: '/notepad', label: 'Notepad', icon: LucideIcons.NotebookText, hotkey: 'n', featureKey: 'notepad' },
@@ -48,13 +49,17 @@ const HOTKEY_STRING = Object.keys(hotkeyNavMap).join(',');
 
 
 // Memoized Navigation component to prevent re-renders unless skills change
-const Navigation = React.memo(({ unlockedSkillIds, pathname }: { unlockedSkillIds: readonly string[]; pathname: string }) => {
+const Navigation = React.memo(({ unlockedSkillIds, userProfile, pathname }: { unlockedSkillIds: readonly string[]; userProfile: UserProfile; pathname: string }) => {
     return (
         <div className="flex-1 min-w-0">
             <nav className="flex items-center space-x-1 overflow-x-auto pb-2">
                 {allPossibleNavItems.map((item) => {
                     const skill = ALL_SKILLS.find(s => s.unlocksFeature === item.featureKey);
-                    const isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                    let isUnlocked = item.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+
+                    if (item.featureKey === 'infamy') {
+                        isUnlocked = userProfile.level >= 100 || userProfile.infamyLevel > 0;
+                    }
 
                     if (!isUnlocked) {
                         return null;
@@ -133,7 +138,7 @@ const UserStats = React.memo(({ userProfile, getAppliedBoost }: { userProfile: U
                             </p>
                         )}
                         {level >= ACTUAL_LEVEL_THRESHOLDS.length && (
-                            <p className="text-xs text-primary">Max Level Reached!</p>
+                             <p className="text-xs text-primary font-bold">Max Level! Go Infamous!</p>
                         )}
                     </div>
                 </PopoverContent>
@@ -184,7 +189,10 @@ export default function Header() {
             const navItem = hotkeyNavMap[handler.key];
             if (navItem) {
                 const skill = ALL_SKILLS.find(s => s.unlocksFeature === navItem.featureKey);
-                const isVisible = navItem.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                let isVisible = navItem.alwaysVisible || (skill ? unlockedSkillIds.includes(skill.id) : false);
+                if (navItem.featureKey === 'infamy') {
+                    isVisible = userProfile.level >= 100 || userProfile.infamyLevel > 0;
+                }
                 
                 if (isVisible) {
                     router.push(navItem.href);
@@ -192,7 +200,7 @@ export default function Header() {
             }
         },
         { preventDefault: true },
-        [router, unlockedSkillIds]
+        [router, unlockedSkillIds, userProfile.level, userProfile.infamyLevel]
     );
 
     return (
@@ -205,7 +213,7 @@ export default function Header() {
                     <span className="font-bold text-xl font-headline hidden sm:inline-block">StudyFlow</span>
                 </Link>
 
-                <Navigation unlockedSkillIds={unlockedSkillIds} pathname={pathname} />
+                <Navigation unlockedSkillIds={unlockedSkillIds} userProfile={userProfile} pathname={pathname} />
 
                 <UserStats userProfile={userProfile} getAppliedBoost={getAppliedBoost} />
             </div>

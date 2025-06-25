@@ -150,17 +150,20 @@ function toast(props: Toast) {
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
+  // FIX: Defer dispatch to avoid state updates during render
+  setTimeout(() => {
+    dispatch({
+      type: "ADD_TOAST",
+      toast: {
+        ...props,
+        id,
+        open: true,
+        onOpenChange: (open) => {
+          if (!open) dismiss()
+        },
       },
-    },
-  })
+    })
+  }, 0)
 
   return {
     id: id,

@@ -8,16 +8,15 @@ import { Slider } from '@/components/ui/slider';
 import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, Moon, TreePine, Flame } from 'lucide-react'; 
 import { useSessions } from '@/contexts/SessionContext';
 
-// Example sounds from archive.org. 
-// IMPORTANT: These URLs might change or become unavailable. Replace with your own reliable sources for production.
+// Locally hosted sounds for reliability
 const AVAILABLE_SOUNDS: AmbientSound[] = [
-  { id: 'rain', name: 'Gentle Rain', filePath: 'https://archive.org/download/RainyMood/RainyMood.mp3', icon: CloudRain },
-  { id: 'cafe', name: 'Busy Cafe', filePath: 'https://archive.org/download/RestaurantAmbiance/Restaurant%20Ambiance.mp3', icon: CoffeeIcon },
-  { id: 'waves', name: 'Ocean Waves', filePath: 'https://archive.org/download/Sounds_of_Sea_Waves/Sounds_of_Sea_Waves.mp3', icon: Waves },
-  { id: 'wind', name: 'Soft Wind', filePath: 'https://archive.org/download/LightWindSound/Light%20Wind%20Sound.mp3', icon: Wind },
-  { id: 'forest', name: 'Forest Night', filePath: 'https://archive.org/download/forest-at-night-and-crickets-sound-for-sleep/forest-at-night-and-crickets-sound-for-sleep.mp3', icon: TreePine },
-  { id: 'fireplace', name: 'Crackling Fire', filePath: 'https://archive.org/download/fireplace-sound/fireplace-sound.mp3', icon: Flame },
-  { id: 'whitenoise', name: 'White Noise', filePath: 'https://archive.org/download/WhiteNoiseSound/White%20Noise%20Sound.mp3', icon: Moon },
+  { id: 'rain', name: 'Gentle Rain', filePath: '/sounds/rain.mp3', icon: CloudRain },
+  { id: 'cafe', name: 'Busy Cafe', filePath: '/sounds/cafe.mp3', icon: CoffeeIcon },
+  { id: 'waves', name: 'Ocean Waves', filePath: '/sounds/waves.mp3', icon: Waves },
+  { id: 'wind', name: 'Soft Wind', filePath: '/sounds/wind.mp3', icon: Wind },
+  { id: 'forest', name: 'Forest Night', filePath: '/sounds/forest.mp3', icon: TreePine },
+  { id: 'fireplace', name: 'Crackling Fire', filePath: '/sounds/fireplace.mp3', icon: Flame },
+  { id: 'whitenoise', name: 'White Noise', filePath: '/sounds/whitenoise.mp3', icon: Moon },
 ];
 
 interface AudioPlayerState {
@@ -204,9 +203,6 @@ export default function AmbiancePage() {
             );
           })}
         </div>
-         <p className="text-xs text-muted-foreground text-center">
-            Note: Sounds are linked from external URLs (e.g., archive.org). Playback depends on their availability and CORS settings. For best results, replace with your own hosted audio files in <code className="bg-muted px-1 rounded-sm">public/sounds/</code>.
-        </p>
       </CardContent>
     </Card>
   );
