@@ -33,14 +33,11 @@ export default function TimerContainer() {
     }
   };
 
-  const visibleTabs = activeTimer ? TABS_CONFIG.filter(tab => tab.value === activeTimer) : TABS_CONFIG;
-  const gridColsClass = `grid-cols-${visibleTabs.length}`;
-
   return (
     <div className="w-full max-w-2xl mx-auto">
       <Tabs value={activeTimer || activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className={`grid w-full ${gridColsClass} mb-6`}>
-            {visibleTabs.map(tab => {
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+            {TABS_CONFIG.map(tab => {
                 const Icon = tab.icon;
                 return (
                     <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-base md:py-3 btn-animated" disabled={!!activeTimer && activeTimer !== tab.value}>

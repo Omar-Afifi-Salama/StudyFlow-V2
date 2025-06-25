@@ -4,7 +4,7 @@
 import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -1060,7 +1060,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     let startingCash = DEFAULT_USER_PROFILE.cash;
-    let startingSkillPoints = 0;
+    let startingSkillPoints = userProfile.skillPoints; // Keep skill points
     if (isInfamySkillUnlocked('infamyStartingBonus')) {
       startingCash += 50000;
       startingSkillPoints += 5;
@@ -1102,7 +1102,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
     toast({ title: "You Have Gone Infamous!", description: "Your journey begins anew, but with greater power. You earned 1 Infamy Point." });
 
-  }, [userProfile.level, toast, isInfamySkillUnlocked]);
+  }, [userProfile, toast, isInfamySkillUnlocked]);
 
 
   const updateSleepWakeTimes = useCallback((wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => {
