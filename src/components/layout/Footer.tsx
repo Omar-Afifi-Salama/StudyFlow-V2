@@ -4,7 +4,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { useSessions } from '@/contexts/SessionContext';
-import { PlusSquare } from 'lucide-react';
+import { PlusSquare, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const quotes = [
   { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
@@ -15,12 +16,18 @@ const quotes = [
   { quote: "The expert in anything was once a beginner.", author: "Helen Hayes" },
   { quote: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela" },
   { quote: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi" },
-  { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" }
+  { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
+  { quote: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+  { quote: "The roots of education are bitter, but the fruit is sweet.", author: "Aristotle" },
+  { quote: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+  { quote: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+  { quote: "I find that the harder I work, the more luck I seem to have.", author: "Thomas Jefferson" },
+  { quote: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
 ];
 
 export default function Footer() {
   const [currentQuote, setCurrentQuote] = useState<{ quote: string; author: string } | null>(null);
-  const { addTestSession } = useSessions(); // Assuming addTestSession exists
+  const { addTestSession, hardReset } = useSessions();
 
   useEffect(() => {
     setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
@@ -28,7 +35,7 @@ export default function Footer() {
 
   const isDevelopment = process.env.NODE_ENV === 'development';
 
-  if (!currentQuote && !isDevelopment) { // Only return null if no quote AND not in dev (to show dev button)
+  if (!currentQuote && !isDevelopment) { 
     return null;
   }
 
@@ -42,11 +49,32 @@ export default function Footer() {
           </>
         )}
         <p className="text-xs mt-3">&copy; {new Date().getFullYear()} StudyFlow App. All rights reserved.</p>
-        {isDevelopment && (
-          <Button onClick={addTestSession} variant="outline" size="sm" className="mt-3 btn-animated">
-            <PlusSquare className="mr-2 h-4 w-4" /> Dev: Add Test Session
-          </Button>
-        )}
+        <div className="flex items-center space-x-2 mt-3">
+          {isDevelopment && (
+            <Button onClick={addTestSession} variant="outline" size="sm" className="btn-animated">
+              <PlusSquare className="mr-2 h-4 w-4" /> Dev: Add Test Session
+            </Button>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="btn-animated">
+                <Trash2 className="mr-2 h-4 w-4" /> Hard Reset
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all your progress, including sessions, level, cash, achievements, and settings, and reload the application.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={hardReset}>Yes, delete everything</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </footer>
   );

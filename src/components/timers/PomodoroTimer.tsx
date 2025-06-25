@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, ListPlus, Settings, HelpCircle, DollarSign, Zap, ChevronsRight, Clock4 } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
 import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, ACTUAL_LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
 import { type PomodoroMode } from '@/types';
@@ -21,21 +21,28 @@ export default function PomodoroTimer() {
   const { 
     userProfile,
     pomodoroState,
-    startPomodoro,
-    pausePomodoro,
-    resetPomodoro,
+    startTimer,
+    pauseTimer,
+    resetTimer,
     switchPomodoroMode,
     updatePomodoroSettings,
-    logPomodoroSession,
-    getSkillBoost
+    logSession,
+    getSkillBoost,
+    activeTimer
   } = useSessions();
 
-  const { mode, isRunning, settings, sessionEndTime, sessionStartTime } = pomodoroState;
+  const { mode, isRunning, settings, sessionEndTime } = pomodoroState;
   const [timeLeft, setTimeLeft] = useState(0);
   
   const { toast } = useToast();
 
   const [localSettings, setLocalSettings] = useState(settings);
+  
+  useHotkeys('p', () => { if (activeTimer === 'pomodoro') { if (isRunning) pauseTimer('pomodoro'); else startTimer('pomodoro'); } }, { preventDefault: true }, [isRunning, startTimer, pauseTimer, activeTimer]);
+  useHotkeys('r', () => { if (activeTimer === 'pomodoro') resetTimer('pomodoro'); }, { preventDefault: true }, [resetTimer, activeTimer]);
+  useHotkeys('s', () => { if (activeTimer === 'pomodoro') switchPomodoroMode(); }, { preventDefault: true }, [switchPomodoroMode, activeTimer]);
+  useHotkeys('l', () => { if (activeTimer === 'pomodoro') logSession('pomodoro'); }, { preventDefault: true, enabled: !isRunning }, [logSession, isRunning, activeTimer]);
+
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -74,11 +81,6 @@ export default function PomodoroTimer() {
     toast({ title: "Settings Saved", description: "Pomodoro timer updated."});
   };
 
-  const currentSessionElapsedTime = useMemo(() => {
-    if (!sessionStartTime) return 0;
-    return (Date.now() - sessionStartTime) / 1000;
-  }, [sessionStartTime, timeLeft]); // Update when timeLeft changes to force re-calc
-
   const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
   const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp; 
   const xpIntoCurrentLevel = userProfile.xp - currentLevelXpStart;
@@ -87,23 +89,20 @@ export default function PomodoroTimer() {
   const xpProgressPercent = nextLevelXpTarget > currentLevelXpStart ? Math.min(100, Math.floor((xpIntoCurrentLevel / (nextLevelXpTarget - currentLevelXpStart)) * 100)) : (userProfile.level >= ACTUAL_LEVEL_THRESHOLDS.length ? 100 : 0);
   
   const streakBonusPercentVal = Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
-  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal);
-  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
-
   const skillXpBoost = getSkillBoost('xp');
   const skillCashBoost = getSkillBoost('cash');
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal + skillXpBoost);
+  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
+  
+  const canStart = activeTimer === null || activeTimer === 'pomodoro';
 
-  useHotkeys('p', () => { if (isRunning) pausePomodoro(); else startPomodoro(); }, { preventDefault: true }, [isRunning, startPomodoro, pausePomodoro]);
-  useHotkeys('r', () => { resetPomodoro(); }, { preventDefault: true }, [resetPomodoro]);
-  useHotkeys('s', () => switchPomodoroMode(), { preventDefault: true }, [switchPomodoroMode]); 
-  useHotkeys('l', logPomodoroSession, { preventDefault: true, enabled: !isRunning && currentSessionElapsedTime > 1 }, [logPomodoroSession, isRunning, currentSessionElapsedTime]);
 
   return (
     <Card className="shadow-lg card-animated">
       <CardHeader className="text-center">
         <div className="flex justify-between items-center mb-2">
             <div className="w-1/4"></div>
-            <CardTitle className="text-2xl font-headline">{modeTextMap[mode]}</CardTitle>
+            <CardTitle className="text-2xl font-headline flex items-center gap-2"><Clock4 />{modeTextMap[mode]}</CardTitle>
             <div className="w-1/4 flex justify-end">
                  <TooltipProvider>
                     <Tooltip>
@@ -142,7 +141,7 @@ export default function PomodoroTimer() {
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={startPomodoro} size="lg" aria-label={`Start ${mode} session`} className="btn-animated">
+                  <Button onClick={() => startTimer('pomodoro')} size="lg" aria-label={`Start ${mode} session`} className="btn-animated" disabled={!canStart}>
                     <Play className="mr-2 h-5 w-5" /> Start
                   </Button>
                 </TooltipTrigger>
@@ -153,7 +152,7 @@ export default function PomodoroTimer() {
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={pausePomodoro} size="lg" variant="outline" aria-label={`Pause ${mode} session`} className="btn-animated">
+                  <Button onClick={() => pauseTimer('pomodoro')} size="lg" variant="outline" aria-label={`Pause ${mode} session`} className="btn-animated">
                     <Pause className="mr-2 h-5 w-5" /> Pause
                   </Button>
                 </TooltipTrigger>
@@ -164,7 +163,7 @@ export default function PomodoroTimer() {
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={resetPomodoro} size="lg" variant="outline" aria-label={`Reset ${mode} session`} className="btn-animated">
+                <Button onClick={() => resetTimer('pomodoro')} size="lg" variant="outline" aria-label={`Reset ${mode} session`} className="btn-animated">
                   <RotateCcw className="mr-2 h-5 w-5" /> Reset
                 </Button>
               </TooltipTrigger>
@@ -215,7 +214,7 @@ export default function PomodoroTimer() {
         <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={logPomodoroSession} disabled={isRunning || currentSessionElapsedTime < 1} size="lg" variant="secondary" aria-label="Log current pomodoro progress" className="btn-animated">
+                    <Button onClick={() => logSession('pomodoro')} disabled={isRunning} size="lg" variant="secondary" aria-label="Log current pomodoro progress" className="btn-animated">
                         <ListPlus className="mr-2 h-5 w-5" /> Log Progress
                     </Button>
                 </TooltipTrigger>

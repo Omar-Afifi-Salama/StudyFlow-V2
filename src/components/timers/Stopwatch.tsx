@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign, Zap, ChevronsRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, ListPlus, HelpCircle, DollarSign, Zap, ChevronsRight, Timer as TimerIcon } from 'lucide-react';
 import TimerDisplay from './TimerDisplay';
 import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, ACTUAL_LEVEL_THRESHOLDS, STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS } from '@/contexts/SessionContext';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -16,15 +16,21 @@ export default function Stopwatch() {
   const { 
       userProfile,
       stopwatchState,
-      startStopwatch,
-      pauseStopwatch,
-      resetStopwatch,
-      logStopwatchSession,
-      getSkillBoost
+      startTimer,
+      pauseTimer,
+      resetTimer,
+      logSession,
+      getSkillBoost,
+      activeTimer
    } = useSessions();
   
   const { timeElapsedOnPause, isRunning, sessionStartTime } = stopwatchState;
   const [timeElapsed, setTimeElapsed] = useState(0);
+  
+  useHotkeys('p', () => { if (activeTimer === 'stopwatch') { if (isRunning) pauseTimer('stopwatch'); else startTimer('stopwatch'); } }, { preventDefault: true }, [isRunning, startTimer, pauseTimer, activeTimer]);
+  useHotkeys('r', () => { if (activeTimer === 'stopwatch') resetTimer('stopwatch'); }, { preventDefault: true, enabled: timeElapsed > 0 || isRunning }, [resetTimer, timeElapsed, isRunning, activeTimer]);
+  useHotkeys('l', () => { if (activeTimer === 'stopwatch') logSession('stopwatch'); }, { preventDefault: true, enabled: timeElapsed > 0 && !isRunning }, [logSession, timeElapsed, isRunning, activeTimer]);
+
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -53,22 +59,20 @@ export default function Stopwatch() {
   const xpProgressPercent = nextLevelXpTarget > currentLevelXpStart ? Math.min(100, Math.floor((xpIntoCurrentLevel / (nextLevelXpTarget - currentLevelXpStart)) * 100)) : (userProfile.level >= ACTUAL_LEVEL_THRESHOLDS.length ? 100 : 0);
   
   const streakBonusPercentVal = Math.min(userProfile.currentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
-  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal);
-  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
-
   const skillXpBoost = getSkillBoost('xp');
   const skillCashBoost = getSkillBoost('cash');
+  const effectiveXpPerMinute = XP_PER_MINUTE_FOCUS * (1 + streakBonusPercentVal + skillXpBoost);
+  const timeToLevelUpSeconds = xpToNextLevelRaw > 0 && effectiveXpPerMinute > 0 ? (xpToNextLevelRaw / effectiveXpPerMinute) * 60 : 0;
+  
+  const canStart = activeTimer === null || activeTimer === 'stopwatch';
 
-  useHotkeys('p', () => { if (isRunning) pauseStopwatch(); else startStopwatch(); }, { preventDefault: true }, [isRunning, startStopwatch, pauseStopwatch]);
-  useHotkeys('r', resetStopwatch, { preventDefault: true, enabled: timeElapsed > 0 || isRunning }, [resetStopwatch, timeElapsed, isRunning]);
-  useHotkeys('l', logStopwatchSession, { preventDefault: true, enabled: timeElapsed > 0 && !isRunning }, [logStopwatchSession, timeElapsed, isRunning]);
 
   return (
     <Card className="shadow-lg card-animated">
       <CardHeader className="text-center">
         <div className="flex justify-between items-center mb-2">
             <div className="w-1/4"></div>
-            <CardTitle className="text-2xl font-headline">Stopwatch</CardTitle>
+            <CardTitle className="text-2xl font-headline flex items-center gap-2"><TimerIcon />Stopwatch</CardTitle>
             <div className="w-1/4 flex justify-end">
                 <TooltipProvider>
                     <Tooltip>
@@ -106,7 +110,7 @@ export default function Stopwatch() {
              <TooltipProvider delayDuration={300}>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={startStopwatch} size="lg" aria-label="Start stopwatch" className="btn-animated">
+                        <Button onClick={() => startTimer('stopwatch')} size="lg" aria-label="Start stopwatch" className="btn-animated" disabled={!canStart}>
                             <Play className="mr-2 h-5 w-5" /> Start
                         </Button>
                     </TooltipTrigger>
@@ -117,7 +121,7 @@ export default function Stopwatch() {
             <TooltipProvider delayDuration={300}>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={pauseStopwatch} size="lg" variant="outline" aria-label="Pause stopwatch" className="btn-animated">
+                        <Button onClick={() => pauseTimer('stopwatch')} size="lg" variant="outline" aria-label="Pause stopwatch" className="btn-animated">
                             <Pause className="mr-2 h-5 w-5" /> Pause
                         </Button>
                     </TooltipTrigger>
@@ -128,7 +132,7 @@ export default function Stopwatch() {
           <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={resetStopwatch} size="lg" variant="outline" disabled={timeElapsed === 0 && !isRunning} aria-label="Reset stopwatch" className="btn-animated">
+                    <Button onClick={() => resetTimer('stopwatch')} size="lg" variant="outline" disabled={timeElapsed === 0 && !isRunning} aria-label="Reset stopwatch" className="btn-animated">
                         <RotateCcw className="mr-2 h-5 w-5" /> Reset
                     </Button>
                 </TooltipTrigger>
@@ -141,7 +145,7 @@ export default function Stopwatch() {
         <TooltipProvider delayDuration={300}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={logStopwatchSession} disabled={timeElapsed === 0} size="lg" variant="secondary" aria-label="Log session" className="btn-animated">
+                    <Button onClick={() => logSession('stopwatch')} disabled={timeElapsed === 0} size="lg" variant="secondary" aria-label="Log session" className="btn-animated">
                         <ListPlus className="mr-2 h-5 w-5" /> Log Session
                     </Button>
                 </TooltipTrigger>

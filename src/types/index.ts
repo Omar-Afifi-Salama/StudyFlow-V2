@@ -10,7 +10,16 @@ export interface StudySession {
   isFullPomodoroCycle?: boolean; // True if a Pomodoro focus session completed its full intended duration
 }
 
-export type TimerMode = 'stopwatch' | 'pomodoro' | 'countdown';
+export type TimerMode = 'pomodoro' | 'stopwatch' | 'countdown';
+
+export interface Bond {
+  id: string;
+  cost: number;
+  returnValue: number;
+  purchaseTime: number;
+  maturityTime: number;
+  claimed: boolean;
+}
 
 export interface Business {
   id: 'startup' | 'farm' | 'mine' | 'industry';
@@ -75,6 +84,10 @@ export interface UserProfile {
   activeOfferId: string | null;
   activeOfferEndTime: number | null;
   offerDeactivatedToday?: boolean;
+  manualLogTimeToday: { date: string, duration: number };
+  infamyLevel: number;
+  bonds: Bond[];
+  lastBondGenerationTime: number;
 }
 
 export interface Skin {

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Timer, Play, Pause, RotateCcw, BellRing, Settings, ListPlus, HelpCircle, Zap, DollarSign, ChevronsRight } from 'lucide-react';
+import { Timer, Play, Pause, RotateCcw, BellRing, Settings, ListPlus, HelpCircle, Zap, DollarSign, ChevronsRight, Hourglass } from 'lucide-react';
 import TimerDisplay from '@/components/timers/TimerDisplay';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -15,51 +15,50 @@ import { useSessions, XP_PER_MINUTE_FOCUS, CASH_PER_5_MINUTES_FOCUS, STREAK_BONU
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatTime } from '@/lib/utils';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export default function CountdownTimer() {
     const { 
         userProfile, 
         countdownState, 
-        startCountdown, 
-        pauseCountdown, 
-        resetCountdown, 
+        startTimer, 
+        pauseTimer, 
+        resetTimer, 
         setCountdownDuration, 
-        logCountdownSession,
-        getSkillBoost 
+        logSession,
+        getSkillBoost,
+        activeTimer
     } = useSessions();
     
-    const { isRunning, timeLeftOnPause, initialDuration, sessionStartTime } = countdownState;
+    const { isRunning, timeLeftOnPause, initialDuration } = countdownState;
 
     const [durationInput, setDurationInput] = useState({ hours: 0, minutes: 5, seconds: 0 });
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
     const [playNotificationSound, setPlayNotificationSound] = useState(true);
 
-    const audioRef = useRef<HTMLAudioElement | null>(null);
     const { toast } = useToast();
+    
+    useHotkeys('p', () => { if (activeTimer === 'countdown') { if (isRunning) pauseTimer('countdown'); else startTimer('countdown'); } }, { preventDefault: true }, [isRunning, startTimer, pauseTimer, activeTimer]);
+    useHotkeys('r', () => { if (activeTimer === 'countdown') resetTimer('countdown'); }, { preventDefault: true, enabled: initialDuration > 0 }, [resetTimer, initialDuration, activeTimer]);
+    useHotkeys('l', () => { if (activeTimer === 'countdown') logSession('countdown'); }, { preventDefault: true, enabled: !isRunning && initialDuration > 0 }, [logSession, isRunning, initialDuration, activeTimer]);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/sounds/notification.mp3');
-            audioRef.current.load();
-        }
-    }, []);
 
     useEffect(() => {
         let interval: NodeJS.Timeout | undefined;
 
-        if (isRunning && sessionStartTime) {
+        if (isRunning && countdownState.sessionStartTime) {
             interval = setInterval(() => {
-                const elapsed = Date.now() - sessionStartTime;
+                const elapsed = Date.now() - countdownState.sessionStartTime;
                 const newTimeLeft = Math.max(0, Math.floor((timeLeftOnPause - elapsed) / 1000));
                 setTimeLeft(newTimeLeft);
 
-                if (newTimeLeft <= 0) {
+                if (newTimeLeft <= 0 && !isFinished) {
                     setIsFinished(true);
-                    pauseCountdown(); // Pause the context state
+                    pauseTimer('countdown');
                     toast({ title: "Countdown Finished!", description: "Your timer has ended." });
-                    if (playNotificationSound && audioRef.current) {
-                        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+                    if (playNotificationSound) {
+                        new Audio('/sounds/notification.mp3').play().catch(e => console.error("Error playing sound:", e));
                     }
                 }
             }, 1000);
@@ -70,7 +69,7 @@ export default function CountdownTimer() {
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isRunning, sessionStartTime, timeLeftOnPause, pauseCountdown, playNotificationSound, toast]);
+    }, [isRunning, countdownState.sessionStartTime, timeLeftOnPause, pauseTimer, playNotificationSound, toast, isFinished]);
 
 
     const handleInputChange = (unit: 'hours' | 'minutes' | 'seconds', value: string) => {
@@ -93,18 +92,19 @@ export default function CountdownTimer() {
     };
 
     const handleResetAndSetNew = () => {
-        resetCountdown(0);
+        resetTimer('countdown');
+        setCountdownDuration(0);
         setIsFinished(false);
         setDurationInput({ hours: 0, minutes: 5, seconds: 0 });
     }
     
     const timeStudiedSeconds = useMemo(() => {
-        if (isRunning && sessionStartTime) {
-            const elapsed = Date.now() - sessionStartTime;
+        if (isRunning && countdownState.sessionStartTime) {
+            const elapsed = Date.now() - countdownState.sessionStartTime;
             return (initialDuration - (timeLeftOnPause - elapsed)) / 1000;
         }
         return (initialDuration - timeLeftOnPause) / 1000;
-    }, [isRunning, sessionStartTime, initialDuration, timeLeftOnPause]);
+    }, [isRunning, countdownState.sessionStartTime, initialDuration, timeLeftOnPause]);
 
     const currentLevelXpStart = ACTUAL_LEVEL_THRESHOLDS[userProfile.level - 1] ?? 0;
     const nextLevelXpTarget = userProfile.level < ACTUAL_LEVEL_THRESHOLDS.length ? ACTUAL_LEVEL_THRESHOLDS[userProfile.level] : userProfile.xp;
@@ -119,13 +119,14 @@ export default function CountdownTimer() {
 
 
     const hasTimerBeenSet = initialDuration > 0;
+    const canStart = activeTimer === null || activeTimer === 'countdown';
 
     return (
         <Card className="shadow-lg card-animated">
              <CardHeader className="text-center">
                 <div className="flex justify-between items-center mb-2">
                     <div className="w-1/4"></div>
-                    <CardTitle className="text-2xl font-headline">Countdown</CardTitle>
+                    <CardTitle className="text-2xl font-headline flex items-center gap-2"><Hourglass/>Countdown</CardTitle>
                     <div className="w-1/4 flex justify-end">
                         <TooltipProvider>
                             <Tooltip>
@@ -175,15 +176,15 @@ export default function CountdownTimer() {
                         {isFinished && <p className="text-2xl font-semibold text-primary animate-pulse"><BellRing className="inline h-7 w-7 mr-2"/>Time's Up!</p>}
                         <div className="flex space-x-3">
                             {!isRunning ? (
-                                <Button onClick={startCountdown} size="lg" disabled={timeLeft <= 0} className="btn-animated">
+                                <Button onClick={() => startTimer('countdown')} size="lg" disabled={timeLeft <= 0 || !canStart} className="btn-animated">
                                 <Play className="mr-2 h-5 w-5" /> {isFinished ? 'Start New' : 'Start'}
                                 </Button>
                             ) : (
-                                <Button onClick={pauseCountdown} size="lg" variant="outline" className="btn-animated">
+                                <Button onClick={() => pauseTimer('countdown')} size="lg" variant="outline" className="btn-animated">
                                 <Pause className="mr-2 h-5 w-5" /> Pause
                                 </Button>
                             )}
-                            <Button onClick={() => resetCountdown()} size="lg" variant="outline" disabled={!hasTimerBeenSet} className="btn-animated">
+                            <Button onClick={() => resetTimer('countdown')} size="lg" variant="outline" disabled={!hasTimerBeenSet} className="btn-animated">
                                 <RotateCcw className="mr-2 h-5 w-5" /> Reset
                             </Button>
                         </div>
@@ -206,7 +207,7 @@ export default function CountdownTimer() {
                 </Popover>
                 <div className="flex gap-2">
                     {timeStudiedSeconds > 0 && (
-                        <Button onClick={logCountdownSession} disabled={isRunning} variant="secondary" className="btn-animated">
+                        <Button onClick={() => logSession('countdown')} disabled={isRunning} variant="secondary" className="btn-animated">
                             <ListPlus className="mr-2 h-4 w-4" /> Log Progress
                         </Button>
                     )}

@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Banknote, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
+import BondCard from './BondCard';
 
 export default function CapitalistPage() {
-  const { userProfile, unlockBusiness, upgradeBusiness, collectBusinessIncome } = useSessions();
-  const { businesses } = userProfile;
+  const { userProfile, unlockBusiness, upgradeBusiness, collectBusinessIncome, claimMaturedBonds, buyBond } = useSessions();
+  const { businesses, bonds } = userProfile;
 
   const totalIncomePerHour = useMemo(() => {
     return Object.values(businesses).reduce((total, business) => {
@@ -22,6 +23,12 @@ export default function CapitalistPage() {
       return total;
     }, 0);
   }, [businesses]);
+  
+  useEffect(() => {
+    claimMaturedBonds();
+    const interval = setInterval(claimMaturedBonds, 60000); // Check for matured bonds every minute
+    return () => clearInterval(interval);
+  }, [claimMaturedBonds]);
 
   const businessOrder: (keyof typeof businesses)[] = ['farm', 'startup', 'mine', 'industry'];
 
@@ -38,7 +45,7 @@ export default function CapitalistPage() {
                 </div>
             </div>
             <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Income Potential (approx.)</p>
+                <p className="text-sm text-muted-foreground">Total Gross Income Potential</p>
                 <p className="font-bold text-lg text-green-500">${totalIncomePerHour.toFixed(0)} / hour</p>
             </div>
           </div>
@@ -56,6 +63,29 @@ export default function CapitalistPage() {
               />
             ))}
           </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-lg card-animated">
+        <CardHeader>
+            <CardTitle>Investment Bonds</CardTitle>
+            <CardDescription>A low-risk, time-based investment. A new bond is available for purchase every hour.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {bonds.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No bonds currently available. Check back soon!</p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {bonds.map(bond => (
+                        <BondCard 
+                            key={bond.id}
+                            bond={bond}
+                            onBuy={() => buyBond(bond.id)}
+                            userCash={userProfile.cash}
+                        />
+                    ))}
+                </div>
+            )}
         </CardContent>
       </Card>
     </div>
