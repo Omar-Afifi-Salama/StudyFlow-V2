@@ -45,12 +45,12 @@ export const ACTUAL_LEVEL_THRESHOLDS = generateArithmeticLevelThresholds(100, XP
 
 
 export const PREDEFINED_SKINS: Skin[] = [
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/6FB5F0/FFFFFF.png?text=Classic+Blue', dataAiHint: 'study app classic blue theme', isTheme: true, themeClass: 'classic' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png?text=Dark+Mode', dataAiHint: 'dark theme study dashboard', isTheme: true, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png?text=Sepia+Tone', dataAiHint: 'sepia theme timer interface', isTheme: true, themeClass: 'sepia' },
-  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/2F4F4F/90EE90.png?text=Forest+Theme', dataAiHint: 'forest theme study app interface', isTheme: true, themeClass: 'theme-forest' },
-  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/FF8C00/FFD700.png?text=Sunset+Theme', dataAiHint: 'sunset theme study app focus mode', isTheme: true, themeClass: 'theme-sunset' },
-  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/483D8B/E6E6FA.png?text=Galaxy+Theme', dataAiHint: 'galaxy theme app dashboard study', isTheme: true, themeClass: 'theme-galaxy' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/2c5282.png?text=Classic', dataAiHint: 'classic blue', isTheme: true, themeClass: 'classic' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'Embrace the darkness. A sleek dark theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/1A202C/A0AEC0.png?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage sepia theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/D2B48C/4A3B31.png?text=Sepia+Tone', dataAiHint: 'sepia tone', isTheme: true, themeClass: 'sepia' },
+  { id: 'forest', name: 'Forest Whisper', description: 'Earthy tones for deep concentration.', price: 10000, levelRequirement: 3, imageUrl: 'https://placehold.co/400x225/4A5C46/E5E7EB.png?text=Forest+Whisper', dataAiHint: 'forest theme', isTheme: true, themeClass: 'theme-forest' },
+  { id: 'sunset', name: 'Sunset Vibes', description: 'Warm colors to keep you motivated.', price: 15000, levelRequirement: 5, imageUrl: 'https://placehold.co/400x225/F97316/FFE4B5.png?text=Sunset+Vibes', dataAiHint: 'sunset theme', isTheme: true, themeClass: 'theme-sunset' },
+  { id: 'galaxy', name: 'Galaxy Quest', description: 'Explore the universe of knowledge.', price: 30000, levelRequirement: 7, imageUrl: 'https://placehold.co/400x225/4338CA/E0E7FF.png?text=Galaxy+Quest', dataAiHint: 'galaxy theme', isTheme: true, themeClass: 'theme-galaxy' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -86,14 +86,13 @@ const DEFAULT_COUNTDOWN_STATE: CountdownState = {
 
 
 const DAILY_OFFERS_POOL: DailyOffer[] = [
-  { id: 'xp_buff_sm', title: 'Mental Clarity', description: 'A small boost to your learning efficiency.', type: 'buff', durationMinutes: 60, effect: { type: 'xp', modifier: 1.10, description: '+10% XP Gain' } },
-  { id: 'xp_buff_lg', title: 'Genius Hour', description: 'A significant boost to your focus and returns.', type: 'buff', durationMinutes: 60, effect: { type: 'xp', modifier: 1.25, description: '+25% XP Gain' } },
-  { id: 'cash_buff_sm', title: 'Good Fortune', description: 'A small boost to your earnings.', type: 'buff', durationMinutes: 120, effect: { type: 'cash', modifier: 1.15, description: '+15% Cash Gain' } },
-  { id: 'cash_buff_lg', title: 'Midas Touch', description: 'A large boost to your earnings.', type: 'buff', durationMinutes: 60, effect: { type: 'cash', modifier: 1.50, description: '+50% Cash Gain' } },
-  { id: 'timer_buff', title: 'Time Dilation', description: 'Pomodoro focus sessions are shorter, but breaks are too!', type: 'buff', durationMinutes: 180, effect: { type: 'timer_speed', modifier: 0.90, description: '10% shorter Pomodoro cycles' } },
-  { id: 'challenge_debuff', title: 'Mental Fog', description: 'Your focus is hazy, making learning less efficient.', type: 'debuff', durationMinutes: 60, effect: { type: 'xp', modifier: 0.80, description: '-20% XP Gain' } },
-  { id: 'high_stakes', title: 'High Stakes', description: 'Double cash from studying, but gain no XP.', type: 'buff', durationMinutes: 60, effect: { type: 'cash', modifier: 2.0, description: '+100% Cash, but 0 XP' } },
+    { id: 'xp_boost_cash_cut', title: 'Intense Focus', description: 'Gain more XP, but earn less cash.', positiveEffect: { type: 'xp', modifier: 1.25, description: '+25% XP Gain' }, negativeEffect: { type: 'cash', modifier: 0.75, description: '-25% Cash Gain' } },
+    { id: 'cash_boost_xp_cut', title: 'Lucrative Grind', description: 'Earn much more cash, but learn less.', positiveEffect: { type: 'cash', modifier: 1.50, description: '+50% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.50, description: '-50% XP Gain' } },
+    { id: 'risky_bet', title: 'All or Nothing', description: 'A huge XP boost, but capitalist income is halved.', positiveEffect: { type: 'xp', modifier: 1.50, description: '+50% XP Gain' }, negativeEffect: { type: 'risk', modifier: 0.5, description: '-50% Capitalist Income' } },
+    { id: 'efficient_work', title: 'Efficient Cycles', description: 'Pomodoro focus is shorter, but so are the breaks.', positiveEffect: { type: 'timer_speed', modifier: 0.85, description: '15% shorter Focus time' }, negativeEffect: { type: 'timer_speed', modifier: 1.20, description: '20% longer Break time' } },
+    { id: 'slow_and_steady', title: 'Slow and Steady', description: 'Slightly less XP, but gain a protective cash bonus.', positiveEffect: { type: 'cash', modifier: 1.10, description: '+10% Cash Gain' }, negativeEffect: { type: 'xp', modifier: 0.90, description: '-10% XP Gain' } },
 ];
+
 
 const now = Date.now();
 const DEFAULT_BUSINESSES = {
@@ -111,10 +110,14 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
   notepadData: DEFAULT_NOTEPAD_DATA, skillPoints: 0, unlockedSkillIds: ['unlockTimers', 'unlockSkillTree'], skillLevels: {},
   businesses: DEFAULT_BUSINESSES,
-  dailyOffers: { date: '', offers: [] }, activeOfferId: null, activeOfferEndTime: null, offerDeactivatedToday: false,
+  dailyOffers: [], activeOfferId: null, offerDeactivatedToday: false,
   manualLogTimeToday: { date: '', duration: 0 },
   bonds: [],
   lastBondGenerationTime: 0,
+  infamyLevel: 0,
+  infamyPoints: 0,
+  unlockedInfamySkillIds: [],
+  hardResetRequestTime: null,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -301,9 +304,11 @@ interface SessionContextType {
 
   addManualSession: (details: { durationInSeconds: number; endTime: number; type: 'Pomodoro Focus' | 'Stopwatch' | 'Countdown'; description: string; }) => boolean;
   deleteSession: (sessionId: string) => void;
-  addTestSession: () => void;
+  addDevLevels: () => void;
   clearSessions: () => void;
   hardReset: () => void;
+  requestHardReset: () => void;
+  cancelHardReset: () => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
@@ -351,6 +356,10 @@ interface SessionContextType {
   isSkillUnlocked: (skillId: string) => boolean;
   canUnlockSkill: (skillId: string) => { can: boolean, reason?: string };
   unlockSkill: (skillId: string) => boolean;
+  isInfamySkillUnlocked: (skillId: string) => boolean;
+  canUnlockInfamySkill: (skillId: string) => { can: boolean, reason?: string };
+  unlockInfamySkill: (skillId: string) => boolean;
+  goInfamous: () => void;
   isFeatureUnlocked: (featureKey: FeatureKey) => boolean;
   getAppliedBoost: (type: 'xp' | 'cash' | 'shopDiscount') => number;
   getSkillBoost: (type: 'xp' | 'cash') => number;
@@ -423,9 +432,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   
   const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
     if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
+    if (featureKey === 'infamy' && (userProfile.level < 100 && userProfile.infamyLevel === 0)) return false;
     const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
     return !skill || isSkillUnlocked(skill.id);
-  }, [isSkillUnlocked]);
+  }, [isSkillUnlocked, userProfile.level, userProfile.infamyLevel]);
   
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
     if(!isFeatureUnlocked('challenges')) return;
@@ -470,14 +480,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             if (skill && skill.shopDiscountPercent) boost += skill.shopDiscountPercent;
         });
     }
-    if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
-        const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
-        if(offer && offer.effect.type === type) {
-            boost += (offer.effect.modifier - 1);
+    if(userProfile.activeOfferId) {
+        const offer = dailyOffers.find(o => o.id === userProfile.activeOfferId);
+        if(offer) {
+          if (offer.positiveEffect.type === type) boost += (offer.positiveEffect.modifier - 1);
+          if (offer.negativeEffect.type === type) boost += (offer.negativeEffect.modifier - 1);
         }
     }
     return boost;
-  }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, userProfile.activeOfferEndTime, getSkillBoost]);
+  }, [userProfile.unlockedSkillIds, userProfile.skillLevels, userProfile.activeOfferId, getSkillBoost, dailyOffers]);
   
   const checkForLevelUp = useCallback((currentXp: number, currentLevel: number) => {
     let newLevel = currentLevel;
@@ -557,25 +568,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             const baseStreakBonus = Math.min(updatedCurrentStreak * STREAK_BONUS_PER_DAY, MAX_STREAK_BONUS);
             const skillXpBonus = getSkillBoost('xp');
             const skillCashBonus = getSkillBoost('cash');
-            let offerXpBonus = 0;
-            let offerCashBonus = 0;
-            let xpDisabledByOffer = false;
+            let offerXpMultiplier = 1.0;
+            let offerCashMultiplier = 1.0;
 
-            const activeOffer = prevProfile.activeOfferId && prevProfile.activeOfferEndTime && prevProfile.activeOfferEndTime > Date.now()
-                ? DAILY_OFFERS_POOL.find(o => o.id === prevProfile.activeOfferId)
-                : null;
-
-            if (activeOffer) {
-                if (activeOffer.effect.type === 'xp') offerXpBonus = activeOffer.effect.modifier - 1;
-                if (activeOffer.effect.type === 'cash') offerCashBonus = activeOffer.effect.modifier - 1;
-                if (activeOffer.id === 'high_stakes') xpDisabledByOffer = true;
+            if(prevProfile.activeOfferId) {
+                const offer = dailyOffers.find(o => o.id === prevProfile.activeOfferId);
+                if (offer) {
+                  if (offer.positiveEffect.type === 'xp') offerXpMultiplier *= offer.positiveEffect.modifier;
+                  if (offer.positiveEffect.type === 'cash') offerCashMultiplier *= offer.positiveEffect.modifier;
+                  if (offer.negativeEffect.type === 'xp') offerXpMultiplier *= offer.negativeEffect.modifier;
+                  if (offer.negativeEffect.type === 'cash') offerCashMultiplier *= offer.negativeEffect.modifier;
+                }
             }
 
-            const totalXpMultiplier = 1 + baseStreakBonus + skillXpBonus + offerXpBonus;
-            const totalCashMultiplier = 1 + baseStreakBonus + skillCashBonus + offerCashBonus;
+            const totalXpMultiplier = (1 + baseStreakBonus + skillXpBonus) * offerXpMultiplier;
+            const totalCashMultiplier = (1 + baseStreakBonus + skillCashBonus) * offerCashMultiplier;
 
             awardedXp = Math.floor(minutesStudied * XP_PER_MINUTE_FOCUS * totalXpMultiplier);
-            if (xpDisabledByOffer) awardedXp = 0;
             awardedCash = Math.floor((minutesStudied / 5) * CASH_PER_5_MINUTES_FOCUS * totalCashMultiplier);
             
             if(isFeatureUnlocked('challenges')) updateChallengeProgress('studyDurationMinutes', Math.floor(minutesStudied));
@@ -612,7 +621,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (newProfile) checkAndUnlockAchievements(newProfile, updatedSessions);
       return updatedSessions;
     });
-  }, [updateStreakAndGetBonus, getSkillBoost, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
+  }, [updateStreakAndGetBonus, getSkillBoost, dailyOffers, checkForLevelUp, updateChallengeProgress, addFloatingGain, toast, isFeatureUnlocked, checkAndUnlockAchievements]);
   
   const addManualSession = useCallback((details: { durationInSeconds: number; endTime: number; type: StudySession['type']; description: string; }) => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -635,11 +644,35 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [addSession, pomodoroState.settings.workDuration, toast, userProfile.manualLogTimeToday]);
 
-  const addTestSession = useCallback(() => {
-    addSession({
-      type: 'Pomodoro Focus', startTime: Date.now() - (30 * 60 * 1000), durationInSeconds: 30 * 60, isFullPomodoroCycle: true,
+  const addDevLevels = useCallback(() => {
+    setUserProfile(prevProfile => {
+        let newXp = prevProfile.xp;
+        let newLevel = prevProfile.level;
+        let skillPointsToAdd = 0;
+        let cashToAdd = 0;
+
+        for (let i = 0; i < 50; i++) {
+            if (newLevel >= 100) break;
+            const xpForNextLevel = (ACTUAL_LEVEL_THRESHOLDS[newLevel] ?? newXp) - newXp;
+            newXp += xpForNextLevel;
+            const levelUpResult = checkForLevelUp(newXp, newLevel);
+            newLevel = levelUpResult.newLevel;
+            skillPointsToAdd += levelUpResult.skillPointsGained;
+            cashToAdd += levelUpResult.cashGained;
+        }
+        
+        return {
+            ...prevProfile,
+            xp: newXp,
+            skillPoints: prevProfile.skillPoints + skillPointsToAdd,
+            cash: prevProfile.cash + cashToAdd,
+            level: newLevel,
+            title: TITLES[newLevel - 1] || TITLES[TITLES.length - 1]
+        };
     });
-  }, [addSession]);
+    toast({ title: "Dev Power!", description: "Added 50 levels of progress." });
+  }, [checkForLevelUp, toast]);
+
 
   const clearSessions = useCallback(() => {
     setSessions([]);
@@ -888,24 +921,21 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const allChallengesDone = dailyChallenges.every(c => c.rewardClaimed);
 
     if (!offer) return;
-     if (userProfile.offerDeactivatedToday) {
-        toast({title: "Offer Choice Locked", description: "You have already deactivated an offer today.", variant: 'destructive'});
+    if (userProfile.offerDeactivatedToday) {
+        toast({title: "Offer Choice Locked", description: "You have already used your offer slot for today.", variant: 'destructive'});
         return;
     }
     if (userProfile.activeOfferId && !allChallengesDone) {
       toast({title: "Offer In Progress", description: "You already have an active offer. Complete all challenges to select another.", variant: 'destructive'});
       return;
     }
-    const endTime = Date.now() + offer.durationMinutes * 60 * 1000;
-    setUserProfile(prev => ({...prev, activeOfferId: offerId, activeOfferEndTime: endTime}));
-    toast({title: "Offer Activated!", description: `${offer.title} is now active for ${offer.durationMinutes} minutes.`});
+    setUserProfile(prev => ({...prev, activeOfferId: offerId, offerDeactivatedToday: true }));
+    toast({title: "Offer Activated!", description: `${offer.title} is now active for the rest of the day.`});
   }, [isFeatureUnlocked, dailyOffers, userProfile.activeOfferId, userProfile.offerDeactivatedToday, dailyChallenges, toast]);
   
   const deactivateOffer = useCallback((offerId: string) => {
-    if (userProfile.activeOfferId !== offerId) return;
-    setUserProfile(prev => ({...prev, activeOfferId: null, activeOfferEndTime: null, offerDeactivatedToday: true}));
-    toast({title: "Offer Deactivated", description: "The active offer has been cancelled for the day."});
-  }, [userProfile.activeOfferId, toast]);
+    // This function is now deprecated due to design change but kept for compatibility.
+  }, []);
 
   const claimChallengeReward = useCallback((challengeId: string) => {
     if(!isFeatureUnlocked('challenges')) return;
@@ -940,7 +970,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             ...prevProfile, xp: newXp, cash: prevProfile.cash + cashToAdd,
             completedChallengeIds: [...(prevProfile.completedChallengeIds || []), challengeId],
             ...(leveledUp && { level: newLevel, title: newTitle, skillPoints: (prevProfile.skillPoints || 0) + skillPointsGained }),
-            ...(allChallengesNowClaimed && { activeOfferId: null, activeOfferEndTime: null })
+            ...(allChallengesNowClaimed && { activeOfferId: null })
         };
         checkAndUnlockAchievements(finalProfile, sessionsRef.current);
         return finalProfile;
@@ -1013,13 +1043,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
             } else { nextMode = 'work'; }
         }
         let durationMs = getDurationForMode(nextMode, prev.settings) * 1000;
-        if(userProfile.activeOfferId && userProfile.activeOfferEndTime && userProfile.activeOfferEndTime > Date.now()) {
-            const offer = DAILY_OFFERS_POOL.find(o => o.id === userProfile.activeOfferId);
-            if(offer?.effect.type === 'timer_speed') durationMs *= offer.effect.modifier;
+        if(userProfile.activeOfferId) {
+            const offer = dailyOffers.find(o => o.id === userProfile.activeOfferId);
+            if(offer?.positiveEffect.type === 'timer_speed') durationMs *= offer.positiveEffect.modifier;
+            if(offer?.negativeEffect.type === 'timer_speed' && nextMode !== 'work') durationMs *= offer.negativeEffect.modifier;
         }
         return { ...prev, mode: nextMode, cyclesCompleted: newCyclesCompleted, sessionEndTime: Date.now() + durationMs };
     });
-  }, [getDurationForMode, userProfile.activeOfferId, userProfile.activeOfferEndTime]);
+  }, [getDurationForMode, userProfile.activeOfferId, dailyOffers]);
 
   const updatePomodoroSettings = useCallback((newSettings: Partial<PomodoroSettings>) => {
     setPomodoroState(prev => {
@@ -1205,10 +1236,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const buyBond = useCallback((bondId: string) => {
     const bond = userProfile.bonds.find(b => b.id === bondId);
     if (!bond || bond.purchaseTime > 0) return;
+    if (userProfile.bonds.some(b => b.isPurchased)) {
+      toast({title: "Choice Made", description: "You can only invest in one bond per cycle.", variant: "destructive"});
+      return;
+    }
     if (userProfile.cash < bond.cost) { toast({title: "Not Enough Cash", description: "You cannot afford this bond.", variant: 'destructive'}); return; }
     
     addFloatingGain('cash', -bond.cost);
-    const updatedBond = { ...bond, purchaseTime: Date.now(), maturityTime: Date.now() + 60 * 60 * 1000 };
+    const updatedBond = { ...bond, purchaseTime: Date.now(), isPurchased: true, maturityTime: Date.now() + 60 * 60 * 1000 };
     setUserProfile(prev => ({
         ...prev,
         cash: prev.cash - bond.cost,
@@ -1221,8 +1256,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const now = Date.now();
     let madeChanges = false;
     const newBonds = userProfile.bonds.filter(bond => {
-        if (bond.purchaseTime > 0 && !bond.claimed && now >= bond.maturityTime) {
-            cashFromBonds += bond.returnValue;
+        if (bond.isPurchased && !bond.claimed && now >= bond.maturityTime) {
+            let actualReturn = 0;
+            switch(bond.risk){
+                case 'low': actualReturn = bond.potentialReturnValue; break;
+                case 'medium': actualReturn = Math.random() < 0.6 ? bond.potentialReturnValue : bond.cost - bond.potentialLossValue; break;
+                case 'high': actualReturn = Math.random() < 0.2 ? bond.potentialReturnValue : bond.cost - bond.potentialLossValue; break;
+            }
+            cashFromBonds += Math.floor(actualReturn);
             madeChanges = true;
             return false;
         }
@@ -1292,20 +1333,27 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         setLastChallengeResetDate(todayStr);
       }
       
-      if (profileToLoad.dailyOffers?.date !== todayStr) {
+      const lastOffersDate = localStorage.getItem('lastOffersDate');
+      if (lastOffersDate !== todayStr) {
           const newOffers = [...DAILY_OFFERS_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
           setDailyOffers(newOffers);
-          profileToLoad.dailyOffers = { date: todayStr, offers: newOffers };
+          profileToLoad.dailyOffers = newOffers;
           profileToLoad.activeOfferId = null;
-          profileToLoad.activeOfferEndTime = null;
           profileToLoad.offerDeactivatedToday = false;
-      } else { setDailyOffers(profileToLoad.dailyOffers.offers); }
+          localStorage.setItem('lastOffersDate', todayStr);
+      } else {
+        setDailyOffers(profileToLoad.dailyOffers || []);
+      }
       
       const now = Date.now();
       if(now - (profileToLoad.lastBondGenerationTime || 0) > 3600 * 1000) {
-          const newBondCost = 500 * Math.pow(1.2, profileToLoad.level);
-          const newBond: Bond = { id: crypto.randomUUID(), cost: newBondCost, returnValue: newBondCost * 1.1, purchaseTime: 0, maturityTime: 0, claimed: false };
-          profileToLoad.bonds = [newBond];
+          const baseCost = 500 + profileToLoad.level * 50;
+          const newBonds: Bond[] = [
+            { id: crypto.randomUUID(), name: "Govt. Bond", description: "A very safe, low-yield government bond.", risk: "low", cost: baseCost, potentialReturnValue: Math.floor(baseCost * 1.05), potentialLossValue: 0, purchaseTime: 0, maturityTime: 0, isPurchased: false, claimed: false },
+            { id: crypto.randomUUID(), name: "Corporate Note", description: "A balanced corporate bond with decent returns.", risk: "medium", cost: baseCost * 2, potentialReturnValue: Math.floor(baseCost * 2.3), potentialLossValue: Math.floor(baseCost * 0.5), purchaseTime: 0, maturityTime: 0, isPurchased: false, claimed: false },
+            { id: crypto.randomUUID(), name: "Junk Bond", description: "A high-risk, high-reward investment.", risk: "high", cost: baseCost * 1.5, potentialReturnValue: Math.floor(baseCost * 4), potentialLossValue: Math.floor(baseCost), purchaseTime: 0, maturityTime: 0, isPurchased: false, claimed: false },
+          ];
+          profileToLoad.bonds = newBonds;
           profileToLoad.lastBondGenerationTime = now;
       }
       setUserProfile(profileToLoad);
@@ -1313,10 +1361,31 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     finally { setIsLoaded(true); }
   }, []);
 
-  const hardReset = () => {
+  const hardReset = useCallback(() => {
     localStorage.clear();
     window.location.reload();
-  };
+  }, []);
+  
+  const requestHardReset = useCallback(() => {
+      setUserProfile(p => ({ ...p, hardResetRequestTime: Date.now() }));
+      toast({title: "Hard Reset Initiated", description: "All data will be permanently deleted in 24 hours. You can cancel this at any time."});
+  }, [toast]);
+  
+  const cancelHardReset = useCallback(() => {
+      setUserProfile(p => ({ ...p, hardResetRequestTime: null }));
+      toast({title: "Hard Reset Cancelled", description: "Your data is safe."});
+  }, [toast]);
+
+  useEffect(() => {
+    if (!isLoaded || !userProfile.hardResetRequestTime) return;
+    const interval = setInterval(() => {
+        if (Date.now() - userProfile.hardResetRequestTime! >= 24 * 60 * 60 * 1000) {
+            hardReset();
+        }
+    }, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [isLoaded, userProfile.hardResetRequestTime, hardReset]);
+
 
   useEffect(() => { loadData(); }, [loadData]);
   
@@ -1357,7 +1426,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
     const intervalId = setInterval(timerWorker, 1000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, getDurationForMode]);
+  }, [isLoaded, getDurationForMode, toast]);
 
   const applyThemePreference = useCallback((skinId: string | null) => {
     if (typeof window === 'undefined') return;
@@ -1391,7 +1460,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       sessions, userProfile, pomodoroState, stopwatchState, countdownState, dailyChallenges, dailyOffers, floatingGains, activeTimer, isLoaded, afkCheckVisible,
       startTimer, pauseTimer, resetTimer, logSession, confirmAfk,
       switchPomodoroMode, updatePomodoroSettings, setCountdownDuration,
-      addManualSession, deleteSession, addTestSession, clearSessions, hardReset, updateSessionDescription,
+      addManualSession, deleteSession, addDevLevels, clearSessions, hardReset, requestHardReset, cancelHardReset, updateSessionDescription,
       updateUserProfile, updateSleepWakeTimes,
       updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,

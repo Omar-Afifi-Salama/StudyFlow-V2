@@ -18,6 +18,7 @@ export interface Bond {
   description: string;
   cost: number;
   potentialReturnValue: number;
+  potentialLossValue: number;
   risk: 'low' | 'medium' | 'high';
   isPurchased?: boolean;
   purchaseTime: number;
@@ -83,11 +84,9 @@ export interface UserProfile {
     mine: Business;
     industry: Business;
   };
-  dailyOffers: {
-      date: string;
-      offers: DailyOffer[];
-  };
+  dailyOffers: DailyOffer[];
   activeOfferId: string | null;
+  offerDeactivatedToday: boolean;
   manualLogTimeToday: { date: string, duration: number };
   infamyLevel: number;
   infamyPoints: number;
