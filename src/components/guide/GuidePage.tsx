@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,7 @@ function HardResetSection() {
     useEffect(() => {
         if (userProfile.hardResetRequestTime) {
             const interval = setInterval(() => {
-                const timeLeft = Math.max(0, userProfile.hardResetRequestTime! + 24 * 60 * 60 * 1000 - Date.now());
+                const timeLeft = Math.max(0, userProfile.hardResetRequestTime! + 10 * 60 * 1000 - Date.now());
                 setResetTimeLeft(timeLeft / 1000);
             }, 1000);
             return () => clearInterval(interval);
@@ -66,7 +65,7 @@ function HardResetSection() {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete ALL data. This is irreversible and will take 24 hours to complete. Please enter the master password to proceed.
+                        This will permanently delete ALL data. This is irreversible and will take 10 minutes to complete. Please enter the master password to proceed.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Input 
@@ -214,7 +213,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-xl font-semibold">Advanced Options</AccordionTrigger>
             <AccordionContent className="flex flex-col items-center">
               <p className="text-muted-foreground mb-4 text-center">
-                  Need to start fresh? This button will begin the 24-hour process to permanently delete all your data. This cannot be undone once completed.
+                  Need to start fresh? This button will begin the 10-minute process to permanently delete all your data. This cannot be undone once completed.
               </p>
               <HardResetSection />
             </AccordionContent>

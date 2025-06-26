@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from 'react';
@@ -58,19 +57,19 @@ const ItemCard = ({ item, type, onUpdateQuadrant }: { item: NotepadTask | Notepa
                     <TooltipProvider delayDuration={100}>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'do')}><AlertTriangle className="h-4 w-4 text-destructive" /></Button></TooltipTrigger>
-                            <TooltipContent><p>Do (Urgent, Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5}><p>Do (Urgent, Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'schedule')}><Calendar className="h-4 w-4 text-primary" /></Button></TooltipTrigger>
-                            <TooltipContent><p>Schedule (Not Urgent, Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5}><p>Schedule (Not Urgent, Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'delegate')}><Users className="h-4 w-4 text-yellow-500" /></Button></TooltipTrigger>
-                            <TooltipContent><p>Delegate (Urgent, Not Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5}><p>Delegate (Urgent, Not Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'eliminate')}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
-                            <TooltipContent><p>Eliminate (Not Urgent, Not Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5}><p>Eliminate (Not Urgent, Not Important)</p></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 )}
@@ -82,7 +81,7 @@ const ItemCard = ({ item, type, onUpdateQuadrant }: { item: NotepadTask | Notepa
 const Quadrant = ({ quadrantKey, items, onUpdateQuadrant }: { quadrantKey: QuadrantKey, items: (NotepadTask | NotepadGoal)[], onUpdateQuadrant: (itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => void }) => {
   const details = quadrantDetails[quadrantKey];
   return (
-    <div className={cn("p-4 rounded-lg shadow-sm flex flex-col h-full card-animated border", details.bgColorClass)}>
+    <div className={cn("p-4 rounded-lg shadow-sm flex flex-col h-full border", details.bgColorClass)}>
       <h3 className={cn("text-lg font-semibold mb-1", details.textColorClass)}>{details.title}</h3>
       <p className={cn("text-xs mb-2 opacity-80", details.textColorClass)}>{details.action}</p>
       <ScrollArea className="flex-grow h-48 pr-3 -mr-3">
@@ -126,7 +125,7 @@ export default function EisenhowerMatrixTab() {
           <Grid className="h-7 w-7 text-primary" />
           <div>
             <CardTitle>Eisenhower Matrix</CardTitle>
-            <CardDescription>Prioritize your tasks and goals by dragging them into the correct quadrant.</CardDescription>
+            <CardDescription>Prioritize your tasks and goals by assigning them to a quadrant.</CardDescription>
           </div>
         </div>
       </CardHeader>

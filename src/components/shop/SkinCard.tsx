@@ -1,10 +1,8 @@
-
 "use client";
 
 import type { Skin } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
 import { useSessions } from '@/contexts/SessionContext';
 
@@ -30,14 +28,12 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
   return (
     <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow card-animated">
       <CardHeader className="p-0">
-        <div className="relative w-full h-40">
-          <Image 
-            src={skin.imageUrl} 
-            alt={skin.name} 
-            fill={true}
-            style={{objectFit: 'cover'}}
+         <div
+            className="relative w-full h-40 bg-cover bg-center"
+            style={{ backgroundImage: `url(${skin.imageUrl})` }}
+            aria-label={skin.name}
             data-ai-hint={skin.dataAiHint}
-          />
+          >
           {isEquipped && (
             <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full flex items-center">
               <ShieldCheck className="h-3 w-3 mr-1" /> Equipped

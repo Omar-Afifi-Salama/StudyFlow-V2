@@ -594,6 +594,13 @@ body {
   text-shadow: 0 0 6px hsl(var(--background) / 0.7), 0 0 3px hsl(140 70% 55% / 0.5); /* Softer Glow effect */
 }
 
+.floating-gain-loss {
+  background-color: transparent;
+  color: hsl(0 80% 60%);
+  border: 1px solid hsl(0 70% 50% / 0.7);
+  text-shadow: 0 0 6px hsl(var(--background) / 0.7), 0 0 3px hsl(0 80% 60% / 0.5);
+}
+
 
 @keyframes float-up-fade-out {
   0% {
