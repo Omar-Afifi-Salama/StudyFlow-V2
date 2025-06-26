@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PlusCircle, Trash2, CalendarIcon, CheckCircle, Edit3, Save, XCircle } from 'lucide-react';
-import { format, parseISO, isValid, differenceInDays, differenceInSeconds } from 'date-fns';
+import { format, parseISO, isValid, differenceInSeconds } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DEFAULT_NOTEPAD_DATA } from '@/contexts/SessionContext';
 
@@ -168,12 +168,15 @@ export default function RevisionHubTab() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                         <div className="flex-grow mb-3 sm:mb-0">
                             <h4 className="font-semibold text-lg">{concept.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                                Learned: {formatDateSafe(concept.learnedDate)} | Last Revised: {formatDateSafe(concept.lastRevisedDate)}
-                            </p>
-                            <p className={`text-sm font-medium ${isDue ? 'text-primary animate-pulse' : 'text-muted-foreground'}`}>
-                                Next Revision Due: {formatDateSafe(concept.nextRevisionDate)}
-                            </p>
+                            <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-x-2 gap-y-1">
+                                <span>Learned: {formatDateSafe(concept.learnedDate)}</span>
+                                <span className="text-border">|</span>
+                                <span>Last Revised: {formatDateSafe(concept.lastRevisedDate)}</span>
+                                <span className="text-border">|</span>
+                                <span className={`font-medium ${isDue ? 'text-primary animate-pulse' : ''}`}>
+                                    Next Due: {formatDateSafe(concept.nextRevisionDate)}
+                                </span>
+                            </div>
                         </div>
                         <div className="flex space-x-1 self-start sm:self-center">
                             <Button variant="ghost" size="icon" onClick={() => startEditing(concept)} disabled={!!editingConcept && editingConcept.id !== concept.id} aria-label={`Edit concept ${concept.name}`}>

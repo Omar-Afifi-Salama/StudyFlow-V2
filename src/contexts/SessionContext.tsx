@@ -67,18 +67,25 @@ export const PREDEFINED_SKINS: Skin[] = [
 ];
 
 export const UTILITY_ITEMS: UtilityItem[] = [
-  { id: 'xp_boost_small', name: 'Small XP Canister', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap' },
-  { id: 'xp_boost_medium', name: 'Medium XP Canister', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap' },
-  { id: 'xp_boost_large', name: 'Large XP Canister', description: 'Instantly gain 15,000 XP.', price: 100000, priceType: 'cash', levelRequirement: 25, effect: { type: 'xp', amount: 15000 }, iconName: 'Zap' },
-  { id: 'xp_boost_huge', name: 'Huge XP Canister', description: 'Instantly gain 40,000 XP.', price: 250000, priceType: 'cash', levelRequirement: 40, effect: { type: 'xp', amount: 40000 }, iconName: 'Zap' },
-  { id: 'xp_from_sp_small', name: 'Knowledge Shard', description: 'Convert 1 SP into 5,000 XP.', price: 1, priceType: 'sp', levelRequirement: 8, effect: { type: 'xp', amount: 5000 }, iconName: 'BrainCircuit' },
-  { id: 'xp_from_sp_medium', name: 'Knowledge Crystal', description: 'Convert 3 SP into 20,000 XP.', price: 3, priceType: 'sp', levelRequirement: 18, effect: { type: 'xp', amount: 20000 }, iconName: 'BrainCircuit' },
-  { id: 'focus_potion', name: 'Focus Potion', description: 'Grants the rewards of one 25-minute focus session.', price: 15000, priceType: 'cash', levelRequirement: 12, effect: { type: 'special_focus_potion' }, iconName: 'FlaskConical' },
-  { id: 'cash_injection_small', name: 'Small Loan', description: 'Convert 2 SP into $20,000 cash.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'HandCoins' },
-  { id: 'cash_injection_medium', name: 'Investor Cheque', description: 'Convert 5 SP into $75,000 cash.', price: 5, priceType: 'sp', levelRequirement: 22, effect: { type: 'cash', amount: 75000 }, iconName: 'HandCoins' },
-  { id: 'cash_injection_large', name: 'Hedge Fund Payout', description: 'Convert 10 SP into $200,000 cash.', price: 10, priceType: 'sp', levelRequirement: 35, effect: { type: 'cash', amount: 200000 }, iconName: 'HandCoins' },
-  { id: 'skill_point_pack', name: 'Mind Expansion', description: 'Buy 3 Skill Points for $100,000.', price: 100000, priceType: 'cash', levelRequirement: 20, effect: { type: 'sp', amount: 3 }, iconName: 'Gem' },
-  { id: 'skill_point_pack_large', name: 'Cerebral Boost', description: 'Buy 5 Skill Points for $180,000.', price: 180000, priceType: 'cash', levelRequirement: 30, effect: { type: 'sp', amount: 5 }, iconName: 'Gem' }
+  // Permanent Unlocks
+  { id: 'sound_pack_premium', name: 'Premium Sound Pack', description: 'Unlock 4 additional high-quality ambient sounds.', price: 50000, priceType: 'cash', levelRequirement: 10, effect: { type: 'unlock_feature', featureKey: 'premiumSounds' }, iconName: 'Headphones', isConsumable: false },
+
+  // Consumables with Cooldowns
+  { id: 'xp_boost_small', name: 'Small XP Canister', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600 },
+  { id: 'xp_boost_medium', name: 'Medium XP Canister', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600 * 2 },
+  { id: 'xp_boost_large', name: 'Large XP Canister', description: 'Instantly gain 15,000 XP.', price: 100000, priceType: 'cash', levelRequirement: 25, effect: { type: 'xp', amount: 15000 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600 * 4 },
+  { id: 'xp_boost_huge', name: 'Huge XP Canister', description: 'Instantly gain 40,000 XP.', price: 250000, priceType: 'cash', levelRequirement: 40, effect: { type: 'xp', amount: 40000 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600 * 8 },
+  
+  { id: 'focus_potion', name: 'Focus Potion', description: 'Grants the rewards of one 25-minute focus session.', price: 15000, priceType: 'cash', levelRequirement: 12, effect: { type: 'special_focus_potion' }, iconName: 'FlaskConical', isConsumable: true, cooldownSeconds: 3600 * 6 },
+  
+  { id: 'skill_point_pack', name: 'Mind Expansion', description: 'Buy 3 Skill Points for $100,000.', price: 100000, priceType: 'cash', levelRequirement: 20, effect: { type: 'sp', amount: 3 }, iconName: 'Gem', isConsumable: true, cooldownSeconds: 86400 },
+  { id: 'skill_point_pack_large', name: 'Cerebral Boost', description: 'Buy 5 Skill Points for $180,000.', price: 180000, priceType: 'cash', levelRequirement: 30, effect: { type: 'sp', amount: 5 }, iconName: 'Gem', isConsumable: true, cooldownSeconds: 86400 * 2 },
+  
+  { id: 'xp_from_sp_small', name: 'Knowledge Shard', description: 'Convert 1 SP into 5,000 XP.', price: 1, priceType: 'sp', levelRequirement: 8, effect: { type: 'xp', amount: 5000 }, iconName: 'BrainCircuit', isConsumable: true, cooldownSeconds: 1800 },
+  { id: 'xp_from_sp_medium', name: 'Knowledge Crystal', description: 'Convert 3 SP into 20,000 XP.', price: 3, priceType: 'sp', levelRequirement: 18, effect: { type: 'xp', amount: 20000 }, iconName: 'BrainCircuit', isConsumable: true, cooldownSeconds: 3600 },
+  
+  { id: 'cash_injection_small', name: 'Small Loan', description: 'Convert 2 SP into $20,000 cash.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'HandCoins', isConsumable: true, cooldownSeconds: 3600 * 2 },
+  { id: 'cash_injection_medium', name: 'Investor Cheque', description: 'Convert 5 SP into $75,000 cash.', price: 5, priceType: 'sp', levelRequirement: 22, effect: { type: 'cash', amount: 75000 }, iconName: 'HandCoins', isConsumable: true, cooldownSeconds: 3600 * 4 },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -132,7 +139,7 @@ const DEFAULT_BUSINESSES = {
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0, cash: 1000, level: 1, title: TITLES[0],
   ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], equippedSkinId: 'classic',
-  ownedUtilityItemIds: [],
+  ownedUtilityItemIds: [], utilityItemCooldowns: {}, ownedSoundIds: [],
   completedChallengeIds: [], currentStreak: 0, longestStreak: 0, lastStudyDate: null,
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
@@ -159,6 +166,8 @@ const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
     { id: 'notepadNote1', title: 'Note Taker', description: 'Create one new note in your notepad.', xpReward: 20, cashReward: 150, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'notepadEntry', resetsDaily: true },
     { id: 'streakKeep', title: 'Streak Keeper', description: 'Maintain your study streak by studying today.', xpReward: 25, cashReward: 250, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'studyStreak', resetsDaily: true },
     { id: 'habitTracker1', title: 'Habit Hero', description: 'Complete one daily habit.', xpReward: 30, cashReward: 200, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'habitCompletions', resetsDaily: true},
+    { id: 'capitalist_income_1k', title: 'Budding Entrepreneur', description: 'Earn $1,000 from the Capitalist Corner.', xpReward: 100, cashReward: 1000, targetValue: 1000, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'capitalistIncome', resetsDaily: true },
+    { id: 'skill_unlock_1', title: 'Skill Seeker', description: 'Unlock a new skill from the Skill Tree.', xpReward: 50, cashReward: 500, targetValue: 1, currentValue: 0, isCompleted: false, rewardClaimed: false, type: 'skillUnlocks', resetsDaily: true },
 ];
 
 export const ALL_ACHIEVEMENTS: Achievement[] = [
@@ -218,6 +227,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   { id: 'taskAnnihilator', name: 'Task Annihilator', description: 'Complete 100 tasks from your checklist.', iconName: 'ListChecks', cashReward: 3000, criteria: (p) => (p.notepadData.tasks.filter(t => t.completed).length || 0) >= 100, category: 'Notepad & Revision' },
   { id: 'archivist', name: 'Archivist', description: 'Save 50 links in your notepad.', iconName: 'Archive', cashReward: 2500, criteria: (p) => (p.notepadData.links?.length || 0) >= 50, category: 'Notepad & Revision' },
   { id: 'longTermPlanner', name: 'Long-Term Planner', description: 'Set a goal with a due date more than a year away.', iconName: 'CalendarPlus', cashReward: 1500, criteria: (p) => p.notepadData.goals.some(g => g.dueDate && differenceInDays(parseISO(g.dueDate), new Date()) > 365), category: 'Notepad & Revision' },
+  { id: 'notepadMaster', name: 'Notepad Master', description: 'Unlock all Notepad-related skills.', iconName: 'NotebookText', cashReward: 10000, criteria: (p) => ['unlockNotepadChecklist', 'unlockNotepadNotes', 'unlockNotepadGoals', 'unlockNotepadLinks', 'unlockNotepadRevision', 'unlockNotepadHabits', 'unlockNotepadEvents', 'unlockNotepadEisenhower'].every(sk => p.unlockedSkillIds.includes(sk)), category: 'Notepad & Revision'},
 
   // Habits
   { id: 'habitFormer', name: 'Habit Former', description: 'Create your first habit.', iconName: 'HabitIcon', cashReward: 500, criteria: (p) => (p.notepadData.habits?.length || 0) >= 1, category: 'Habits' },
@@ -239,7 +249,7 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   // General / Meta
   { id: 'skillfulLearner', name: 'Skillful Learner', description: 'Unlock 5 skills from the skill tree.', iconName: 'Network', cashReward: 1000, criteria: (p) => p.unlockedSkillIds.length >= 5, category: 'General' },
   { id: 'treeOfKnowledge', name: 'Tree of Knowledge', description: 'Unlock 15 skills from the skill tree.', iconName: 'Network', cashReward: 5000, criteria: (p) => p.unlockedSkillIds.length >= 15, category: 'General' },
-  { id: 'skillTreeMaster', name: 'Skill Tree Master', description: 'Unlock all non-infinite skills.', iconName: 'Network', cashReward: 20000, criteria: p => ALL_SKILLS.filter(sk => sk.category !== 'Infinite').every(sk => p.unlockedSkillIds.includes(sk.id)), category: 'General'},
+  { id: 'skillTreeMaster', name: 'Skill Tree Master', description: 'Unlock all non-infinite skills.', iconName: 'Network', cashReward: 20000, criteria: p => ALL_SKILLS.filter(sk => sk.category !== 'Infinite').every(sk => p.unlockedSkillIds.includes(sk)), category: 'General'},
   { id: 'completionist', name: 'Completionist', description: 'Unlock all other achievements.', iconName: 'Crown', cashReward: 100000, criteria: (p) => (p.unlockedAchievementIds?.length || 0) >= ALL_ACHIEVEMENTS.length - 1, category: 'General' },
 ];
 
@@ -302,7 +312,7 @@ export const ALL_SKILLS: Skill[] = [
   // Infinite Skills
   { id: 'infiniteXpBoost', name: 'Endless Insight', description: 'Permanently increases XP gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Infinite' },
   { id: 'infiniteCashBoost', name: 'Infinite Earnings', description: 'Permanently increases Cash gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['cashBoost2'], category: 'Infinite' },
-  { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteLevel: 25, prerequisiteSkillIds: ['infiniteXpBoost', 'infiniteCashBoost'], category: 'Infinite' },
+  { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteLevel: 25, prerequisiteSkillIds: ['deepWork', 'marketAnalyst', 'goalMomentum'], category: 'Infinite' },
 ];
 
 export const ALL_INFAMY_SKILLS: Skill[] = [
@@ -478,9 +488,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const isFeatureUnlocked = useCallback((featureKey: FeatureKey) => {
     if (featureKey === 'timers' || featureKey === 'skill-tree') return true;
     if (featureKey === 'infamy' && (userProfile.level < 100 && userProfile.infamyLevel === 0)) return false;
+    
+    // Handle special cases first
+    if(featureKey === 'premiumSounds') {
+        return userProfile.ownedUtilityItemIds.includes('sound_pack_premium');
+    }
+
     const skill = ALL_SKILLS.find(s => s.unlocksFeature === featureKey);
     return !skill || isSkillUnlocked(skill.id);
-  }, [isSkillUnlocked, userProfile.level, userProfile.infamyLevel]);
+  }, [isSkillUnlocked, userProfile.level, userProfile.infamyLevel, userProfile.ownedUtilityItemIds]);
   
   const updateChallengeProgress = useCallback((type: DailyChallenge['type'], value: number, absoluteValue: boolean = false) => {
     if(!isFeatureUnlocked('challenges')) return;
@@ -1008,54 +1024,44 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
   }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
   
-  const isUtilityItemOwned = useCallback((itemId: string) => userProfile.ownedUtilityItemIds.includes(itemId), [userProfile.ownedUtilityItemIds]);
+  const isUtilityItemOwned = useCallback((itemId: string) => {
+      const item = UTILITY_ITEMS.find(i => i.id === itemId);
+      if (!item) return false;
+      if (!item.isConsumable) return userProfile.ownedUtilityItemIds.includes(itemId);
+      return false; // Consumables aren't "owned"
+  }, [userProfile.ownedUtilityItemIds]);
 
   const buyUtilityItem = useCallback((itemId: string) => {
-    if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return false; }
+    if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in the Skill Tree.", icon: <XCircle/> }); return false; }
     const item = UTILITY_ITEMS.find(i => i.id === itemId);
     if (!item) { toast({ title: "Error", description: "Item not found.", variant: "destructive" }); return false; }
-    if (isUtilityItemOwned(itemId)) { toast({ title: "Already Purchased", description: "You can only buy this item once." }); return false; }
+    
+    if (!item.isConsumable && isUtilityItemOwned(itemId)) { toast({ title: "Already Purchased", description: "You can only buy this item once." }); return false; }
+    if (item.isConsumable && (userProfile.utilityItemCooldowns?.[itemId] || 0) > Date.now()) { toast({ title: "Item on Cooldown", description: "You must wait before buying this again."}); return false; }
     if (userProfile.level < item.levelRequirement) { toast({ title: "Level Too Low", description: `Requires Level ${item.levelRequirement}.` }); return false; }
     
     if (item.priceType === 'cash' && userProfile.cash < item.price) { toast({ title: "Not Enough Cash", description: `Need $${item.price.toLocaleString()}.` }); return false; }
     if (item.priceType === 'sp' && userProfile.skillPoints < item.price) { toast({ title: "Not Enough Skill Points", description: `Need ${item.price} SP.` }); return false; }
 
-    const profileUpdates: Partial<UserProfile> = {
-      ownedUtilityItemIds: [...userProfile.ownedUtilityItemIds, itemId],
-    };
+    const profileUpdates: Partial<UserProfile> = {};
+    if (!item.isConsumable) profileUpdates.ownedUtilityItemIds = [...userProfile.ownedUtilityItemIds, itemId];
+    else profileUpdates.utilityItemCooldowns = { ...(userProfile.utilityItemCooldowns || {}), [itemId]: Date.now() + (item.cooldownSeconds || 0) * 1000 };
 
-    if (item.priceType === 'cash') {
-      profileUpdates.cash = userProfile.cash - item.price;
-      addFloatingGain('cash', -item.price);
-    } else {
-      profileUpdates.skillPoints = userProfile.skillPoints - item.price;
-    }
+    if (item.priceType === 'cash') { profileUpdates.cash = userProfile.cash - item.price; addFloatingGain('cash', -item.price); } 
+    else { profileUpdates.skillPoints = userProfile.skillPoints - item.price; }
 
-    if (item.effect.type === 'xp') {
-      profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + item.effect.amount;
-      addFloatingGain('xp', item.effect.amount);
-    } else if (item.effect.type === 'cash') {
-      profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + item.effect.amount;
-      addFloatingGain('cash', item.effect.amount);
-    } else if (item.effect.type === 'sp') {
-      profileUpdates.skillPoints = (profileUpdates.skillPoints ?? userProfile.skillPoints) + item.effect.amount;
-    } else if (item.effect.type === 'special_focus_potion') {
-        const xpAmount = XP_PER_MINUTE_FOCUS * 25;
-        const cashAmount = CASH_PER_5_MINUTES_FOCUS * 5;
-        profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + xpAmount;
-        profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + cashAmount;
-        addFloatingGain('xp', xpAmount);
-        addFloatingGain('cash', cashAmount);
+    if (item.effect.type === 'xp') { profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + item.effect.amount; addFloatingGain('xp', item.effect.amount); } 
+    else if (item.effect.type === 'cash') { profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + item.effect.amount; addFloatingGain('cash', item.effect.amount); } 
+    else if (item.effect.type === 'sp') { profileUpdates.skillPoints = (profileUpdates.skillPoints ?? userProfile.skillPoints) + item.effect.amount; } 
+    else if (item.effect.type === 'special_focus_potion') {
+        const xpAmount = XP_PER_MINUTE_FOCUS * 25; const cashAmount = CASH_PER_5_MINUTES_FOCUS * 5;
+        profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + xpAmount; profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + cashAmount;
+        addFloatingGain('xp', xpAmount); addFloatingGain('cash', cashAmount);
     }
     
     const newProfile = { ...userProfile, ...profileUpdates };
     const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newProfile.xp, newProfile.level);
-    if(leveledUp) {
-      newProfile.level = newLevel;
-      newProfile.title = newTitle;
-      newProfile.skillPoints += skillPointsGained;
-      newProfile.cash += cashGained;
-    }
+    if(leveledUp) { newProfile.level = newLevel; newProfile.title = newTitle; newProfile.skillPoints += skillPointsGained; newProfile.cash += cashGained; }
 
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
@@ -1150,9 +1156,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const newProfile = { ...userProfile, skillPoints: userProfile.skillPoints - skill.cost, unlockedSkillIds: newUnlockedSkills, skillLevels: newSkillLevels };
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
-    toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You upgraded: ${skill.name}`, icon: <CheckCircle/>});
+    if(isFeatureUnlocked('challenges')) updateChallengeProgress('skillUnlocks', 1);
+    toast({ title: skill.category === 'Infinite' ? "Skill Upgraded!" : "Skill Unlocked!", description: `You unlocked: ${skill.name}`, icon: <CheckCircle/>});
     return true;
-  }, [canUnlockSkill, toast, userProfile, checkAndUnlockAchievements]);
+  }, [canUnlockSkill, toast, userProfile, checkAndUnlockAchievements, isFeatureUnlocked, updateChallengeProgress]);
 
   const isInfamySkillUnlocked = useCallback((skillId: string) => {
     return userProfile.unlockedInfamySkillIds.includes(skillId);
@@ -1417,8 +1424,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const newProfile = { ...userProfile, cash: userProfile.cash - upgradeCost, businesses: { ...userProfile.businesses, [businessId]: updatedBusiness } };
     setUserProfile(newProfile);
     checkAndUnlockAchievements(newProfile, sessionsRef.current);
+    if(isFeatureUnlocked('challenges')) updateChallengeProgress('capitalistIncome', upgradeCost, false);
     toast({ title: "Business Upgraded!", description: `${business.name} is now Level ${updatedBusiness.level}.`, icon: <TrendingUp/> });
-  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements]);
+  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, checkAndUnlockAchievements, updateChallengeProgress]);
   
   const collectBusinessIncome = useCallback((businessId: keyof UserProfile['businesses'], rawAmount: number, secondsPassed: number) => {
     if(!isFeatureUnlocked('capitalist')) return;
@@ -1450,7 +1458,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         addFloatingGain('cash', incomeToCollect);
     }
     setUserProfile(prev => ({ ...prev, cash: prev.cash + incomeToCollect, businesses: newBusinesses }));
-  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain]);
+    if(isFeatureUnlocked('challenges') && incomeToCollect > 0) updateChallengeProgress('capitalistIncome', incomeToCollect, false);
+  }, [isFeatureUnlocked, userProfile, toast, addFloatingGain, updateChallengeProgress]);
   
   const buyBond = useCallback((bondId: string) => {
     const bond = userProfile.bonds.find(b => b.id === bondId);
@@ -1545,6 +1554,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 case 'ambianceUsage': return tempIsFeatureUnlocked('ambiance');
                 case 'notepadEntry': return tempIsFeatureUnlocked('notepadNotes') || tempIsFeatureUnlocked('notepadRevision');
                 case 'habitCompletions': return tempIsFeatureUnlocked('notepadHabits');
+                case 'capitalistIncome': return tempIsFeatureUnlocked('capitalist');
+                case 'skillUnlocks': return tempIsFeatureUnlocked('skill-tree');
                 default: return true;
             }
         });
