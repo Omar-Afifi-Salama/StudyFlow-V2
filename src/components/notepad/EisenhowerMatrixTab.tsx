@@ -5,11 +5,13 @@ import { useMemo } from 'react';
 import { useSessions } from '@/contexts/SessionContext';
 import type { NotepadTask, NotepadGoal } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Grid, MoreHorizontal, X } from 'lucide-react';
+import { Grid, MoreHorizontal, X, AlertTriangle, Calendar, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
 
 type QuadrantKey = 'do' | 'schedule' | 'delegate' | 'eliminate';
 
@@ -44,12 +46,38 @@ const ItemContextMenu = ({ item, type, onUpdateQuadrant }: { item: NotepadTask |
   );
 };
 
-const ItemCard = ({ item, type, onUpdateQuadrant }: { item: NotepadTask | NotepadGoal, type: 'task' | 'goal', onUpdateQuadrant: (itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => void }) => (
-  <div className="p-2 border rounded-md flex justify-between items-center bg-background/50 hover:bg-background/80 transition-colors">
-    <p className={cn("text-sm flex-grow", item.completed && "line-through text-muted-foreground")}>{item.text}</p>
-    <ItemContextMenu item={item} type={type} onUpdateQuadrant={onUpdateQuadrant} />
-  </div>
-);
+const ItemCard = ({ item, type, onUpdateQuadrant }: { item: NotepadTask | NotepadGoal, type: 'task' | 'goal', onUpdateQuadrant: (itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => void }) => {
+    const isCategorized = !!item.quadrant;
+    return (
+        <div className="p-2 border rounded-md flex justify-between items-center bg-background/50 hover:bg-background/80 transition-colors">
+            <p className={cn("text-sm flex-grow", item.completed && "line-through text-muted-foreground")}>{item.text}</p>
+             <div className="flex items-center shrink-0 ml-2">
+                {isCategorized ? (
+                    <ItemContextMenu item={item} type={type} onUpdateQuadrant={onUpdateQuadrant} />
+                ) : (
+                    <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'do')}><AlertTriangle className="h-4 w-4 text-destructive" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Do (Urgent, Important)</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'schedule')}><Calendar className="h-4 w-4 text-primary" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Schedule (Not Urgent, Important)</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'delegate')}><Users className="h-4 w-4 text-yellow-500" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Delegate (Urgent, Not Important)</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'eliminate')}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Eliminate (Not Urgent, Not Important)</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const Quadrant = ({ quadrantKey, items, onUpdateQuadrant }: { quadrantKey: QuadrantKey, items: (NotepadTask | NotepadGoal)[], onUpdateQuadrant: (itemId: string, itemType: 'task' | 'goal', quadrant?: QuadrantKey) => void }) => {
   const details = quadrantDetails[quadrantKey];

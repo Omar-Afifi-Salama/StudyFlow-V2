@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond } from '@/types';
+import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond, UtilityItem } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull } from 'lucide-react';
@@ -29,9 +29,18 @@ export const TITLES = [
   "Zenith Scholar", "Apex Sage", "Omega Mind", "Alpha Learner", "The Final Word", "Unending Query", "Silent Savant", "Void Thinker", "The Librarian", "One Who Knows"
 ];
 
-// Each level takes 1 hour of focused study
-export const ACTUAL_LEVEL_THRESHOLDS = Array.from({ length: 100 }, (_, i) => i * 60 * XP_PER_MINUTE_FOCUS);
-ACTUAL_LEVEL_THRESHOLDS.unshift(0); // Level 1 is 0 XP
+const generateLevelThresholds = () => {
+    const thresholds = [0];
+    let cumulativeXp = 0;
+    for (let level = 1; level < 100; level++) {
+        const minutesForNextLevel = (level - 1) * 5 + 25;
+        const xpForNextLevel = minutesForNextLevel * XP_PER_MINUTE_FOCUS;
+        cumulativeXp += xpForNextLevel;
+        thresholds.push(cumulativeXp);
+    }
+    return thresholds;
+};
+export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds();
 
 
 export const PREDEFINED_SKINS: Skin[] = [
@@ -66,6 +75,12 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/282a36/ff79c6', dataAiHint: 'vampire castle', isTheme: true, isLightTheme: false, themeClass: 'theme-dracula' },
 ];
 
+export const UTILITY_ITEMS: UtilityItem[] = [
+  { id: 'xp_boost_small', name: 'Small XP Boost', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap' },
+  { id: 'xp_boost_medium', name: 'Medium XP Boost', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap' },
+  { id: 'cash_injection_small', name: 'Cash Injection', description: 'A quick injection of $20,000.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'DollarSign' },
+  { id: 'skill_point_pack', name: 'Mind Expansion', description: 'Instantly gain 3 Skill Points.', price: 100000, priceType: 'cash', levelRequirement: 20, effect: { type: 'sp', amount: 3 }, iconName: 'Gem' }
+];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
   tasks: [], notes: [], goals: [], links: [], revisionConcepts: [], habits: [], countdownEvents: [],
@@ -118,6 +133,7 @@ const DEFAULT_BUSINESSES = {
 const DEFAULT_USER_PROFILE: UserProfile = {
   xp: 0, cash: 1000, level: 1, title: TITLES[0],
   ownedSkinIds: ['classic', 'dark_mode', 'sepia_tone'], equippedSkinId: 'classic',
+  ownedUtilityItemIds: [],
   completedChallengeIds: [], currentStreak: 0, longestStreak: 0, lastStudyDate: null,
   wakeUpTime: { hour: 8, period: 'AM' }, sleepTime: { hour: 10, period: 'PM' },
   unlockedAchievementIds: [], lastLoginDate: null, dailyLoginStreak: 0,
@@ -125,12 +141,12 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   businesses: DEFAULT_BUSINESSES,
   dailyOffers: [], activeOfferId: null,
   manualLogTimeToday: { date: '', duration: 0 },
-  bonds: [],
-  lastBondGenerationTime: 0,
   infamyLevel: 0,
   infamyPoints: 0,
   unlockedInfamySkillIds: [],
   hardResetRequestTime: null,
+  bonds: [],
+  lastBondGenerationTime: 0,
 };
 
 const INITIAL_DAILY_CHALLENGES_POOL: DailyChallenge[] = [
@@ -370,6 +386,8 @@ interface SessionContextType {
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
   isSkinOwned: (skinId: string) => boolean;
+  buyUtilityItem: (itemId: string) => boolean;
+  isUtilityItemOwned: (itemId: string) => boolean;
 
   selectDailyOffer: (offerId: string) => void;
   
@@ -520,7 +538,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     let skillPointsGained = 0;
     let cashGained = 0;
 
-    while (newLevel < ACTUAL_LEVEL_THRESHOLDS.length && currentXp >= ACTUAL_LEVEL_THRESHOLDS[newLevel]) {
+    while (newLevel < 100 && currentXp >= ACTUAL_LEVEL_THRESHOLDS[newLevel]) {
       newLevel++;
       leveledUp = true;
       skillPointsGained++;
@@ -965,6 +983,54 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
   }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
+  
+  const isUtilityItemOwned = useCallback((itemId: string) => userProfile.ownedUtilityItemIds.includes(itemId), [userProfile.ownedUtilityItemIds]);
+
+  const buyUtilityItem = useCallback((itemId: string) => {
+    if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return false; }
+    const item = UTILITY_ITEMS.find(i => i.id === itemId);
+    if (!item) { toast({ title: "Error", description: "Item not found.", variant: "destructive" }); return false; }
+    if (isUtilityItemOwned(itemId)) { toast({ title: "Already Purchased", description: "You can only buy this item once." }); return false; }
+    if (userProfile.level < item.levelRequirement) { toast({ title: "Level Too Low", description: `Requires Level ${item.levelRequirement}.` }); return false; }
+    
+    if (item.priceType === 'cash' && userProfile.cash < item.price) { toast({ title: "Not Enough Cash", description: `Need $${item.price.toLocaleString()}.` }); return false; }
+    if (item.priceType === 'sp' && userProfile.skillPoints < item.price) { toast({ title: "Not Enough Skill Points", description: `Need ${item.price} SP.` }); return false; }
+
+    const profileUpdates: Partial<UserProfile> = {
+      ownedUtilityItemIds: [...userProfile.ownedUtilityItemIds, itemId],
+    };
+
+    if (item.priceType === 'cash') {
+      profileUpdates.cash = userProfile.cash - item.price;
+      addFloatingGain('cash', -item.price);
+    } else {
+      profileUpdates.skillPoints = userProfile.skillPoints - item.price;
+    }
+
+    if (item.effect.type === 'xp') {
+      profileUpdates.xp = userProfile.xp + item.effect.amount;
+      addFloatingGain('xp', item.effect.amount);
+    } else if (item.effect.type === 'cash') {
+      profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + item.effect.amount;
+      addFloatingGain('cash', item.effect.amount);
+    } else if (item.effect.type === 'sp') {
+      profileUpdates.skillPoints = (profileUpdates.skillPoints ?? userProfile.skillPoints) + item.effect.amount;
+    }
+    
+    const newProfile = { ...userProfile, ...profileUpdates };
+    const { newLevel, newTitle, leveledUp, skillPointsGained, cashGained } = checkForLevelUp(newProfile.xp, newProfile.level);
+    if(leveledUp) {
+      newProfile.level = newLevel;
+      newProfile.title = newTitle;
+      newProfile.skillPoints += skillPointsGained;
+      newProfile.cash += cashGained;
+    }
+
+    setUserProfile(newProfile);
+    checkAndUnlockAchievements(newProfile, sessionsRef.current);
+    toast({ title: "Item Purchased!", description: `You acquired ${item.name}.`, icon: <CheckCircle /> });
+    return true;
+  }, [isFeatureUnlocked, userProfile, isUtilityItemOwned, toast, addFloatingGain, checkForLevelUp, checkAndUnlockAchievements]);
 
   const selectDailyOffer = useCallback((offerId: string) => {
     if (!isFeatureUnlocked('challenges')) return;
@@ -1093,7 +1159,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     let startingCash = DEFAULT_USER_PROFILE.cash;
-    let startingSkillPoints = userProfile.skillPoints; // Keep skill points
+    
     if (isInfamySkillUnlocked('infamyStartingBonus')) {
       startingCash += 50000;
     }
@@ -1116,7 +1182,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       level: 1,
       title: TITLES[0],
       cash: startingCash,
-      skillPoints: startingSkillPoints,
       businesses: startingBusinesses,
       // Infamy progression
       infamyLevel: prev.infamyLevel + 1,
@@ -1423,6 +1488,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
           for (let i = 1; i < ACTUAL_LEVEL_THRESHOLDS.length; i++) {
             if (profileToLoad.xp >= ACTUAL_LEVEL_THRESHOLDS[i]) correctLevel = i + 1; else break;
           }
+          if(correctLevel > 100) correctLevel = 100;
+          
           if (profileToLoad.level !== correctLevel) {
             profileToLoad.level = correctLevel;
             profileToLoad.title = TITLES[correctLevel - 1] || TITLES[TITLES.length - 1];
@@ -1450,7 +1517,15 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
                 default: return true;
             }
         });
-        const newChallenges = [...availableChallenges].sort(() => 0.5 - Math.random()).slice(0, numChallenges).map(ch => ({...ch, currentValue: 0, isCompleted: false, rewardClaimed: false}));
+        const newChallenges = [...availableChallenges].sort(() => 0.5 - Math.random()).slice(0, numChallenges).map(ch => ({
+            ...ch, 
+            currentValue: 0, 
+            isCompleted: false, 
+            rewardClaimed: false,
+            targetValue: Math.ceil(ch.targetValue * (1 + (profileToLoad.level / 20))), // Scale target
+            xpReward: Math.ceil(ch.xpReward * (1 + (profileToLoad.level / 10))), // Scale XP
+            cashReward: Math.ceil(ch.cashReward * (1 + (profileToLoad.level / 10))), // Scale Cash
+        }));
         setDailyChallenges(newChallenges);
         setLastChallengeResetDate(todayStr);
       }
@@ -1468,7 +1543,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       
       const now = Date.now();
       if(now - (profileToLoad.lastBondGenerationTime || 0) > 3600 * 1000) {
-          const baseCost = 500 + profileToLoad.level * 50;
+          const baseCost = Math.max(500, Math.floor(profileToLoad.cash * 0.05) + profileToLoad.level * 50);
           const newBonds: Bond[] = [
             { id: crypto.randomUUID(), name: "Govt. Bond", description: "A very safe, low-yield government bond.", risk: "low", cost: baseCost, potentialReturnValue: Math.floor(baseCost * 1.05), potentialLossValue: 0, purchaseTime: 0, maturityTime: 0, isPurchased: false, claimed: false },
             { id: crypto.randomUUID(), name: "Corporate Note", description: "A balanced corporate bond with decent returns.", risk: "medium", cost: baseCost * 2, potentialReturnValue: Math.floor(baseCost * 2.3), potentialLossValue: Math.floor(baseCost * 0.5), purchaseTime: 0, maturityTime: 0, isPurchased: false, claimed: false },
@@ -1554,21 +1629,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const root = window.document.documentElement;
     const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
     
-    // Remove all potential theme attributes to prevent conflicts
-    PREDEFINED_SKINS.forEach(skin => {
-      if (skin.isTheme && skin.themeClass) {
-        root.removeAttribute(`data-theme`);
-      }
-    });
+    const themeClass = equippedSkin?.isTheme ? equippedSkin.themeClass : 'classic';
 
-    const themeClass = equippedSkin?.isTheme ? equippedSkin.themeClass : null;
-
-    if (themeClass && themeClass !== 'classic') {
-      root.setAttribute('data-theme', themeClass);
-    } else {
-      // If classic or no theme, ensure no theme attribute is set
-      root.removeAttribute('data-theme');
-    }
+    root.setAttribute('data-theme', themeClass);
     
   }, [userProfile.equippedSkinId, isLoaded]);
 
@@ -1597,7 +1660,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent,
       unlockBusiness, upgradeBusiness, collectBusinessIncome, buyBond, claimMaturedBonds,
-      getSkinById, buySkin, equipSkin, isSkinOwned,
+      getSkinById, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned,
       selectDailyOffer,
       claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost,

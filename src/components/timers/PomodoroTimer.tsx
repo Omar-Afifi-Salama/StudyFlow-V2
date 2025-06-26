@@ -31,7 +31,8 @@ export default function PomodoroTimer() {
     activeTimer
   } = useSessions();
 
-  const { mode, isRunning, settings, sessionEndTime, cyclesCompleted, cyclesPerLongBreak } = pomodoroState;
+  const { mode, isRunning, settings, sessionEndTime, cyclesCompleted } = pomodoroState;
+  const { cyclesPerLongBreak } = settings;
   const [timeLeft, setTimeLeft] = useState(0);
   
   const { toast } = useToast();
@@ -96,7 +97,7 @@ export default function PomodoroTimer() {
   
   const canStart = activeTimer === null || activeTimer === 'pomodoro';
 
-  const currentCycle = (cyclesCompleted % cyclesPerLongBreak) + 1;
+  const currentCycle = cyclesPerLongBreak > 0 ? (cyclesCompleted % cyclesPerLongBreak) + 1 : 1;
 
 
   return (

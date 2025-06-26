@@ -53,6 +53,19 @@ export interface DailyOffer {
     negativeDescription: string;
 }
 
+export interface UtilityItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  priceType: 'cash' | 'sp';
+  levelRequirement: number;
+  effect: {
+    type: 'xp' | 'cash' | 'sp';
+    amount: number;
+  };
+  iconName: string;
+}
 
 export interface UserProfile {
   xp: number;
@@ -61,6 +74,7 @@ export interface UserProfile {
   title: string;
   ownedSkinIds: string[];
   equippedSkinId: string | null;
+  ownedUtilityItemIds: string[];
   completedChallengeIds: string[];
   currentStreak: number; // Study streak
   longestStreak: number; // Study streak

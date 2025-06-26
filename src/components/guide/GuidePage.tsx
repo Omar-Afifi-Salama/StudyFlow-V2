@@ -93,16 +93,17 @@ export default function GuidePage() {
   
   const levelData = TITLES.map((title, index) => {
     const level = index + 1;
+    if (level > 100) return null;
     const xpRequired = ACTUAL_LEVEL_THRESHOLDS[index];
-    const hoursToReach = xpRequired / XP_PER_MINUTE_FOCUS / 60;
+    const minutesToReach = xpRequired / XP_PER_MINUTE_FOCUS;
     
     return {
       level,
       title,
       xpRequired: xpRequired.toLocaleString(),
-      hoursToReach: hoursToReach.toFixed(1),
+      minutesToReach: minutesToReach.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 1}),
     };
-  });
+  }).filter(Boolean);
 
   return (
     <Card className="shadow-lg w-full card-animated">
@@ -130,10 +131,10 @@ export default function GuidePage() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-1">
-            <AccordionTrigger className="text-xl font-semibold">Levels, Titles & Hours</AccordionTrigger>
+            <AccordionTrigger className="text-xl font-semibold">Levels, Titles & XP</AccordionTrigger>
             <AccordionContent>
               <p className="mb-4 text-muted-foreground">
-                Level up by earning XP from study sessions. Each level requires 60 minutes of focus. Each new level also grants you a new title, Skill Points, and a cash reward. The cash reward for reaching level 'N' is <span className="font-semibold text-primary">N * ${CASH_REWARD_PER_LEVEL}</span>.
+                Level up by earning XP from study sessions. The time required to level up increases by 5 minutes with each level you gain, starting from 25 minutes for Level 1. Each new level also grants you a new title, Skill Points, and a cash reward. The cash reward for reaching level 'N' is <span className="font-semibold text-primary">N * ${CASH_REWARD_PER_LEVEL}</span>.
               </p>
               <div className="max-h-[500px] overflow-y-auto pr-2">
                  <Table>
@@ -142,7 +143,7 @@ export default function GuidePage() {
                         <TableHead className="w-[100px]">Level</TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead className="text-right">Total XP</TableHead>
-                        <TableHead className="text-right">Total Hours</TableHead>
+                        <TableHead className="text-right">Total Minutes</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -151,7 +152,7 @@ export default function GuidePage() {
                             <TableCell className="font-medium">{data.level}</TableCell>
                             <TableCell>{data.title}</TableCell>
                             <TableCell className="text-right">{data.xpRequired}</TableCell>
-                            <TableCell className="text-right">{data.hoursToReach}</TableCell>
+                            <TableCell className="text-right">{data.minutesToReach}</TableCell>
                         </TableRow>
                         ))}
                     </TableBody>
