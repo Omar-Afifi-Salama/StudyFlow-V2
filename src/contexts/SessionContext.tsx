@@ -4,7 +4,7 @@
 import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond, UtilityItem } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull, FlaskConical } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -44,42 +44,41 @@ export const ACTUAL_LEVEL_THRESHOLDS = generateLevelThresholds();
 
 
 export const PREDEFINED_SKINS: Skin[] = [
-  // Free Defaults
-  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/0A2540', dataAiHint: 'classic blue', isTheme: true, isLightTheme: true, themeClass: 'classic' },
-  { id: 'dark_mode', name: 'Dark Mode', description: 'A sleek dark theme for night owls.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/2d3748/e2e8f0', dataAiHint: 'dark theme', isTheme: true, isLightTheme: false, themeClass: 'dark' },
-  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/c0a080/4a3f30', dataAiHint: 'sepia tone', isTheme: true, isLightTheme: true, themeClass: 'sepia' },
-  
-  // Tier 1 (LVL 10)
-  { id: 'theme-solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/fefce8/16a34a', dataAiHint: 'solarpunk city', isTheme: true, isLightTheme: true, themeClass: 'theme-solarpunk' },
-  { id: 'theme-oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/083344/2dd4bf', dataAiHint: 'ocean deep', isTheme: true, isLightTheme: false, themeClass: 'theme-oceanic' },
-  { id: 'theme-minty-fresh', name: 'Minty Fresh', description: 'A clean and refreshing mint green theme.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/f0fdf4/22c55e', dataAiHint: 'mint leaf', isTheme: true, isLightTheme: true, themeClass: 'theme-minty-fresh' },
-  { id: 'theme-sakura-season', name: 'Sakura Season', description: 'Soft pinks inspired by cherry blossoms.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/fff5f7/ec4899', dataAiHint: 'cherry blossom', isTheme: true, isLightTheme: true, themeClass: 'theme-sakura-season' },
-
-  // Tier 2 (LVL 20)
-  { id: 'theme-cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/0a0a0a/f400a1', dataAiHint: 'cyberpunk city', isTheme: true, isLightTheme: false, themeClass: 'theme-cyberpunk' },
-  { id: 'theme-desert-mirage', name: 'Desert Mirage', description: 'Warm oranges and sandy tones.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/fffbeb/f97316', dataAiHint: 'desert sunset', isTheme: true, isLightTheme: true, themeClass: 'theme-desert-mirage' },
-  { id: 'theme-arctic-dawn', name: 'Arctic Dawn', description: 'Cool blues and purples of a polar sunrise.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/ecfeff/06b6d4', dataAiHint: 'arctic sunrise', isTheme: true, isLightTheme: true, themeClass: 'theme-arctic-dawn' },
-  { id: 'theme-lavender-haze', name: 'Lavender Haze', description: 'A dreamy and calming lavender theme.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/f5f3ff/8b5cf6', dataAiHint: 'lavender field', isTheme: true, isLightTheme: true, themeClass: 'theme-lavender-haze' },
-
-  // Tier 3 (LVL 30)
-  { id: 'theme-volcanic-ash', name: 'Volcanic Ash', description: 'A dark theme with fiery orange highlights.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/262626/ea580c', dataAiHint: 'volcano lava', isTheme: true, isLightTheme: false, themeClass: 'theme-volcanic-ash' },
-  { id: 'theme-steampunk', name: 'Steampunk', description: 'Browns, brass, and verdigris for a mechanical feel.', price: 80000, levelRequirement: 32, imageUrl: 'https://placehold.co/400x225/4d3d30/c89b3c', dataAiHint: 'steampunk gears', isTheme: true, isLightTheme: true, themeClass: 'theme-steampunk' },
-  { id: 'theme-emerald-grove', name: 'Emerald Grove', description: 'A rich, dark theme with deep green tones.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/1c2a2b/10b981', dataAiHint: 'enchanted forest', isTheme: true, isLightTheme: false, themeClass: 'theme-emerald-grove' },
-  { id: 'theme-monochrome', name: 'Monochrome', description: 'A minimalist black and white theme.', price: 65000, levelRequirement: 25, imageUrl: 'https://placehold.co/400x225/ffffff/525252', dataAiHint: 'black white', isTheme: true, isLightTheme: true, themeClass: 'theme-monochrome' },
-
-  // Tier 4 (LVL 40+)
-  { id: 'theme-crimson-peak', name: 'Crimson Peak', description: 'A dark theme with stark crimson accents.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1a1a1a/dc2626', dataAiHint: 'red mountain', isTheme: true, isLightTheme: false, themeClass: 'theme-crimson-peak' },
-  { id: 'theme-sapphire-depths', name: 'Sapphire Depths', description: 'A deep, dark blue theme with sapphire highlights.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1e293b/3b82f6', dataAiHint: 'blue crystal', isTheme: true, isLightTheme: false, themeClass: 'theme-sapphire-depths' },
-  { id: 'theme-8-bit-arcade', name: '8-Bit Arcade', description: 'A retro theme with pixel-perfect colors.', price: 120000, levelRequirement: 45, imageUrl: 'https://placehold.co/400x225/1a1b26/00ffff', dataAiHint: 'pixel art', isTheme: true, isLightTheme: false, themeClass: 'theme-8-bit-arcade' },
-  { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/2e3440/88c0d0', dataAiHint: 'nordic fjord', isTheme: true, isLightTheme: false, themeClass: 'theme-nord' },
-  { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/282a36/ff79c6', dataAiHint: 'vampire castle', isTheme: true, isLightTheme: false, themeClass: 'theme-dracula' },
+  { id: 'classic', name: 'Classic Blue', description: 'The default, calming blue theme.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/E5F1FC/0A2540?text=Classic+Blue', dataAiHint: 'classic blue', isTheme: true, isLightTheme: true, themeClass: 'classic' },
+  { id: 'dark_mode', name: 'Dark Mode', description: 'A sleek dark theme for night owls.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/2d3748/e2e8f0?text=Dark+Mode', dataAiHint: 'dark theme', isTheme: true, isLightTheme: false, themeClass: 'dark' },
+  { id: 'sepia_tone', name: 'Sepia Tone', description: 'A warm, vintage theme for focused nostalgia.', price: 0, levelRequirement: 1, imageUrl: 'https://placehold.co/400x225/c0a080/4a3f30?text=Sepia+Tone', dataAiHint: 'sepia tone', isTheme: true, isLightTheme: true, themeClass: 'sepia' },
+  { id: 'theme-solarpunk', name: 'Solarpunk', description: 'Lush greens and gold for an optimistic future.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/fefce8/16a34a?text=Solarpunk', dataAiHint: 'solarpunk city', isTheme: true, isLightTheme: true, themeClass: 'theme-solarpunk' },
+  { id: 'theme-oceanic', name: 'Oceanic', description: 'Deep blues and teals for calm concentration.', price: 20000, levelRequirement: 10, imageUrl: 'https://placehold.co/400x225/083344/2dd4bf?text=Oceanic', dataAiHint: 'ocean deep', isTheme: true, isLightTheme: false, themeClass: 'theme-oceanic' },
+  { id: 'theme-minty-fresh', name: 'Minty Fresh', description: 'A clean and refreshing mint green theme.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/f0fdf4/22c55e?text=Minty+Fresh', dataAiHint: 'mint leaf', isTheme: true, isLightTheme: true, themeClass: 'theme-minty-fresh' },
+  { id: 'theme-sakura-season', name: 'Sakura Season', description: 'Soft pinks inspired by cherry blossoms.', price: 25000, levelRequirement: 12, imageUrl: 'https://placehold.co/400x225/fff5f7/ec4899?text=Sakura+Season', dataAiHint: 'cherry blossom', isTheme: true, isLightTheme: true, themeClass: 'theme-sakura-season' },
+  { id: 'theme-cyberpunk', name: 'Cyberpunk', description: 'Neon-drenched streets for late-night focus.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/0a0a0a/f400a1?text=Cyberpunk', dataAiHint: 'cyberpunk city', isTheme: true, isLightTheme: false, themeClass: 'theme-cyberpunk' },
+  { id: 'theme-desert-mirage', name: 'Desert Mirage', description: 'Warm oranges and sandy tones.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/fffbeb/f97316?text=Desert+Mirage', dataAiHint: 'desert sunset', isTheme: true, isLightTheme: true, themeClass: 'theme-desert-mirage' },
+  { id: 'theme-arctic-dawn', name: 'Arctic Dawn', description: 'Cool blues and purples of a polar sunrise.', price: 45000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/ecfeff/06b6d4?text=Arctic+Dawn', dataAiHint: 'arctic sunrise', isTheme: true, isLightTheme: true, themeClass: 'theme-arctic-dawn' },
+  { id: 'theme-lavender-haze', name: 'Lavender Haze', description: 'A dreamy and calming lavender theme.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/f5f3ff/8b5cf6?text=Lavender+Haze', dataAiHint: 'lavender field', isTheme: true, isLightTheme: true, themeClass: 'theme-lavender-haze' },
+  { id: 'theme-volcanic-ash', name: 'Volcanic Ash', description: 'A dark theme with fiery orange highlights.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/262626/ea580c?text=Volcanic+Ash', dataAiHint: 'volcano lava', isTheme: true, isLightTheme: false, themeClass: 'theme-volcanic-ash' },
+  { id: 'theme-steampunk', name: 'Steampunk', description: 'Browns, brass, and verdigris for a mechanical feel.', price: 80000, levelRequirement: 32, imageUrl: 'https://placehold.co/400x225/4d3d30/c89b3c?text=Steampunk', dataAiHint: 'steampunk gears', isTheme: true, isLightTheme: true, themeClass: 'theme-steampunk' },
+  { id: 'theme-emerald-grove', name: 'Emerald Grove', description: 'A rich, dark theme with deep green tones.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/1c2a2b/10b981?text=Emerald+Grove', dataAiHint: 'enchanted forest', isTheme: true, isLightTheme: false, themeClass: 'theme-emerald-grove' },
+  { id: 'theme-monochrome', name: 'Monochrome', description: 'A minimalist black and white theme.', price: 65000, levelRequirement: 25, imageUrl: 'https://placehold.co/400x225/ffffff/525252?text=Monochrome', dataAiHint: 'black white', isTheme: true, isLightTheme: true, themeClass: 'theme-monochrome' },
+  { id: 'theme-crimson-peak', name: 'Crimson Peak', description: 'A dark theme with stark crimson accents.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1a1a1a/dc2626?text=Crimson+Peak', dataAiHint: 'red mountain', isTheme: true, isLightTheme: false, themeClass: 'theme-crimson-peak' },
+  { id: 'theme-sapphire-depths', name: 'Sapphire Depths', description: 'A deep, dark blue theme with sapphire highlights.', price: 100000, levelRequirement: 40, imageUrl: 'https://placehold.co/400x225/1e293b/3b82f6?text=Sapphire+Depths', dataAiHint: 'blue crystal', isTheme: true, isLightTheme: false, themeClass: 'theme-sapphire-depths' },
+  { id: 'theme-8-bit-arcade', name: '8-Bit Arcade', description: 'A retro theme with pixel-perfect colors.', price: 120000, levelRequirement: 45, imageUrl: 'https://placehold.co/400x225/1a1b26/00ffff?text=8-Bit+Arcade', dataAiHint: 'pixel art', isTheme: true, isLightTheme: false, themeClass: 'theme-8-bit-arcade' },
+  { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/2e3440/88c0d0?text=Nord', dataAiHint: 'nordic fjord', isTheme: true, isLightTheme: false, themeClass: 'theme-nord' },
+  { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/282a36/ff79c6?text=Dracula', dataAiHint: 'vampire castle', isTheme: true, isLightTheme: false, themeClass: 'theme-dracula' },
 ];
 
 export const UTILITY_ITEMS: UtilityItem[] = [
-  { id: 'xp_boost_small', name: 'Small XP Boost', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap' },
-  { id: 'xp_boost_medium', name: 'Medium XP Boost', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap' },
-  { id: 'cash_injection_small', name: 'Cash Injection', description: 'A quick injection of $20,000.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'DollarSign' },
-  { id: 'skill_point_pack', name: 'Mind Expansion', description: 'Instantly gain 3 Skill Points.', price: 100000, priceType: 'cash', levelRequirement: 20, effect: { type: 'sp', amount: 3 }, iconName: 'Gem' }
+  { id: 'xp_boost_small', name: 'Small XP Canister', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap' },
+  { id: 'xp_boost_medium', name: 'Medium XP Canister', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap' },
+  { id: 'xp_boost_large', name: 'Large XP Canister', description: 'Instantly gain 15,000 XP.', price: 100000, priceType: 'cash', levelRequirement: 25, effect: { type: 'xp', amount: 15000 }, iconName: 'Zap' },
+  { id: 'xp_boost_huge', name: 'Huge XP Canister', description: 'Instantly gain 40,000 XP.', price: 250000, priceType: 'cash', levelRequirement: 40, effect: { type: 'xp', amount: 40000 }, iconName: 'Zap' },
+  { id: 'xp_from_sp_small', name: 'Knowledge Shard', description: 'Convert 1 SP into 5,000 XP.', price: 1, priceType: 'sp', levelRequirement: 8, effect: { type: 'xp', amount: 5000 }, iconName: 'BrainCircuit' },
+  { id: 'xp_from_sp_medium', name: 'Knowledge Crystal', description: 'Convert 3 SP into 20,000 XP.', price: 3, priceType: 'sp', levelRequirement: 18, effect: { type: 'xp', amount: 20000 }, iconName: 'BrainCircuit' },
+  { id: 'focus_potion', name: 'Focus Potion', description: 'Grants the rewards of one 25-minute focus session.', price: 15000, priceType: 'cash', levelRequirement: 12, effect: { type: 'special_focus_potion' }, iconName: 'FlaskConical' },
+  { id: 'cash_injection_small', name: 'Small Loan', description: 'Convert 2 SP into $20,000 cash.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'HandCoins' },
+  { id: 'cash_injection_medium', name: 'Investor Cheque', description: 'Convert 5 SP into $75,000 cash.', price: 5, priceType: 'sp', levelRequirement: 22, effect: { type: 'cash', amount: 75000 }, iconName: 'HandCoins' },
+  { id: 'cash_injection_large', name: 'Hedge Fund Payout', description: 'Convert 10 SP into $200,000 cash.', price: 10, priceType: 'sp', levelRequirement: 35, effect: { type: 'cash', amount: 200000 }, iconName: 'HandCoins' },
+  { id: 'skill_point_pack', name: 'Mind Expansion', description: 'Buy 3 Skill Points for $100,000.', price: 100000, priceType: 'cash', levelRequirement: 20, effect: { type: 'sp', amount: 3 }, iconName: 'Gem' },
+  { id: 'skill_point_pack_large', name: 'Cerebral Boost', description: 'Buy 5 Skill Points for $180,000.', price: 180000, priceType: 'cash', levelRequirement: 30, effect: { type: 'sp', amount: 5 }, iconName: 'Gem' }
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -329,6 +328,7 @@ interface SessionContextType {
   dailyOffers: DailyOffer[];
   floatingGains: FloatingGain[];
   activeTimer: TimerMode | null;
+  skinPreview: { id: string | null; timeoutId: NodeJS.Timeout | null };
   isLoaded: boolean;
   afkCheckVisible: boolean;
 
@@ -385,6 +385,7 @@ interface SessionContextType {
   getSkinById: (id: string) => Skin | undefined;
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
+  trySkin: (skinId: string) => void;
   isSkinOwned: (skinId: string) => boolean;
   buyUtilityItem: (itemId: string) => boolean;
   isUtilityItemOwned: (itemId: string) => boolean;
@@ -418,6 +419,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [lastChallengeResetDate, setLastChallengeResetDate] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [floatingGains, setFloatingGains] = useState<FloatingGain[]>([]);
+  const [skinPreview, setSkinPreview] = useState<{ id: string | null; timeoutId: NodeJS.Timeout | null }>({ id: null, timeoutId: null });
+
   
   const [afkCheckVisible, setAfkCheckVisible] = useState(false);
   const afkTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -975,6 +978,27 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [isFeatureUnlocked, userProfile, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain, checkAndUnlockAchievements]);
 
+  const trySkin = useCallback((skinId: string) => {
+    if (skinPreview.id) {
+      toast({ title: "Preview Active", description: "Another theme preview is already in progress.", variant: "default" });
+      return;
+    }
+    const skin = getSkinById(skinId);
+    if (!skin) return;
+
+    if (skinPreview.timeoutId) clearTimeout(skinPreview.timeoutId);
+    
+    setSkinPreview(prev => ({ ...prev, id: skinId }));
+    toast({ title: "Theme Preview", description: `Trying out ${skin.name} for 30 seconds.` });
+
+    const timeoutId = setTimeout(() => {
+        setSkinPreview({ id: null, timeoutId: null });
+        toast({ title: "Preview Ended", description: `Reverted to your original theme.` });
+    }, 30000);
+
+    setSkinPreview(prev => ({ ...prev, timeoutId }));
+  }, [skinPreview.id, skinPreview.timeoutId, toast, getSkinById]);
+
   const equipSkin = useCallback((skinId: string) => {
     if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return; }
     if (!isSkinOwned(skinId)) { toast({ title: "Error", description: "You don't own this skin.", variant: "destructive", icon: <XCircle/> }); return; }
@@ -1008,13 +1032,20 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (item.effect.type === 'xp') {
-      profileUpdates.xp = userProfile.xp + item.effect.amount;
+      profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + item.effect.amount;
       addFloatingGain('xp', item.effect.amount);
     } else if (item.effect.type === 'cash') {
       profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + item.effect.amount;
       addFloatingGain('cash', item.effect.amount);
     } else if (item.effect.type === 'sp') {
       profileUpdates.skillPoints = (profileUpdates.skillPoints ?? userProfile.skillPoints) + item.effect.amount;
+    } else if (item.effect.type === 'special_focus_potion') {
+        const xpAmount = XP_PER_MINUTE_FOCUS * 25;
+        const cashAmount = CASH_PER_5_MINUTES_FOCUS * 5;
+        profileUpdates.xp = (profileUpdates.xp || userProfile.xp) + xpAmount;
+        profileUpdates.cash = (profileUpdates.cash ?? userProfile.cash) + cashAmount;
+        addFloatingGain('xp', xpAmount);
+        addFloatingGain('cash', cashAmount);
     }
     
     const newProfile = { ...userProfile, ...profileUpdates };
@@ -1564,7 +1595,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   
   const requestHardReset = useCallback(() => {
       setUserProfile(p => ({ ...p, hardResetRequestTime: Date.now() }));
-      toast({title: "Hard Reset Initiated", description: "All data will be permanently deleted in 24 hours. You can cancel this at any time."});
+      toast({title: "Hard Reset Initiated", description: "All data will be permanently deleted in 10 minutes. You can cancel this at any time."});
   }, [toast]);
   
   const cancelHardReset = useCallback(() => {
@@ -1575,7 +1606,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isLoaded || !userProfile.hardResetRequestTime) return;
     const interval = setInterval(() => {
-        if (Date.now() - userProfile.hardResetRequestTime! >= 24 * 60 * 60 * 1000) {
+        if (Date.now() - userProfile.hardResetRequestTime! >= 10 * 60 * 1000) {
             hardReset();
         }
     }, 60000); // Check every minute
@@ -1627,13 +1658,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window === 'undefined' || !isLoaded) return;
     const root = window.document.documentElement;
-    const equippedSkin = PREDEFINED_SKINS.find(s => s.id === userProfile.equippedSkinId);
+    const skinIdToApply = skinPreview.id || userProfile.equippedSkinId;
+    const equippedSkin = PREDEFINED_SKINS.find(s => s.id === skinIdToApply);
     
     const themeClass = equippedSkin?.isTheme ? equippedSkin.themeClass : 'classic';
 
-    root.setAttribute('data-theme', themeClass);
+    root.setAttribute('data-theme', themeClass || 'classic');
     
-  }, [userProfile.equippedSkinId, isLoaded]);
+  }, [userProfile.equippedSkinId, skinPreview.id, isLoaded]);
 
   useEffect(() => {
     if (isLoaded) {
@@ -1650,7 +1682,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SessionContext.Provider value={{
-      sessions, userProfile, pomodoroState, stopwatchState, countdownState, dailyChallenges, dailyOffers, floatingGains, activeTimer, isLoaded, afkCheckVisible,
+      sessions, userProfile, pomodoroState, stopwatchState, countdownState, dailyChallenges, dailyOffers, floatingGains, activeTimer, skinPreview, isLoaded, afkCheckVisible,
       startTimer, pauseTimer, resetTimer, logSession, confirmAfk,
       switchPomodoroMode, updatePomodoroSettings, setCountdownDuration,
       addManualSession, deleteSession, addDevLevels, clearSessions, hardReset, requestHardReset, cancelHardReset, updateSessionDescription,
@@ -1660,7 +1692,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent,
       unlockBusiness, upgradeBusiness, collectBusinessIncome, buyBond, claimMaturedBonds,
-      getSkinById, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned,
+      getSkinById, buySkin, equipSkin, trySkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned,
       selectDailyOffer,
       claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost,

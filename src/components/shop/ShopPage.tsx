@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Gem, DollarSign, Palette, Sparkles, Wand2 } from 'lucide-react';
 
 export default function ShopPage() {
-  const { userProfile, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned } = useSessions();
+  const { userProfile, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned, trySkin, skinPreview } = useSessions();
   
   const lightSkins = PREDEFINED_SKINS.filter(skin => skin.isLightTheme);
   const darkSkins = PREDEFINED_SKINS.filter(skin => !skin.isLightTheme);
@@ -66,6 +66,8 @@ export default function ShopPage() {
                     isEquipped={userProfile.equippedSkinId === skin.id}
                     onBuy={() => buySkin(skin.id)}
                     onEquip={() => equipSkin(skin.id)}
+                    onTry={() => trySkin(skin.id)}
+                    isPreviewing={!!skinPreview.id}
                   />
                 ))}
               </div>
@@ -84,6 +86,8 @@ export default function ShopPage() {
                     isEquipped={userProfile.equippedSkinId === skin.id}
                     onBuy={() => buySkin(skin.id)}
                     onEquip={() => equipSkin(skin.id)}
+                    onTry={() => trySkin(skin.id)}
+                    isPreviewing={!!skinPreview.id}
                   />
                 ))}
               </div>

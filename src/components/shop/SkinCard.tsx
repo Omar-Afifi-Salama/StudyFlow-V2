@@ -1,9 +1,10 @@
+
 "use client";
 
 import type { Skin } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { useSessions } from '@/contexts/SessionContext';
 
 interface SkinCardProps {
@@ -12,11 +13,13 @@ interface SkinCardProps {
   userLevel: number;
   isOwned: boolean;
   isEquipped: boolean;
+  isPreviewing: boolean;
   onBuy: () => void;
   onEquip: () => void;
+  onTry: () => void;
 }
 
-export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquipped, onBuy, onEquip }: SkinCardProps) {
+export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquipped, isPreviewing, onBuy, onEquip, onTry }: SkinCardProps) {
   const { getAppliedBoost } = useSessions();
   const shopDiscount = getAppliedBoost('shopDiscount');
   const effectivePrice = Math.round(skin.price * (1 - shopDiscount));
@@ -71,11 +74,16 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
             </Button>
           )
         ) : (
-          <Button onClick={onBuy} disabled={!canBuy} className="w-full btn-animated">
-            <ShoppingCart className="mr-2 h-4 w-4" /> Buy Skin
-            {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
-            {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(Need ${(effectivePrice - userCash).toLocaleString()} more)</span>}
-          </Button>
+          <div className="w-full flex items-center gap-2">
+            <Button onClick={onBuy} disabled={!canBuy} className="w-full btn-animated">
+              <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+              {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
+              {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(${effectivePrice.toLocaleString()})</span>}
+            </Button>
+            <Button onClick={onTry} disabled={isPreviewing} variant="secondary" className="btn-animated">
+              <Eye className="mr-2 h-4 w-4"/> Try
+            </Button>
+          </div>
         )}
       </CardFooter>
     </Card>

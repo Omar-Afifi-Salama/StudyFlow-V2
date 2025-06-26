@@ -61,8 +61,8 @@ export interface UtilityItem {
   priceType: 'cash' | 'sp';
   levelRequirement: number;
   effect: {
-    type: 'xp' | 'cash' | 'sp';
-    amount: number;
+    type: 'xp' | 'cash' | 'sp' | 'special_focus_potion';
+    amount?: number;
   };
   iconName: string;
 }
