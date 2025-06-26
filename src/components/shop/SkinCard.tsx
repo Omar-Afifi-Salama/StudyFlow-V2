@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { useSessions } from '@/contexts/SessionContext';
+import Image from 'next/image';
 
 interface SkinCardProps {
   skin: Skin;
@@ -33,10 +34,14 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
       <CardHeader className="p-0">
          <div
             className="relative w-full h-40 bg-cover bg-center"
-            style={{ backgroundImage: `url(${skin.imageUrl})` }}
-            aria-label={skin.name}
-            data-ai-hint={skin.dataAiHint}
           >
+          <Image 
+            src={skin.imageUrl} 
+            alt={skin.name} 
+            layout="fill" 
+            objectFit="cover" 
+            data-ai-hint={skin.dataAiHint}
+          />
           {isEquipped && (
             <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full flex items-center">
               <ShieldCheck className="h-3 w-3 mr-1" /> Equipped
@@ -80,7 +85,7 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
               {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
               {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(${effectivePrice.toLocaleString()})</span>}
             </Button>
-            <Button onClick={onTry} disabled={isPreviewing} variant="secondary" className="btn-animated">
+            <Button onClick={() => onTry(skin.id)} disabled={isPreviewing} variant="secondary" className="btn-animated">
               <Eye className="mr-2 h-4 w-4"/> Try
             </Button>
           </div>

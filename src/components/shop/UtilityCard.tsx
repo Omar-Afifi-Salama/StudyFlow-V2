@@ -53,25 +53,22 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
   const canAfford = item.priceType === 'cash' ? userCash >= item.price : userSkillPoints >= item.price;
   const meetsLevelRequirement = userLevel >= item.levelRequirement;
   
-  let canBuy = false;
-  let buyButtonText = "Buy Item";
-  let disabledReason = "";
+  let canBuy = true;
+  let buttonText = "Buy Item";
 
   if (isOwned && !item.isConsumable) {
     canBuy = false;
-    buyButtonText = "Purchased";
+    buttonText = "Purchased";
   } else if (isOnCooldown) {
     canBuy = false;
-    buyButtonText = "On Cooldown";
   } else if (!meetsLevelRequirement) {
     canBuy = false;
-    buyButtonText = `Requires Lvl ${item.levelRequirement}`;
+    buttonText = `Requires Lvl ${item.levelRequirement}`;
   } else if (!canAfford) {
      canBuy = false;
-     buyButtonText = `Need ${item.price.toLocaleString()} ${item.priceType === 'sp' ? 'SP' : '$'}`;
-  } else {
-    canBuy = true;
+     buttonText = `Need ${item.price.toLocaleString()} ${item.priceType === 'sp' ? 'SP' : '$'}`;
   }
+
 
   const Icon = getIconComponent(item.iconName);
 
@@ -112,7 +109,7 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
           </Button>
         ) : (
           <Button onClick={onBuy} disabled={!canBuy} className="w-full btn-animated">
-            {buyButtonText}
+            {buttonText}
           </Button>
         )}
       </CardFooter>

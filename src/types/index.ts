@@ -53,6 +53,7 @@ export interface DailyOffer {
     negativeDescription: string;
 }
 
+export type UtilityCategory = 'XP Boost' | 'Currency Exchange' | 'Permanent Unlocks';
 export interface UtilityItem {
   id: string;
   name: string;
@@ -68,6 +69,7 @@ export interface UtilityItem {
   iconName: string;
   isConsumable: boolean;
   cooldownSeconds?: number;
+  category?: UtilityCategory;
 }
 
 export interface UserProfile {
@@ -217,7 +219,7 @@ export interface DailyChallenge {
   currentValue: number;
   isCompleted: boolean;
   rewardClaimed: boolean;
-  type: 'focusCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions';
+  type: 'focusCycles' | 'studyDurationMinutes' | 'tasksCompleted' | 'studyStreak' | 'ambianceUsage' | 'notepadEntry' | 'habitCompletions' | 'capitalistIncome' | 'skillUnlocks';
   resetsDaily: boolean;
   lastProgressUpdate?: number;
 }
