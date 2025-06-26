@@ -5,18 +5,20 @@ import type { AmbientSound } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, Moon, TreePine, Flame } from 'lucide-react'; 
+import { Volume2, VolumeX, Play, Pause, Waves, Wind, CloudRain, Coffee as CoffeeIcon, Moon, TreePine, Flame, Lock, Speaker } from 'lucide-react'; 
 import { useSessions } from '@/contexts/SessionContext';
+import Link from 'next/link';
 
 // Locally hosted sounds for reliability
 const AVAILABLE_SOUNDS: AmbientSound[] = [
-  { id: 'rain', name: 'Gentle Rain', filePath: '/sounds/rain.mp3', icon: CloudRain },
-  { id: 'cafe', name: 'Busy Cafe', filePath: '/sounds/cafe.mp3', icon: CoffeeIcon },
-  { id: 'waves', name: 'Ocean Waves', filePath: '/sounds/waves.mp3', icon: Waves },
-  { id: 'wind', name: 'Soft Wind', filePath: '/sounds/wind.mp3', icon: Wind },
-  { id: 'forest', name: 'Forest Night', filePath: '/sounds/forest.mp3', icon: TreePine },
-  { id: 'fireplace', name: 'Crackling Fire', filePath: '/sounds/fireplace.mp3', icon: Flame },
-  { id: 'whitenoise', name: 'White Noise', filePath: '/sounds/whitenoise.mp3', icon: Moon },
+  { id: 'rain', name: 'Gentle Rain', filePath: '/sounds/rain.mp3', icon: CloudRain, isPremium: false },
+  { id: 'cafe', name: 'Busy Cafe', filePath: '/sounds/cafe.mp3', icon: CoffeeIcon, isPremium: false },
+  { id: 'waves', name: 'Ocean Waves', filePath: '/sounds/waves.mp3', icon: Waves, isPremium: false },
+  { id: 'whitenoise', name: 'White Noise', filePath: '/sounds/whitenoise.mp3', icon: Moon, isPremium: false },
+  { id: 'wind', name: 'Soft Wind', filePath: '/sounds/wind.mp3', icon: Wind, isPremium: true },
+  { id: 'forest', name: 'Forest Night', filePath: '/sounds/forest.mp3', icon: TreePine, isPremium: true },
+  { id: 'fireplace', name: 'Crackling Fire', filePath: '/sounds/fireplace.mp3', icon: Flame, isPremium: true },
+  { id: 'brown-noise', name: 'Brown Noise', filePath: '/sounds/brown-noise.mp3', icon: Speaker, isPremium: true },
 ];
 
 interface AudioPlayerState {
@@ -34,10 +36,11 @@ export default function AmbiancePage() {
       return acc;
     }, {} as Record<string, AudioPlayerState>)
   );
-  const { updateChallengeProgress } = useSessions();
+  const { updateChallengeProgress, isUtilityItemOwned } = useSessions();
   const usageTrackerRef = useRef<NodeJS.Timeout | null>(null);
   const activeUsageStartTimeRef = useRef<number | null>(null);
 
+  const hasPremiumAccess = isUtilityItemOwned('sound_pack_premium');
 
   // Initialize Audio elements
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function AmbiancePage() {
       if (!audioPlayersRef.current[sound.id]) {
         const audio = new Audio(sound.filePath);
         audio.loop = true;
-        audio.crossOrigin = "anonymous"; // Important for some external sources
+        audio.crossOrigin = "anonymous";
         audioPlayersRef.current[sound.id] = audio;
       }
     });
@@ -86,7 +89,7 @@ export default function AmbiancePage() {
         activeUsageStartTimeRef.current = Date.now();
     } else if (!anySoundPlaying && activeUsageStartTimeRef.current) {
         const durationMs = Date.now() - activeUsageStartTimeRef.current;
-        updateChallengeProgress('ambianceUsage', Math.floor(durationMs / (1000 * 60))); // Convert ms to minutes
+        updateChallengeProgress('ambianceUsage', Math.floor(durationMs / (1000 * 60)));
         activeUsageStartTimeRef.current = null;
     }
 
@@ -94,13 +97,12 @@ export default function AmbiancePage() {
       usageTrackerRef.current = setInterval(() => {
         if (activeUsageStartTimeRef.current) {
           const durationSinceLastTickMs = Date.now() - activeUsageStartTimeRef.current;
-          // Update challenge every minute of continuous play
-          if(durationSinceLastTickMs > 0) { // only update if there's a new duration
+          if(durationSinceLastTickMs > 0) {
             updateChallengeProgress('ambianceUsage', Math.floor(durationSinceLastTickMs / (1000 * 60)));
-            activeUsageStartTimeRef.current = Date.now(); // Reset start time for next minute increment
+            activeUsageStartTimeRef.current = Date.now();
           }
         }
-      }, 60000); // Check every minute
+      }, 60000);
     } else if (!anySoundPlaying && usageTrackerRef.current) {
       clearInterval(usageTrackerRef.current);
       usageTrackerRef.current = null;
@@ -108,10 +110,11 @@ export default function AmbiancePage() {
 
   }, [playerStates, masterVolume, isMasterMuted, updateAudioProperties, updateChallengeProgress]);
 
-  const togglePlay = (soundId: string) => {
+  const togglePlay = (sound: AmbientSound) => {
+    if (sound.isPremium && !hasPremiumAccess) return;
     setPlayerStates(prev => ({
       ...prev,
-      [soundId]: { ...prev[soundId], isPlaying: !prev[soundId].isPlaying },
+      [sound.id]: { ...prev[sound.id], isPlaying: !prev[sound.id].isPlaying },
     }));
   };
 
@@ -139,7 +142,6 @@ export default function AmbiancePage() {
         return newStates;
     });
   };
-
 
   return (
     <Card className="shadow-lg w-full card-animated">
@@ -176,17 +178,24 @@ export default function AmbiancePage() {
           {AVAILABLE_SOUNDS.map((sound) => {
             const state = playerStates[sound.id];
             const IconComponent = sound.icon;
+            const isLocked = sound.isPremium && !hasPremiumAccess;
             return (
-              <Card key={sound.id} className="shadow-md card-animated">
+              <Card key={sound.id} className={`shadow-md card-animated ${isLocked ? 'bg-muted/50 opacity-70' : ''}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <IconComponent className="h-6 w-6 text-primary" />
+                        <IconComponent className={`h-6 w-6 ${isLocked ? 'text-muted-foreground' : 'text-primary'}`} />
                         <CardTitle className="text-xl">{sound.name}</CardTitle>
                     </div>
-                    <Button onClick={() => togglePlay(sound.id)} variant="outline" size="icon" aria-label={state.isPlaying ? `Pause ${sound.name}` : `Play ${sound.name}`} className="btn-animated">
-                      {state.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                    </Button>
+                    {isLocked ? (
+                      <Button asChild variant="secondary" size="sm" className="btn-animated">
+                        <Link href="/shop"><Lock className="h-4 w-4 mr-2" />Shop</Link>
+                      </Button>
+                    ) : (
+                      <Button onClick={() => togglePlay(sound)} variant="outline" size="icon" aria-label={state.isPlaying ? `Pause ${sound.name}` : `Play ${sound.name}`} className="btn-animated">
+                        {state.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -196,7 +205,7 @@ export default function AmbiancePage() {
                     step={0.01}
                     onValueChange={(newVal) => handleVolumeChange(sound.id, newVal[0])}
                     aria-label={`${sound.name} volume`}
-                    disabled={!state.isPlaying || isMasterMuted}
+                    disabled={!state.isPlaying || isMasterMuted || isLocked}
                   />
                 </CardContent>
               </Card>

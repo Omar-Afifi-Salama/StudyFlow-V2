@@ -50,7 +50,7 @@ export default function CountdownTimer() {
         if (isRunning && countdownState.sessionStartTime) {
             interval = setInterval(() => {
                 const elapsed = Date.now() - countdownState.sessionStartTime;
-                const newTimeLeft = Math.max(0, Math.floor((timeLeftOnPause - elapsed) / 1000));
+                const newTimeLeft = Math.max(0, Math.ceil((timeLeftOnPause - elapsed) / 1000));
                 setTimeLeft(newTimeLeft);
 
                 if (newTimeLeft <= 0 && !isFinished) {
@@ -63,7 +63,7 @@ export default function CountdownTimer() {
                 }
             }, 1000);
         } else {
-            setTimeLeft(Math.floor(timeLeftOnPause / 1000));
+            setTimeLeft(Math.ceil(timeLeftOnPause / 1000));
         }
 
         return () => {
@@ -152,7 +152,7 @@ export default function CountdownTimer() {
                 </div>
                 <Progress value={xpProgressPercent} className="w-3/4 mx-auto h-2 mt-1" />
                 {xpToNextLevelRaw > 0 && timeToLevelUpSeconds > 0 && (
-                    <p className="text-xs text-primary mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                         Approx. {formatTime(timeToLevelUpSeconds, true)} to next level
                     </p>
                 )}
@@ -172,7 +172,7 @@ export default function CountdownTimer() {
                     </div>
                 ) : (
                     <>
-                        <TimerDisplay seconds={timeLeft} forceHours={initialDuration >= 3600000} className="text-primary"/>
+                        <TimerDisplay seconds={timeLeft} forceHours={initialDuration >= 3600000} />
                         {isFinished && <p className="text-2xl font-semibold text-primary animate-pulse"><BellRing className="inline h-7 w-7 mr-2"/>Time's Up!</p>}
                         <div className="flex space-x-3">
                             {!isRunning ? (

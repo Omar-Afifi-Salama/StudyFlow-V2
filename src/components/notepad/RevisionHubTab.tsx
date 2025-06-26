@@ -149,27 +149,19 @@ export default function RevisionHubTab() {
                 const nextRevision = parseISO(concept.nextRevisionDate);
                 const now = new Date();
 
-                let progress = 0;
-                let progressText = "";
+                let retentionStrength = 0;
                 let isDue = false;
 
                 if (isValid(nextRevision) && isValid(lastRevised)) {
                     isDue = now >= nextRevision;
                     if (isDue) {
-                        progress = 100;
-                        const daysOverdue = differenceInDays(now, nextRevision);
-                        progressText = daysOverdue === 0 ? "Due today" : `${daysOverdue} day(s) overdue`;
+                        retentionStrength = 0;
                     } else {
                         const totalDuration = differenceInSeconds(nextRevision, lastRevised);
                         const elapsed = differenceInSeconds(now, lastRevised);
-                        progress = totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
-                        const daysRemaining = differenceInDays(nextRevision, now);
-                        progressText = `Due in ${daysRemaining + 1} day(s)`;
+                        retentionStrength = totalDuration > 0 ? Math.max(0, 100 - (elapsed / totalDuration) * 100) : 100;
                     }
-                } else {
-                    progressText = "Invalid date data.";
                 }
-
 
               return (
                 <li key={concept.id} className={`p-4 rounded-md border ${isDue ? 'border-primary bg-primary/10' : 'bg-card'} ${editingConcept?.id === concept.id ? 'ring-2 ring-primary' : ''}`}>
@@ -178,6 +170,9 @@ export default function RevisionHubTab() {
                             <h4 className="font-semibold text-lg">{concept.name}</h4>
                             <p className="text-sm text-muted-foreground">
                                 Learned: {formatDateSafe(concept.learnedDate)} | Last Revised: {formatDateSafe(concept.lastRevisedDate)}
+                            </p>
+                            <p className={`text-sm font-medium ${isDue ? 'text-primary animate-pulse' : 'text-muted-foreground'}`}>
+                                Next Revision Due: {formatDateSafe(concept.nextRevisionDate)}
                             </p>
                         </div>
                         <div className="flex space-x-1 self-start sm:self-center">
@@ -210,12 +205,12 @@ export default function RevisionHubTab() {
                     </div>
                     <div className="mt-3">
                         <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs font-medium text-muted-foreground">Revision Progress</span>
-                             <span className={`text-xs font-semibold ${isDue ? 'text-primary animate-pulse' : 'text-foreground'}`}>
-                                {progressText} (Stage {concept.revisionStage + 1})
+                            <span className="text-xs font-medium text-muted-foreground">Retention Strength</span>
+                             <span className={`text-xs font-semibold ${retentionStrength < 50 ? 'text-destructive' : 'text-foreground'}`}>
+                                {retentionStrength.toFixed(0)}%
                             </span>
                         </div>
-                        <Progress value={progress} aria-label={`Revision progress for ${concept.name}`} />
+                        <Progress value={retentionStrength} aria-label={`Retention strength for ${concept.name}`} />
                     </div>
                 </li>
               );

@@ -43,9 +43,7 @@ export default function ShopPage() {
                   <UtilityCard
                     key={item.id}
                     item={item}
-                    userCash={userProfile.cash}
-                    userSkillPoints={userProfile.skillPoints}
-                    userLevel={userProfile.level}
+                    userProfile={userProfile}
                     isOwned={isUtilityItemOwned(item.id)}
                     onBuy={() => buyUtilityItem(item.id)}
                   />

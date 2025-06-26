@@ -50,7 +50,7 @@ export default function PomodoroTimer() {
   }, [settings]);
   
   useEffect(() => {
-    const calculateTimeLeft = () => Math.max(0, Math.floor((sessionEndTime - Date.now()) / 1000));
+    const calculateTimeLeft = () => Math.max(0, Math.ceil((sessionEndTime - Date.now()) / 1000));
     
     setTimeLeft(calculateTimeLeft());
 

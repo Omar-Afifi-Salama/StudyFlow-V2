@@ -61,10 +61,13 @@ export interface UtilityItem {
   priceType: 'cash' | 'sp';
   levelRequirement: number;
   effect: {
-    type: 'xp' | 'cash' | 'sp' | 'special_focus_potion';
+    type: 'xp' | 'cash' | 'sp' | 'special_focus_potion' | 'unlock_feature';
     amount?: number;
+    featureKey?: FeatureKey;
   };
   iconName: string;
+  isConsumable: boolean;
+  cooldownSeconds?: number;
 }
 
 export interface UserProfile {
@@ -75,6 +78,8 @@ export interface UserProfile {
   ownedSkinIds: string[];
   equippedSkinId: string | null;
   ownedUtilityItemIds: string[];
+  utilityItemCooldowns: { [itemId: string]: number }; // timestamp for when cooldown ends
+  ownedSoundIds: string[];
   completedChallengeIds: string[];
   currentStreak: number; // Study streak
   longestStreak: number; // Study streak
@@ -235,6 +240,7 @@ export interface AmbientSound {
   name: string;
   filePath: string;
   icon: React.ComponentType<{ className?: string }>;
+  isPremium?: boolean;
 }
 
 export type FeatureKey =
@@ -256,7 +262,8 @@ export type FeatureKey =
   | 'notepadRevision'
   | 'notepadHabits'
   | 'notepadEvents'
-  | 'notepadEisenhower';
+  | 'notepadEisenhower'
+  | 'premiumSounds';
 
 export interface Skill {
   id: string;
