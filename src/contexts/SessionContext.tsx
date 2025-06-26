@@ -79,22 +79,19 @@ export const PREDEFINED_SKINS: Skin[] = [
   { id: 'theme-nord', name: 'Nord', description: 'A popular, cool-toned dark theme for developers.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/2e3440/88c0d0?text=Nord', dataAiHint: 'nordic fjord', isTheme: true, isLightTheme: false, themeClass: 'theme-nord' },
   { id: 'theme-dracula', name: 'Dracula', description: 'Another iconic dark theme with vibrant colors.', price: 150000, levelRequirement: 50, imageUrl: 'https://placehold.co/400x225/282a36/ff79c6?text=Dracula', dataAiHint: 'vampire castle', isTheme: true, isLightTheme: false, themeClass: 'theme-dracula' },
   // --- New Dark Themes ---
-  { id: 'theme-midnight-hacker', name: 'Midnight Hacker', description: 'Classic green-on-black terminal style.', price: 30000, levelRequirement: 14, imageUrl: 'https://placehold.co/400x225/0d0d0d/39ff14?text=Hacker', dataAiHint: 'hacker code', isTheme: true, isLightTheme: false, themeClass: 'theme-midnight-hacker' },
-  { id: 'theme-royal-purple', name: 'Royal Purple', description: 'A dark theme with regal purple and gold accents.', price: 35000, levelRequirement: 16, imageUrl: 'https://placehold.co/400x225/2c1f3d/d4af37?text=Royal', dataAiHint: 'royal crown', isTheme: true, isLightTheme: false, themeClass: 'theme-royal-purple' },
-  { id: 'theme-vampire-gothic', name: 'Vampire Gothic', description: 'A gothic theme with deep reds and grays.', price: 40000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/1a1a1a/8b0000?text=Gothic', dataAiHint: 'gothic castle', isTheme: true, isLightTheme: false, themeClass: 'theme-vampire-gothic' },
-  { id: 'theme-toxic-waste', name: 'Toxic Waste', description: 'A dark theme with vibrant, toxic greens.', price: 40000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/1f2922/adff2f?text=Toxic', dataAiHint: 'toxic waste', isTheme: true, isLightTheme: false, themeClass: 'theme-toxic-waste' },
-  { id: 'theme-synthwave-sunset', name: 'Synthwave Sunset', description: 'An 80s-inspired theme with sunset gradients.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/2c003e/ff6ac1?text=Synthwave', dataAiHint: 'synthwave sunset', isTheme: true, isLightTheme: false, themeClass: 'theme-synthwave-sunset' },
+  { id: 'theme-midnight-hacker', name: 'Midnight Hacker', description: 'Classic green-on-black terminal style.', price: 30000, levelRequirement: 14, imageUrl: 'https://placehold.co/400x225/0d0d0d/39ff14?text=Midnight+Hacker', dataAiHint: 'hacker code', isTheme: true, isLightTheme: false, themeClass: 'theme-midnight-hacker' },
+  { id: 'theme-royal-purple', name: 'Royal Purple', description: 'A dark theme with regal purple and gold accents.', price: 35000, levelRequirement: 16, imageUrl: 'https://placehold.co/400x225/2c1f3d/d4af37?text=Royal+Purple', dataAiHint: 'royal crown', isTheme: true, isLightTheme: false, themeClass: 'theme-royal-purple' },
+  { id: 'theme-vampire-gothic', name: 'Vampire Gothic', description: 'A gothic theme with deep reds and grays.', price: 40000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/1a1a1a/8b0000?text=Vampire+Gothic', dataAiHint: 'gothic castle', isTheme: true, isLightTheme: false, themeClass: 'theme-vampire-gothic' },
+  { id: 'theme-toxic-waste', name: 'Toxic Waste', description: 'A dark theme with vibrant, toxic greens.', price: 40000, levelRequirement: 18, imageUrl: 'https://placehold.co/400x225/1f2922/adff2f?text=Toxic+Waste', dataAiHint: 'toxic waste', isTheme: true, isLightTheme: false, themeClass: 'theme-toxic-waste' },
+  { id: 'theme-synthwave-sunset', name: 'Synthwave Sunset', description: 'An 80s-inspired theme with sunset gradients.', price: 50000, levelRequirement: 20, imageUrl: 'https://placehold.co/400x225/2c003e/ff6ac1?text=Synthwave+Sunset', dataAiHint: 'synthwave sunset', isTheme: true, isLightTheme: false, themeClass: 'theme-synthwave-sunset' },
   { id: 'theme-starlight', name: 'Starlight', description: 'A deep space theme with twinkling star highlights.', price: 60000, levelRequirement: 24, imageUrl: 'https://placehold.co/400x225/0c0a24/f0f8ff?text=Starlight', dataAiHint: 'starry night', isTheme: true, isLightTheme: false, themeClass: 'theme-starlight' },
-  { id: 'theme-retro-orange', name: 'Retro Orange', description: 'A 70s-inspired theme with warm oranges and browns.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/3d2c21/f08a4b?text=Retro', dataAiHint: 'retro pattern', isTheme: true, isLightTheme: false, themeClass: 'theme-retro-orange' },
+  { id: 'theme-retro-orange', name: 'Retro Orange', description: 'A 70s-inspired theme with warm oranges and browns.', price: 55000, levelRequirement: 22, imageUrl: 'https://placehold.co/400x225/3d2c21/f08a4b?text=Retro+Orange', dataAiHint: 'retro pattern', isTheme: true, isLightTheme: false, themeClass: 'theme-retro-orange' },
   { id: 'theme-inferno', name: 'Inferno', description: 'A fiery theme of burning embers and charcoal.', price: 65000, levelRequirement: 26, imageUrl: 'https://placehold.co/400x225/210707/ff4500?text=Inferno', dataAiHint: 'fire flames', isTheme: true, isLightTheme: false, themeClass: 'theme-inferno' },
   { id: 'theme-deep-forest', name: 'Deep Forest', description: 'Earthy browns and deep greens of a forest at night.', price: 70000, levelRequirement: 28, imageUrl: 'https://placehold.co/400x225/1a2421/a3b18a?text=Deep+Forest', dataAiHint: 'dark forest', isTheme: true, isLightTheme: false, themeClass: 'theme-deep-forest' },
-  { id: 'theme-matrix-rain', name: 'Matrix Rain', description: 'A dark theme with cascading green code.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/000000/00ff00?text=Matrix', dataAiHint: 'matrix code', isTheme: true, isLightTheme: false, themeClass: 'theme-matrix-rain' },
+  { id: 'theme-matrix-rain', name: 'Matrix Rain', description: 'A dark theme with cascading green code.', price: 75000, levelRequirement: 30, imageUrl: 'https://placehold.co/400x225/000000/00ff00?text=Matrix+Rain', dataAiHint: 'matrix code', isTheme: true, isLightTheme: false, themeClass: 'theme-matrix-rain' },
 ];
 
 export const UTILITY_ITEMS: UtilityItem[] = [
-  // Permanent Unlocks
-  { id: 'sound_pack_premium', name: 'Premium Sound Pack', description: 'Unlock 4 additional high-quality ambient sounds.', price: 50000, priceType: 'cash', levelRequirement: 10, effect: { type: 'unlock_feature', featureKey: 'premiumSounds' }, iconName: 'Headphones', isConsumable: false, category: 'Permanent Unlocks' },
-
   // XP Boosters
   { id: 'xp_boost_small', name: 'Small XP Canister', description: 'Instantly gain 1,200 XP.', price: 10000, priceType: 'cash', levelRequirement: 5, effect: { type: 'xp', amount: 1200 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600, category: 'XP Boost' },
   { id: 'xp_boost_medium', name: 'Medium XP Canister', description: 'Instantly gain 6,000 XP.', price: 45000, priceType: 'cash', levelRequirement: 15, effect: { type: 'xp', amount: 6000 }, iconName: 'Zap', isConsumable: true, cooldownSeconds: 3600 * 2, category: 'XP Boost' },
@@ -109,6 +106,9 @@ export const UTILITY_ITEMS: UtilityItem[] = [
   { id: 'skill_point_pack_large', name: 'Cerebral Boost', description: 'Buy 5 Skill Points for $180,000.', price: 180000, priceType: 'cash', levelRequirement: 30, effect: { type: 'sp', amount: 5 }, iconName: 'Gem', isConsumable: true, cooldownSeconds: 86400 * 2, category: 'Currency Exchange' },
   { id: 'cash_injection_small', name: 'Small Loan', description: 'Convert 2 SP into $20,000 cash.', price: 2, priceType: 'sp', levelRequirement: 10, effect: { type: 'cash', amount: 20000 }, iconName: 'HandCoins', isConsumable: true, cooldownSeconds: 3600 * 2, category: 'Currency Exchange' },
   { id: 'cash_injection_medium', name: 'Investor Cheque', description: 'Convert 5 SP into $75,000 cash.', price: 5, priceType: 'sp', levelRequirement: 22, effect: { type: 'cash', amount: 75000 }, iconName: 'HandCoins', isConsumable: true, cooldownSeconds: 3600 * 4, category: 'Currency Exchange' },
+
+  // Permanent Unlocks
+  { id: 'sound_pack_premium', name: 'Premium Sound Pack', description: 'Unlock 4 additional high-quality ambient sounds.', price: 50000, priceType: 'cash', levelRequirement: 10, effect: { type: 'unlock_feature', featureKey: 'premiumSounds' }, iconName: 'Headphones', isConsumable: false, category: 'Permanent Unlocks' },
 ];
 
 export const DEFAULT_NOTEPAD_DATA: NotepadData = {
@@ -385,6 +385,7 @@ interface SessionContextType {
   updateSessionDescription: (sessionId: string, description: string) => void;
   
   updateUserProfile: (updatedProfileData: Partial<UserProfile>) => void;
+  dangerouslySetUserProfile: (profile: UserProfile) => void;
   updateSleepWakeTimes: (wakeUpTime: UserProfile['wakeUpTime'], sleepTime: UserProfile['sleepTime']) => void;
 
   updateNotepadData: (updatedNotepadData: Partial<NotepadData>) => void;
@@ -419,6 +420,7 @@ interface SessionContextType {
   buySkin: (skinId: string) => boolean;
   equipSkin: (skinId: string) => void;
   trySkin: (skinId: string) => void;
+  cancelSkinPreview: () => void;
   isSkinOwned: (skinId: string) => boolean;
   buyUtilityItem: (itemId: string) => boolean;
   isUtilityItemOwned: (itemId: string) => boolean;
@@ -505,6 +507,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       return newProfile;
     });
   }, [checkAndUnlockAchievements]);
+  
+  const dangerouslySetUserProfile = useCallback((profile: UserProfile) => {
+    setUserProfile(profile);
+  }, []);
   
   const isSkillUnlocked = useCallback((skillId: string) => userProfile.unlockedSkillIds.includes(skillId), [userProfile.unlockedSkillIds]);
   
@@ -599,7 +605,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (cashGained > 0) addFloatingGain('cash', cashGained);
       return { newLevel, newTitle, leveledUp, skillPointsGained, cashGained };
     }
-    return { newLevel: currentLevel, newTitle: TITLES[currentLevel -1], leveledUp, skillPointsGained, cashGained };
+    return { newLevel: currentLevel, newTitle: TITLES[currentLevel - 1], leveledUp, skillPointsGained, cashGained };
   }, [toast, addFloatingGain]);
 
   const updateStreakAndGetBonus = useCallback((currentProfile: UserProfile) => {
@@ -1017,35 +1023,53 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     return true;
   }, [isFeatureUnlocked, userProfile, getSkinById, isSkinOwned, getAppliedBoost, toast, addFloatingGain, checkAndUnlockAchievements]);
 
-  const trySkin = useCallback((skinId: string) => {
-    if (skinPreview.id) {
-      toast({ title: "Preview Active", description: "Another theme preview is already in progress.", variant: "default" });
-      return;
+  const cancelSkinPreview = useCallback(() => {
+    if (skinPreview.timeoutId) {
+        clearTimeout(skinPreview.timeoutId);
     }
+    setSkinPreview({ id: null, timeoutId: null });
+    toast({ title: "Preview Cancelled", description: "Reverted to your original theme." });
+  }, [skinPreview.timeoutId, toast]);
+
+  const trySkin = useCallback((skinId: string) => {
     const skin = getSkinById(skinId);
     if (!skin) return;
 
-    if (skinPreview.timeoutId) clearTimeout(skinPreview.timeoutId);
+    if (skinPreview.timeoutId) {
+      clearTimeout(skinPreview.timeoutId);
+    }
     
-    setSkinPreview(prev => ({ ...prev, id: skinId }));
-    toast({ title: "Theme Preview", description: `Trying out ${skin.name} for 30 seconds.` });
+    setSkinPreview({ id: skinId, timeoutId: null });
+    toast({ title: "Theme Preview", description: `Trying out ${skin.name} for 60 seconds.` });
 
     const timeoutId = setTimeout(() => {
-        setSkinPreview({ id: null, timeoutId: null });
-        toast({ title: "Preview Ended", description: `Reverted to your original theme.` });
-    }, 30000);
+      setSkinPreview(prev => {
+        // Only revert if the current preview is the one that timed out
+        if (prev.id === skinId) {
+          toast({ title: "Preview Ended", description: `Reverted to your original theme.` });
+          return { id: null, timeoutId: null };
+        }
+        return prev;
+      });
+    }, 60000);
 
     setSkinPreview(prev => ({ ...prev, timeoutId }));
-  }, [skinPreview.id, skinPreview.timeoutId, toast, getSkinById]);
+  }, [skinPreview.timeoutId, toast, getSkinById]);
 
   const equipSkin = useCallback((skinId: string) => {
     if(!isFeatureUnlocked('shop')) { toast({ title: "Shop Locked", description: "Unlock Shop in Skill Tree.", icon: <XCircle/> }); return; }
     if (!isSkinOwned(skinId)) { toast({ title: "Error", description: "You don't own this skin.", variant: "destructive", icon: <XCircle/> }); return; }
     const skinToEquip = getSkinById(skinId);
     if (!skinToEquip) return;
+
+    // If a preview is active, cancel it before equipping
+    if (skinPreview.id) {
+        cancelSkinPreview();
+    }
+    
     setUserProfile(prev => ({ ...prev, equippedSkinId: skinId }));
     toast({ title: "Skin Equipped!", description: `${skinToEquip.name} is now active.`, icon: <PaletteIcon/> });
-  }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast]);
+  }, [isFeatureUnlocked, isSkinOwned, getSkinById, toast, skinPreview.id, cancelSkinPreview]);
   
   const isUtilityItemOwned = useCallback((itemId: string) => {
       const item = UTILITY_ITEMS.find(i => i.id === itemId);
@@ -1720,13 +1744,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       startTimer, pauseTimer, resetTimer, logSession, confirmAfk,
       switchPomodoroMode, updatePomodoroSettings, setCountdownDuration,
       addManualSession, deleteSession, addDevLevels, clearSessions, hardReset, requestHardReset, cancelHardReset, updateSessionDescription,
-      updateUserProfile, updateSleepWakeTimes,
+      updateUserProfile, dangerouslySetUserProfile, updateSleepWakeTimes,
       updateNotepadData, addNotepadNote, updateNotepadNote, deleteNotepadNote, updateItemQuadrant,
       addRevisionConcept, markConceptRevised, deleteRevisionConcept,
       addHabit, updateHabit, deleteHabit, logHabitCompletion, getHabitCompletionForDate, getHabitCompletionsForWeek,
       addNotepadCountdownEvent, updateNotepadCountdownEvent, deleteNotepadCountdownEvent,
       unlockBusiness, upgradeBusiness, collectBusinessIncome, buyBond, claimMaturedBonds,
-      getSkinById, buySkin, equipSkin, trySkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned,
+      getSkinById, buySkin, equipSkin, trySkin, cancelSkinPreview, isSkinOwned, buyUtilityItem, isUtilityItemOwned,
       selectDailyOffer,
       claimChallengeReward, updateChallengeProgress,
       getUnlockedAchievements, isSkillUnlocked, canUnlockSkill, unlockSkill, isFeatureUnlocked, getAppliedBoost, getSkillBoost,

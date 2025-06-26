@@ -16,7 +16,7 @@ interface SkinCardProps {
   isEquipped: boolean;
   onBuy: () => void;
   onEquip: () => void;
-  onTry: () => void;
+  onTry: (skinId: string) => void;
   onCancelPreview: () => void;
   isPreviewing: boolean;
   previewingSkinId: string | null;
@@ -45,6 +45,7 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
             layout="fill" 
             objectFit="cover" 
             data-ai-hint={skin.dataAiHint}
+            unoptimized // Prevents Next.js image optimization from interfering with placeholder service
           />
           {isEquipped && (
             <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full flex items-center">
@@ -104,5 +105,3 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
     </Card>
   );
 }
-
-    

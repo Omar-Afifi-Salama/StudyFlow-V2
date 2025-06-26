@@ -28,7 +28,7 @@ interface UtilityCardProps {
 }
 
 export default function UtilityCard({ item, userProfile, isOwned, onBuy }: UtilityCardProps) {
-  const { userCash, userSkillPoints, userLevel, utilityItemCooldowns } = userProfile;
+  const { userCash, skillPoints: userSkillPoints, level: userLevel, utilityItemCooldowns } = userProfile;
   const [timeLeft, setTimeLeft] = useState(0);
 
   const cooldownEndTime = utilityItemCooldowns?.[item.id] || 0;
@@ -53,20 +53,17 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
   const canAfford = item.priceType === 'cash' ? userCash >= item.price : userSkillPoints >= item.price;
   const meetsLevelRequirement = userLevel >= item.levelRequirement;
   
-  let canBuy = !isOwned || item.isConsumable;
-  let buttonText = "Buy Item";
+  let canBuy = (!isOwned || item.isConsumable) && meetsLevelRequirement && canAfford && !isOnCooldown;
   
+  let buttonText = "Buy Item";
   if (!item.isConsumable && isOwned) {
       buttonText = "Purchased";
   } else if (isOnCooldown) {
       buttonText = formatTime(timeLeft, true);
-      canBuy = false;
   } else if (!meetsLevelRequirement) {
       buttonText = `Requires Lvl ${item.levelRequirement}`;
-      canBuy = false;
   } else if (!canAfford) {
       buttonText = `Need ${item.price.toLocaleString()} ${item.priceType === 'sp' ? 'SP' : '$'}`;
-      canBuy = false;
   }
 
 
@@ -116,5 +113,3 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
     </Card>
   );
 }
-
-    
