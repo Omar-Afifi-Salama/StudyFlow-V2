@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,14 +13,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime } from "@/lib/utils";
+import { Textarea } from "../ui/textarea";
 
 const CASH_REWARD_PER_LEVEL = 500;
 const RESET_PASSWORD = "studyflowreset"; // Hardcoded password
 
-function HardResetSection() {
-    const { userProfile, requestHardReset, cancelHardReset } = useSessions();
+function OwnerControlsSection() {
+    const { userProfile, requestHardReset, cancelHardReset, dangerouslySetUserProfile } = useSessions();
     const [resetTimeLeft, setResetTimeLeft] = useState(0);
     const [passwordInput, setPasswordInput] = useState("");
+    const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+    const [jsonData, setJsonData] = useState("");
+    const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -33,18 +38,38 @@ function HardResetSection() {
     }, [userProfile.hardResetRequestTime]);
 
     const handleResetRequest = () => {
+        requestHardReset();
+    };
+
+    const handleVerifyPassword = (onSuccess: () => void) => {
         if (passwordInput === RESET_PASSWORD) {
-            requestHardReset();
             setPasswordInput("");
+            onSuccess();
         } else {
             toast({
                 title: "Incorrect Password",
-                description: "The password for the hard reset is incorrect.",
+                description: "The password for this owner action is incorrect.",
                 variant: "destructive",
             });
         }
     };
     
+    const openJsonEditor = () => {
+        setJsonData(JSON.stringify(userProfile, null, 2));
+        setIsJsonEditorOpen(true);
+    }
+    
+    const handleSaveJson = () => {
+        try {
+            const newProfile = JSON.parse(jsonData);
+            dangerouslySetUserProfile(newProfile);
+            toast({ title: "Success", description: "User data has been updated." });
+            setIsJsonEditorOpen(false);
+        } catch (error) {
+            toast({ title: "Invalid JSON", description: "Could not parse the data. Please check the format.", variant: "destructive" });
+        }
+    };
+
     if (userProfile.hardResetRequestTime) {
       return (
         <div className="flex flex-col items-center gap-2 mt-4 p-4 border border-destructive rounded-lg">
@@ -55,9 +80,11 @@ function HardResetSection() {
     }
 
     return (
+      <div className="flex flex-col md:flex-row gap-4 justify-center">
+        {/* Hard Reset Dialog */}
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mt-4 w-full md:w-auto">
+                <Button variant="destructive" className="w-full md:w-auto">
                     <Trash2 className="mr-2 h-4 w-4" /> Hard Reset All Data
                 </Button>
             </AlertDialogTrigger>
@@ -76,10 +103,39 @@ function HardResetSection() {
                 />
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetRequest}>Confirm & Start Reset</AlertDialogAction>
+                    <AlertDialogAction onClick={() => handleVerifyPassword(handleResetRequest)}>Confirm & Start Reset</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+
+        {/* JSON Editor Dialog */}
+         <AlertDialog open={isJsonEditorOpen} onOpenChange={setIsJsonEditorOpen}>
+            <AlertDialogTrigger asChild>
+                 <Button variant="outline" className="w-full md:w-auto">
+                    Edit User Data
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-2xl">
+                 <AlertDialogHeader>
+                    <AlertDialogTitle>Edit Raw User Data</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Warning: Modifying this data directly can cause unexpected issues. Proceed with caution.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Textarea
+                    value={jsonData}
+                    onChange={(e) => setJsonData(e.target.value)}
+                    className="min-h-[400px] font-mono text-xs"
+                    aria-label="User profile JSON data"
+                />
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSaveJson}>Save Changes</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+      </div>
     );
 }
 
@@ -94,13 +150,15 @@ export default function GuidePage() {
     const level = index + 1;
     if (level > 100) return null;
     const xpRequired = ACTUAL_LEVEL_THRESHOLDS[index];
-    const minutesToReach = xpRequired / XP_PER_MINUTE_FOCUS;
+    const prevXp = index > 0 ? ACTUAL_LEVEL_THRESHOLDS[index - 1] : 0;
+    const xpForThisLevel = xpRequired - prevXp;
+    const minutesToLevelUp = xpForThisLevel / XP_PER_MINUTE_FOCUS;
     
     return {
       level,
       title,
       xpRequired: xpRequired.toLocaleString(),
-      minutesToReach: minutesToReach.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 1}),
+      minutesToLevelUp: minutesToLevelUp.toLocaleString(),
     };
   }).filter(Boolean);
 
@@ -141,8 +199,8 @@ export default function GuidePage() {
                         <TableRow>
                         <TableHead className="w-[100px]">Level</TableHead>
                         <TableHead>Title</TableHead>
-                        <TableHead className="text-right">Total XP</TableHead>
-                        <TableHead className="text-right">Total Minutes</TableHead>
+                        <TableHead className="text-right">Total XP Needed</TableHead>
+                        <TableHead className="text-right">Base Minutes to Level Up</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -151,7 +209,7 @@ export default function GuidePage() {
                             <TableCell className="font-medium">{data.level}</TableCell>
                             <TableCell>{data.title}</TableCell>
                             <TableCell className="text-right">{data.xpRequired}</TableCell>
-                            <TableCell className="text-right">{data.minutesToReach}</TableCell>
+                            <TableCell className="text-right">{data.minutesToLevelUp}</TableCell>
                         </TableRow>
                         ))}
                     </TableBody>
@@ -210,12 +268,12 @@ export default function GuidePage() {
           </AccordionItem>
           
           <AccordionItem value="item-5">
-            <AccordionTrigger className="text-xl font-semibold">Advanced Options</AccordionTrigger>
+            <AccordionTrigger className="text-xl font-semibold">Owner Controls</AccordionTrigger>
             <AccordionContent className="flex flex-col items-center">
               <p className="text-muted-foreground mb-4 text-center">
-                  Need to start fresh? This button will begin the 10-minute process to permanently delete all your data. This cannot be undone once completed.
+                  These are developer-only tools for managing app data. Use with extreme caution.
               </p>
-              <HardResetSection />
+              <OwnerControlsSection />
             </AccordionContent>
           </AccordionItem>
 
@@ -232,3 +290,5 @@ export default function GuidePage() {
     </Card>
   );
 }
+
+    

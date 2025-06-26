@@ -16,7 +16,7 @@ const categoryIcons: Record<UtilityCategory, React.ElementType> = {
 };
 
 export default function ShopPage() {
-  const { userProfile, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned, trySkin, skinPreview } = useSessions();
+  const { userProfile, buySkin, equipSkin, isSkinOwned, buyUtilityItem, isUtilityItemOwned, trySkin, skinPreview, cancelSkinPreview } = useSessions();
   
   const lightSkins = PREDEFINED_SKINS.filter(skin => skin.isLightTheme);
   const darkSkins = PREDEFINED_SKINS.filter(skin => !skin.isLightTheme);
@@ -32,7 +32,7 @@ export default function ShopPage() {
     }, {} as Record<UtilityCategory, typeof UTILITY_ITEMS>);
   }, []);
 
-  const categoryOrder: UtilityCategory[] = ['Permanent Unlocks', 'XP Boost', 'Currency Exchange'];
+  const categoryOrder: UtilityCategory[] = ['XP Boost', 'Currency Exchange', 'Permanent Unlocks'];
 
 
   return (
@@ -99,7 +99,9 @@ export default function ShopPage() {
                     onBuy={() => buySkin(skin.id)}
                     onEquip={() => equipSkin(skin.id)}
                     onTry={() => trySkin(skin.id)}
+                    onCancelPreview={cancelSkinPreview}
                     isPreviewing={!!skinPreview.id}
+                    previewingSkinId={skinPreview.id}
                   />
                 ))}
               </div>
@@ -119,7 +121,9 @@ export default function ShopPage() {
                     onBuy={() => buySkin(skin.id)}
                     onEquip={() => equipSkin(skin.id)}
                     onTry={() => trySkin(skin.id)}
+                    onCancelPreview={cancelSkinPreview}
                     isPreviewing={!!skinPreview.id}
+                    previewingSkinId={skinPreview.id}
                   />
                 ))}
               </div>
@@ -129,3 +133,5 @@ export default function ShopPage() {
     </div>
   );
 }
+
+    

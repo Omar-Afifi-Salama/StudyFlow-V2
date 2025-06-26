@@ -53,20 +53,20 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
   const canAfford = item.priceType === 'cash' ? userCash >= item.price : userSkillPoints >= item.price;
   const meetsLevelRequirement = userLevel >= item.levelRequirement;
   
-  let canBuy = true;
+  let canBuy = !isOwned || item.isConsumable;
   let buttonText = "Buy Item";
-
-  if (isOwned && !item.isConsumable) {
-    canBuy = false;
-    buttonText = "Purchased";
+  
+  if (!item.isConsumable && isOwned) {
+      buttonText = "Purchased";
   } else if (isOnCooldown) {
-    canBuy = false;
+      buttonText = formatTime(timeLeft, true);
+      canBuy = false;
   } else if (!meetsLevelRequirement) {
-    canBuy = false;
-    buttonText = `Requires Lvl ${item.levelRequirement}`;
+      buttonText = `Requires Lvl ${item.levelRequirement}`;
+      canBuy = false;
   } else if (!canAfford) {
-     canBuy = false;
-     buttonText = `Need ${item.price.toLocaleString()} ${item.priceType === 'sp' ? 'SP' : '$'}`;
+      buttonText = `Need ${item.price.toLocaleString()} ${item.priceType === 'sp' ? 'SP' : '$'}`;
+      canBuy = false;
   }
 
 
@@ -116,3 +116,5 @@ export default function UtilityCard({ item, userProfile, isOwned, onBuy }: Utili
     </Card>
   );
 }
+
+    

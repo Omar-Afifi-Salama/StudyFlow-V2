@@ -28,7 +28,7 @@ const ItemContextMenu = ({ item, type, onUpdateQuadrant }: { item: NotepadTask |
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-1 z-10">
+      <PopoverContent className="w-auto p-1 z-50">
         <div className="flex flex-col">
           {(Object.keys(quadrantDetails) as QuadrantKey[]).map(qKey => (
             <Button key={qKey} variant="ghost" className="justify-start text-sm h-8" onClick={() => onUpdateQuadrant(item.id, type, qKey)}>
@@ -58,19 +58,19 @@ const ItemCard = ({ item, type, onUpdateQuadrant }: { item: NotepadTask | Notepa
                     <TooltipProvider delayDuration={100}>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'do')}><AlertTriangle className="h-4 w-4 text-destructive" /></Button></TooltipTrigger>
-                            <TooltipContent side="top" sideOffset={5} className="z-10"><p>Do (Urgent, Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5} className="z-50"><p>Do (Urgent, Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'schedule')}><Calendar className="h-4 w-4 text-primary" /></Button></TooltipTrigger>
-                            <TooltipContent side="top" sideOffset={5} className="z-10"><p>Schedule (Not Urgent, Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5} className="z-50"><p>Schedule (Not Urgent, Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'delegate')}><Users className="h-4 w-4 text-yellow-500" /></Button></TooltipTrigger>
-                            <TooltipContent side="top" sideOffset={5} className="z-10"><p>Delegate (Urgent, Not Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5} className="z-50"><p>Delegate (Urgent, Not Important)</p></TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUpdateQuadrant(item.id, type, 'eliminate')}><Trash2 className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger>
-                            <TooltipContent side="top" sideOffset={5} className="z-10"><p>Eliminate (Not Urgent, Not Important)</p></TooltipContent>
+                            <TooltipContent side="top" sideOffset={5} className="z-50"><p>Eliminate (Not Urgent, Not Important)</p></TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 )}
@@ -158,3 +158,5 @@ export default function EisenhowerMatrixTab() {
     </Card>
   );
 }
+
+    

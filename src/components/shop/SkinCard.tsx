@@ -4,7 +4,7 @@
 import type { Skin } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
+import { CheckCircle, DollarSign, Lock, ShieldCheck, ShoppingCart, Eye, XCircle } from 'lucide-react';
 import { useSessions } from '@/contexts/SessionContext';
 import Image from 'next/image';
 
@@ -14,13 +14,15 @@ interface SkinCardProps {
   userLevel: number;
   isOwned: boolean;
   isEquipped: boolean;
-  isPreviewing: boolean;
   onBuy: () => void;
   onEquip: () => void;
   onTry: () => void;
+  onCancelPreview: () => void;
+  isPreviewing: boolean;
+  previewingSkinId: string | null;
 }
 
-export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquipped, isPreviewing, onBuy, onEquip, onTry }: SkinCardProps) {
+export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquipped, isPreviewing, onBuy, onEquip, onTry, onCancelPreview, previewingSkinId }: SkinCardProps) {
   const { getAppliedBoost } = useSessions();
   const shopDiscount = getAppliedBoost('shopDiscount');
   const effectivePrice = Math.round(skin.price * (1 - shopDiscount));
@@ -28,6 +30,8 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
   const canAfford = userCash >= effectivePrice;
   const meetsLevelRequirement = userLevel >= skin.levelRequirement;
   const canBuy = !isOwned && canAfford && meetsLevelRequirement;
+  
+  const isThisSkinPreviewing = previewingSkinId === skin.id;
 
   return (
     <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow card-animated">
@@ -85,12 +89,20 @@ export default function SkinCard({ skin, userCash, userLevel, isOwned, isEquippe
               {!meetsLevelRequirement && <span className="ml-1 text-xs">(Lvl {skin.levelRequirement})</span>}
               {!canAfford && meetsLevelRequirement && <span className="ml-1 text-xs">(${effectivePrice.toLocaleString()})</span>}
             </Button>
-            <Button onClick={() => onTry(skin.id)} disabled={isPreviewing} variant="secondary" className="btn-animated">
-              <Eye className="mr-2 h-4 w-4"/> Try
-            </Button>
+            {isThisSkinPreviewing ? (
+                 <Button onClick={onCancelPreview} variant="destructive" className="btn-animated">
+                    <XCircle className="mr-2 h-4 w-4"/> Cancel
+                </Button>
+            ) : (
+                <Button onClick={() => onTry(skin.id)} variant="secondary" className="btn-animated">
+                    <Eye className="mr-2 h-4 w-4"/> Try
+                </Button>
+            )}
           </div>
         )}
       </CardFooter>
     </Card>
   );
 }
+
+    
