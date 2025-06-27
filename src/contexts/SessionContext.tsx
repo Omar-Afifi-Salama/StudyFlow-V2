@@ -4,7 +4,7 @@
 import type { StudySession, UserProfile, Skin, NotepadTask, NotepadNote, NotepadGoal, NotepadLink, NotepadData, DailyChallenge, Achievement, RevisionConcept, Habit, HabitFrequency, HabitLogEntry, NotepadCountdownEvent, Skill, FeatureKey, FloatingGain, PomodoroState, StopwatchState, CountdownState, PomodoroMode, PomodoroSettings, DailyOffer, Business, Bond, UtilityItem, UtilityCategory } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull, FlaskConical } from 'lucide-react';
+import { BookOpen, Zap, ShoppingCart, ShieldCheck, CalendarCheck, Award, Clock, BarChart, Coffee, Timer, TrendingUp, Brain, Gift, Star, DollarSign, Activity, AlignLeft, Link2, CheckSquare, Trophy, TrendingDown, Sigma, Moon, Sun, Palette, Package, Briefcase, Target as TargetIcon, Edit, Repeat, ListChecks as HabitIcon, CalendarClock, BarChart3, Wind, NotebookText, Settings, Lightbulb, HelpCircle, Network, Settings2, Grid, CheckSquare2, StickyNote, Target, Link as LinkLucide, Sparkles, XCircle, Save, Trash2, CheckCircle, Percent, RepeatIcon, PaletteIcon, MoreVertical, ChevronDown, Gem, Flame, Shuffle, BrainCircuit, Rocket, Eye, Layers, Smartphone, Sunrise, Feather, Library, CalendarHeart, CalendarCheck2, Building2, HandCoins, FileText, Archive, CalendarPlus, Signal, Shirt, Headphones, RotateCcw, Crown, Landmark, Skull, FlaskConical, Command, FastForward, Clock2 } from 'lucide-react';
 import { format, addDays, differenceInDays, isYesterday, isToday, parseISO, startOfWeek, getWeek, formatISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
 export const XP_PER_MINUTE_FOCUS = 10;
@@ -277,65 +277,79 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
 ];
 
 export const ALL_SKILLS: Skill[] = [
-  // Always Unlocked
-  { id: 'unlockTimers', name: 'Core Timers', description: 'Access Pomodoro and Stopwatch timers.', cost: 0, iconName: 'Clock', unlocksFeature: 'timers', category: 'Core Feature' },
+  // TIER 0: ROOT
+  { id: 'unlockTimers', name: 'Core Timers', description: 'Access Pomodoro, Stopwatch, and Countdown timers.', cost: 0, iconName: 'Clock', unlocksFeature: 'timers', category: 'Core Feature' },
   { id: 'unlockSkillTree', name: 'Path of Growth', description: 'Access the Skill Tree to unlock abilities.', cost: 0, iconName: 'Network', unlocksFeature: 'skill-tree', category: 'Core Feature' },
   
-  // Core Feature Unlocks - Tier 1 (Logical progression from base)
-  { id: 'unlockAbout', name: 'Guidance', description: 'Unlocks the "Guide" page to learn more about StudyFlow.', cost: 1, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, category: 'Core Feature' },
-  { id: 'unlockStats', name: 'Data Analyst', description: 'Unlocks the "Statistics" page to monitor your study habits.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 2, category: 'Core Feature' },
-  { id: 'unlockNotepadMain', name: 'Notekeeper', description: 'Unlocks the main "Digital Notepad" page. Essential for organizing studies.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 2, category: 'Core Feature' },
+  // TIER 1: Foundational Features
+  { id: 'unlockAbout', name: 'Guidance', description: 'Unlocks the "Guide" page to learn more about StudyFlow.', cost: 1, iconName: 'HelpCircle', unlocksFeature: 'about', prerequisiteLevel: 1, prerequisiteSkillIds: ['unlockTimers'], category: 'Core Feature' },
+  { id: 'unlockStats', name: 'Data Analyst', description: 'Unlocks the "Statistics" page to monitor your study habits.', cost: 1, iconName: 'BarChart3', unlocksFeature: 'stats', prerequisiteLevel: 2, prerequisiteSkillIds: ['unlockTimers'], category: 'Core Feature' },
+  { id: 'unlockNotepadMain', name: 'Notekeeper', description: 'Unlocks the "Productivity Hub" for organizing notes and tasks.', cost: 1, iconName: 'NotebookText', unlocksFeature: 'notepad', prerequisiteLevel: 2, prerequisiteSkillIds: ['unlockTimers'], category: 'Core Feature' },
+
+  // --- Branch 1: Gameplay / Economy (Left Path) ---
+  // TIER 2
+  { id: 'unlockAchievements', name: 'Milestones', description: 'Unlocks the "Achievements" page to track accomplishments.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
+  { id: 'unlockShop', name: 'Collector', description: 'Unlocks the "Shop" to purchase skins and items.', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
+  // TIER 3
+  { id: 'unlockChallenges', name: 'Daily Endeavors', description: 'Unlocks "Daily Challenges" and "Daily Offers".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
+  { id: 'unlockCapitalist', name: 'Investor', description: 'Unlocks the "Capitalist Corner" for passive income.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
+  // TIER 4
+  { id: 'challengeReroll', name: 'Challenge Reroll', description: 'Once per day, reroll one daily challenge for a new one.', cost: 2, iconName: 'Shuffle', prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
+  { id: 'businessAcumen', name: 'Business Acumen', description: 'Reduces upgrade costs for all businesses by 10%.', cost: 3, iconName: 'TrendingUp', prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
+  // TIER 5
+  { id: 'seasonalHunter', name: 'Seasonal Hunter', description: 'Unlocks special, seasonal challenges for unique rewards.', cost: 3, iconName: 'CalendarHeart', prerequisiteSkillIds: ['challengeReroll'], category: 'Utility' },
+  { id: 'marketAnalyst', name: 'Market Analyst', description: "Provides a hint about the AI Startup's income chance.", cost: 4, iconName: 'Eye', prerequisiteSkillIds: ['businessAcumen'], category: 'Utility' },
+  // TIER 6
+  { id: 'streakShield', name: 'Streak Guardian', description: 'Once per week, your study streak is protected if you miss a day.', cost: 3, iconName: 'ShieldCheck', prerequisiteSkillIds: ['seasonalHunter'], category: 'Utility' },
+  { id: 'shopDiscount1', name: 'Savvy Shopper I', description: 'Get a 5% discount on all cash purchases in the shop.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteSkillIds: ['marketAnalyst'], category: 'Utility' },
+  // TIER 7
+  { id: 'shopDiscount2', name: 'Savvy Shopper II', description: 'Get an additional 5% discount (10% total) on cash purchases.', cost: 4, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteSkillIds: ['shopDiscount1'], category: 'Utility' },
   
-  // Notepad Tab Unlocks - Tier 2 (Branching off Notekeeper Access)
-  { id: 'unlockNotepadChecklist', name: 'Task Organizer', description: 'Unlocks the Checklist tab in the Notepad.', cost: 1, iconName: 'CheckSquare2', unlocksFeature: 'notepadChecklist', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 3, category: 'Notepad Feature' },
-  { id: 'unlockNotepadNotes', name: 'Quick Notes', description: 'Unlocks the Notes tab for freeform thoughts.', cost: 1, iconName: 'StickyNote', unlocksFeature: 'notepadNotes', prerequisiteSkillIds: ['unlockNotepadMain'], prerequisiteLevel: 3, category: 'Notepad Feature' },
+  // --- Branch 2: Productivity / Features (Middle Path) ---
+  // TIER 2
+  { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlocks the "Ambiance Mixer" for background sounds.', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteSkillIds: ['unlockAbout'], category: 'Core Feature' },
+  { id: 'pwaPro', name: 'PWA Pro', description: 'Enhances PWA functionality for better offline access.', cost: 1, iconName: 'Smartphone', prerequisiteSkillIds: ['unlockAbout'], category: 'Utility' },
+  // TIER 3
+  { id: 'ambianceAttunement', name: 'Ambiance Attunement', description: 'Using the Ambiance Mixer during a focus session provides a 2% XP boost.', cost: 2, iconName: 'Headphones', prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
+  { id: 'hotkeyHero', name: 'Hotkey Hero', description: 'Unlocks advanced hotkeys for faster app navigation.', cost: 2, iconName: 'Command', prerequisiteSkillIds: ['pwaPro'], category: 'Utility' },
+  // TIER 4
+  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteSkillIds: ['ambianceAttunement'], category: 'Passive Boost' },
+  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteSkillIds: ['hotkeyHero'], category: 'Passive Boost' },
+  // TIER 5
+  { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
+  { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
+  // TIER 6
+  { id: 'knowledgeRetention', name: 'Knowledge Retention', description: 'Every 10th focus session grants a 25% XP bonus.', cost: 3, iconName: 'BrainCircuit', prerequisiteSkillIds: ['xpBoost2'], category: 'Passive Boost' },
+  { id: 'afkForgiveness', name: 'AFK Forgiveness', description: 'Increases the AFK check timer from 60 to 90 minutes.', cost: 2, iconName: 'Clock2', prerequisiteSkillIds: ['cashBoost2'], category: 'Utility' },
+  // TIER 7
+  { id: 'deepWork', name: "Deep Work Mode", description: "Unlocks a 'Deep Work' Pomodoro mode (50/10) with a 10% XP bonus.", cost: 5, iconName: 'Rocket', prerequisiteSkillIds: ['knowledgeRetention', 'afkForgiveness'], category: 'Core Feature' },
+
+  // --- Branch 3: Notepad / Organization (Right Path) ---
+  // TIER 2
+  { id: 'unlockNotepadChecklist', name: 'Checklist', description: 'Unlocks the Checklist tab in the Productivity Hub.', cost: 1, iconName: 'CheckSquare2', unlocksFeature: 'notepadChecklist', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadNotes', name: 'Freeform Notes', description: 'Unlocks the Notes tab for unstructured thoughts.', cost: 1, iconName: 'StickyNote', unlocksFeature: 'notepadNotes', prerequisiteSkillIds: ['unlockNotepadMain'], category: 'Notepad Feature' },
+  // TIER 3
+  { id: 'unlockNotepadGoals', name: 'Goal Setter', description: 'Unlocks the Goals tab to track long-term objectives.', cost: 1, iconName: 'Target', unlocksFeature: 'notepadGoals', prerequisiteSkillIds: ['unlockNotepadChecklist'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadLinks', name: 'Link Collector', description: 'Unlocks the Links tab to save useful resources.', cost: 1, iconName: 'LinkLucide', unlocksFeature: 'notepadLinks', prerequisiteSkillIds: ['unlockNotepadNotes'], category: 'Notepad Feature' },
+  // TIER 4
+  { id: 'unlockNotepadRevision', name: 'Revision Hub', description: 'Unlocks the Revision Hub for spaced repetition.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadNotes'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadHabits', name: 'Habit Tracker', description: 'Unlocks the Habit Tracker to build routines.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadGoals'], category: 'Notepad Feature' },
+  // TIER 5
+  { id: 'revisionAccelerator', name: 'Revision Accelerator', description: 'Reduces time between revision intervals by 10%.', cost: 2, iconName: 'FastForward', prerequisiteSkillIds: ['unlockNotepadRevision'], category: 'Notepad Feature' },
+  { id: 'habitConsistency', name: 'Habit Consistency', description: 'Maintain a 7-day habit streak for a one-time 500 XP bonus.', cost: 2, iconName: 'CalendarCheck2', prerequisiteSkillIds: ['unlockNotepadHabits'], category: 'Notepad Feature' },
+  // TIER 6
+  { id: 'unlockNotepadEvents', name: 'Event Countdown', description: 'Unlocks the Events tab for deadline tracking.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['revisionAccelerator'], category: 'Notepad Feature' },
+  { id: 'unlockNotepadEisenhower', name: 'Eisenhower Matrix', description: 'Unlocks the Eisenhower Matrix for prioritization.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['habitConsistency'], category: 'Notepad Feature' },
+  // TIER 7
+  { id: 'deadlineDriven', name: 'Deadline Driven', description: 'Completing a goal on its due date grants a 250 XP bonus.', cost: 2, iconName: 'Trophy', prerequisiteSkillIds: ['unlockNotepadEvents', 'unlockNotepadEisenhower'], category: 'Notepad Feature' },
+
+  // --- Tier 8: Ultimate Skills ---
+  { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteSkillIds: ['shopDiscount2', 'deepWork', 'deadlineDriven'], category: 'Infinite' },
+  { id: 'dailyDiligence', name: 'Daily Diligence', description: 'Completing all daily challenges unlocks a bonus skill point.', cost: 5, iconName: 'Sunrise', prerequisiteSkillIds: ['synergizer'], category: 'Utility' },
   
-  // More App Features - Tier 2 & 3 (Branching off Core or Stats)
-  { id: 'unlockAchievements', name: 'Milestone Monitor', description: 'Unlocks the "Achievements" page.', cost: 1, iconName: 'Award', unlocksFeature: 'achievements', prerequisiteLevel: 3, prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
-  { id: 'unlockShop', name: 'Aspiring Collector', description: 'Unlocks the "Skin Shop".', cost: 1, iconName: 'ShoppingCart', unlocksFeature: 'shop', prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockStats'], category: 'Core Feature' },
-  { id: 'unlockAmbiance', name: 'Ambiance Weaver', description: 'Unlocks the "Ambiance Mixer".', cost: 1, iconName: 'Wind', unlocksFeature: 'ambiance', prerequisiteLevel: 4, prerequisiteSkillIds: ['unlockAbout'], category: 'Core Feature' },
-  { id: 'pwaPro', name: 'PWA Pro', description: 'Enhances PWA functionality with offline access to core features.', cost: 1, iconName: 'Smartphone', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Utility' },
-
-  // Advanced Notepad Features - Tier 3 (Requires earlier notepad skills or higher level)
-  { id: 'unlockNotepadGoals', name: 'Goal Setter', description: 'Unlocks the Goals tab in Notepad.', cost: 1, iconName: 'Target', unlocksFeature: 'notepadGoals', prerequisiteSkillIds: ['unlockNotepadChecklist'], prerequisiteLevel: 4, category: 'Notepad Feature' },
-  { id: 'unlockNotepadLinks', name: 'Resource Manager', description: 'Unlocks the Links tab in Notepad.', cost: 1, iconName: 'LinkLucide', unlocksFeature: 'notepadLinks', prerequisiteSkillIds: ['unlockNotepadNotes'], prerequisiteLevel: 4, category: 'Notepad Feature' },
-  
-  // Core Gameplay Loop Features - Tier 3 & 4
-  { id: 'unlockChallenges', name: 'Challenge Seeker', description: 'Unlocks "Daily Challenges" and "Daily Offers".', cost: 2, iconName: 'CalendarCheck', unlocksFeature: 'challenges', prerequisiteLevel: 5, prerequisiteSkillIds: ['unlockAchievements'], category: 'Core Feature' },
-  { id: 'challengeReroll', name: 'Challenge Reroll', description: 'Once per day, you can reroll one of your daily challenges for a new one.', cost: 2, iconName: 'Shuffle', prerequisiteLevel: 7, prerequisiteSkillIds: ['unlockChallenges'], category: 'Utility' },
-
-  
-  // Top Tier Features & Notepad - Tier 4 & 5
-  { id: 'unlockCapitalist', name: 'Budding Investor', description: 'Unlocks the "Capitalist Corner" to generate passive income.', cost: 2, iconName: 'Briefcase', unlocksFeature: 'capitalist', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Core Feature' },
-  { id: 'unlockNotepadRevision', name: 'Revision Strategist', description: 'Unlocks the "Revision Hub" in Notepad.', cost: 2, iconName: 'Brain', unlocksFeature: 'notepadRevision', prerequisiteSkillIds: ['unlockNotepadNotes', 'unlockNotepadGoals'], prerequisiteLevel: 6, category: 'Notepad Feature' },
-  { id: 'unlockNotepadHabits', name: 'Habit Builder', description: 'Unlocks the "Habit Tracker" tab in Notepad.', cost: 2, iconName: 'HabitIcon', unlocksFeature: 'notepadHabits', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
-  { id: 'unlockNotepadEvents', name: 'Deadline Master', description: 'Unlocks the "Events Countdown" tab in Notepad.', cost: 1, iconName: 'CalendarClock', unlocksFeature: 'notepadEvents', prerequisiteSkillIds: ['unlockNotepadGoals'], prerequisiteLevel: 7, category: 'Notepad Feature' },
-  { id: 'unlockNotepadEisenhower', name: 'Priority Expert', description: 'Unlocks the "Eisenhower Matrix" in Notepad.', cost: 2, iconName: 'Grid', unlocksFeature: 'notepadEisenhower', prerequisiteSkillIds: ['unlockNotepadHabits'], prerequisiteLevel: 8, category: 'Notepad Feature' },
-  { id: 'revisionAccelerator', name: 'Revision Accelerator', description: 'Reduces the time between revision intervals in the Revision Hub by 10%.', cost: 2, iconName: 'Rocket', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockNotepadRevision'], category: 'Notepad Feature' },
-  { id: 'goalMomentum', name: 'Goal Momentum', description: 'Completing a goal on its due date grants a small XP bonus.', cost: 2, iconName: 'Trophy', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockNotepadGoals'], category: 'Notepad Feature' },
-
-  // Passive Boosts Branch - XP
-  { id: 'xpBoost1', name: 'Learner\'s Edge I', description: 'Gain +5% XP from all study sessions.', cost: 2, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 5, prerequisiteSkillIds: ['pwaPro'], category: 'Passive Boost' },
-  { id: 'xpBoost2', name: 'Learner\'s Edge II', description: 'Gain an additional +5% XP (total +10%).', cost: 3, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 10, prerequisiteSkillIds: ['xpBoost1'], category: 'Passive Boost' },
-  { id: 'knowledgeRetention', name: 'Knowledge Retention', description: 'Every 10th focus session grants a 25% XP bonus.', cost: 3, iconName: 'BrainCircuit', prerequisiteLevel: 12, prerequisiteSkillIds: ['xpBoost2'], category: 'Passive Boost' },
-  { id: 'deepWork', name: "Deep Work Mode", description: "Unlocks a 'Deep Work' Pomodoro mode (50/10) with a 10% XP bonus.", cost: 5, iconName: 'Zap', prerequisiteLevel: 20, prerequisiteSkillIds: ['knowledgeRetention'], category: 'Core Feature' },
-
-  // Passive Boosts Branch - Cash
-  { id: 'cashBoost1', name: 'Money Mindset I', description: 'Gain +5% Cash from all study sessions.', cost: 2, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockShop'], category: 'Passive Boost' },
-  { id: 'cashBoost2', name: 'Money Mindset II', description: 'Gain an additional +5% Cash (total +10%).', cost: 3, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 11, prerequisiteSkillIds: ['cashBoost1'], category: 'Passive Boost' },
-  { id: 'businessAcumen', name: 'Business Acumen', description: 'Reduces upgrade costs for all businesses by 10%.', cost: 3, iconName: 'TrendingUp', prerequisiteLevel: 8, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
-  { id: 'marketAnalyst', name: 'Market Analyst', description: "Provides a hint about the next hour's AI Startup income chance.", cost: 4, iconName: 'Eye', prerequisiteLevel: 12, prerequisiteSkillIds: ['businessAcumen'], category: 'Utility' },
-
-
-  // Utility Skills - Higher Cost / Unique Effects
-  { id: 'streakShield', name: 'Streak Guardian', description: 'Once every 7 real-world days, your study streak is protected if you miss a day of studying. (Conceptual)', cost: 3, iconName: 'ShieldCheck', otherEffect: 'streak_shield', prerequisiteLevel: 7, prerequisiteSkillIds: ['challengeReroll'], category: 'Utility' },
-  { id: 'shopDiscount1', name: 'Savvy Shopper', description: 'Get a 5% discount on all skin purchases.', cost: 2, iconName: 'Percent', shopDiscountPercent: 0.05, prerequisiteLevel: 9, prerequisiteSkillIds: ['unlockCapitalist'], category: 'Utility' },
-  { id: 'breakTimeBonus', name: 'Break Time Bonus', description: 'Taking Pomodoro breaks has a small chance to grant bonus cash.', cost: 2, iconName: 'Coffee', prerequisiteLevel: 6, prerequisiteSkillIds: ['unlockAmbiance'], category: 'Passive Boost' },
-
-  // Infinite Skills
-  { id: 'infiniteXpBoost', name: 'Endless Insight', description: 'Permanently increases XP gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['xpBoost2'], category: 'Infinite' },
-  { id: 'infiniteCashBoost', name: 'Infinite Earnings', description: 'Permanently increases Cash gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteLevel: 15, prerequisiteSkillIds: ['cashBoost2'], category: 'Infinite' },
-  { id: 'synergizer', name: 'Synergizer', description: 'Unlocks a small, permanent bonus to both XP and Cash gain for every achievement unlocked.', cost: 5, iconName: 'Layers', prerequisiteLevel: 25, prerequisiteSkillIds: ['deepWork', 'marketAnalyst', 'goalMomentum'], category: 'Infinite' },
+  // --- Tier 9: Infinite Skills ---
+  { id: 'infiniteXpBoost', name: 'Endless Insight', description: 'Permanently increases XP gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'Zap', xpBoostPercent: 0.05, prerequisiteSkillIds: ['dailyDiligence'], category: 'Infinite' },
+  { id: 'infiniteCashBoost', name: 'Infinite Earnings', description: 'Permanently increases Cash gain by 5%. Can be upgraded infinitely.', cost: 4, iconName: 'DollarSign', cashBoostPercent: 0.05, prerequisiteSkillIds: ['dailyDiligence'], category: 'Infinite' },
 ];
 
 export const ALL_INFAMY_SKILLS: Skill[] = [
